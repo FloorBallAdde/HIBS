@@ -111,6 +111,7 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | Datum | Beslut | Kommentar |
 |-------|--------|-----------|
 | 2026-03-10 | Roadmap skapad | Första versionen baserad på Andreas Apple Notes |
+| 2026-03-10 | Sprint 1 klar | HomeContent extraherad till src/components/home/HomeContent.jsx. App.jsx 648→561 rader. |
 | | | |
 
 ---

@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-10*
+*Senast uppdaterad: 2026-03-10 (Sprint 1 klar)*
 
 ---
 
@@ -90,7 +90,7 @@ hibs-app/
     │   │   ├── Checklist.jsx
     │   │   └── Roadmap.jsx
     │   └── home/
-    │       └── Dashboard.jsx     ← NY: hem-dashboard
+    │       └── HomeContent.jsx   ← Sprint 1: extraherad hem-vy
     └── styles/                   ← (framtida: CSS-moduler)
 ```
 
@@ -108,3 +108,15 @@ hibs-app/
 8. **Rensa App.jsx** — bara routing och layout kvar
 
 *Varje steg: implementera → testa lokalt → commita*
+
+---
+
+## Fas 0 — Sprintlogg
+
+| Sprint | Datum | Beskrivning | App.jsx rader | Status |
+|--------|-------|-------------|---------------|--------|
+| 1 | 2026-03-10 | Extrahera HomeContent → src/components/home/HomeContent.jsx | 648 → 561 | ✅ Klar |
+| 2 | — | Extrahera MatchContent → src/components/match/MatchContent.jsx | — | ⏳ Nästa |
+| 3 | — | Extrahera MerContent → src/components/mer/MerContent.jsx | — | ⬜ |
+| 4 | — | Hooks (useAppData, useAuth) — App.jsx → ~100-150 rad | — | ⬜ |
+| 5 | — | Fas 1: Goalkeepers + Hard Rules | — | ⬜ |
