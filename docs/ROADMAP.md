@@ -1,6 +1,6 @@
 # HIBS Tränarapp — Roadmap & Förbättringar
 
-*Senast uppdaterad: 2026-03-10*
+*Senast uppdaterad: 2026-03-11*
 *Status: Aktiv utveckling (privat bruk)*
 *Chefsutvecklare: Claude | Produktägare: Andreas*
 
@@ -74,7 +74,7 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 
 | # | Feature | Källa | Prioritet |
 |---|---------|-------|-----------|
-| F1 | Målvakter exkluderas automatiskt från scramble | Andreas Notes | 🔴 Hög |
+| F1 | ✅ Målvakter exkluderas automatiskt från scramble | Andreas Notes | 🔴 Hög |
 | F2 | Hårdregel: spelare som inte kan spela 1:a (Benji, Sigge — konfigurerbart) | Andreas Notes | 🔴 Hög |
 | F3 | Övningsbibliotek: enklare förklaringar + ritexempel (SVG-tavla) | Andreas Notes | 🟡 Medel |
 | F4 | Övningsbibliotek: favoritsystem | Andreas Notes | 🟡 Medel |
@@ -112,6 +112,7 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 |-------|--------|-----------|
 | 2026-03-10 | Roadmap skapad | Första versionen baserad på Andreas Apple Notes |
 | 2026-03-10 | Sprint 1 klar | HomeContent extraherad till src/components/home/HomeContent.jsx. App.jsx 648→561 rader. |
+| 2026-03-11 | Sprint 2 klar | MatchContent extraherad (561→430 rader). F1: Målvakter exkluderas från scramble — visas som "I mål" istället. |
 | | | |
 
 ---

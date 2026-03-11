@@ -91,6 +91,10 @@ hibs-app/
     │   │   └── Roadmap.jsx
     │   └── home/
     │       └── HomeContent.jsx   ← Sprint 1: extraherad hem-vy
+    ├── match/
+    │   ├── MatchContent.jsx      ← Sprint 2: extraherat match-flöde
+    │   ├── MatchCard.jsx
+    │   └── FormationCard.jsx
     └── styles/                   ← (framtida: CSS-moduler)
 ```
 
@@ -116,7 +120,7 @@ hibs-app/
 | Sprint | Datum | Beskrivning | App.jsx rader | Status |
 |--------|-------|-------------|---------------|--------|
 | 1 | 2026-03-10 | Extrahera HomeContent → src/components/home/HomeContent.jsx | 648 → 561 | ✅ Klar |
-| 2 | — | Extrahera MatchContent → src/components/match/MatchContent.jsx | — | ⏳ Nästa |
-| 3 | — | Extrahera MerContent → src/components/mer/MerContent.jsx | — | ⬜ |
+| 2 | 2026-03-11 | Extrahera MatchContent + F1: Målvakter exkluderas från scramble | 561 → 430 | ✅ Klar |
+| 3 | — | Extrahera MerContent → src/components/mer/MerContent.jsx | — | ⏳ Nästa |
 | 4 | — | Hooks (useAppData, useAuth) — App.jsx → ~100-150 rad | — | ⬜ |
-| 5 | — | Fas 1: Goalkeepers + Hard Rules | — | ⬜ |
+| 5 | — | Fas 1: Hard Rules (F2) | — | ⬜ |
