@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-10 (Sprint 1 klar)*
+*Senast uppdaterad: 2026-03-11 (Sprint 3 klar)*
 
 ---
 
@@ -89,6 +89,8 @@ hibs-app/
     │   ├── season/
     │   │   ├── Checklist.jsx
     │   │   └── Roadmap.jsx
+    │   ├── mer/
+    │   │   └── MerContent.jsx      ← Sprint 3: extraherad mer-vy
     │   └── home/
     │       └── HomeContent.jsx   ← Sprint 1: extraherad hem-vy
     ├── match/
@@ -121,6 +123,5 @@ hibs-app/
 |--------|-------|-------------|---------------|--------|
 | 1 | 2026-03-10 | Extrahera HomeContent → src/components/home/HomeContent.jsx | 648 → 561 | ✅ Klar |
 | 2 | 2026-03-11 | Extrahera MatchContent + F1: Målvakter exkluderas från scramble | 561 → 430 | ✅ Klar |
-| 3 | — | Extrahera MerContent → src/components/mer/MerContent.jsx | — | ⏳ Nästa |
-| 4 | — | Hooks (useAppData, useAuth) — App.jsx → ~100-150 rad | — | ⬜ |
-| 5 | — | Fas 1: Hard Rules (F2) | — | ⬜ |
+| 3 | 2026-03-11 | Extrahera MerContent + F2: Hårda positionsregler i ScrambleMode | 430 → 312 | ✅ Klar |
+| 4 | — | Hooks (useAppData, useAuth) — App.jsx → ~100-150 rad | — | ⏳ Nästa |

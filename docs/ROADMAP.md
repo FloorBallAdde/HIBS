@@ -75,12 +75,14 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | # | Feature | Källa | Prioritet |
 |---|---------|-------|-----------|
 | F1 | ✅ Målvakter exkluderas automatiskt från scramble | Andreas Notes | 🔴 Hög |
-| F2 | Hårdregel: spelare som inte kan spela 1:a (Benji, Sigge — konfigurerbart) | Andreas Notes | 🔴 Hög |
+| F2 | ✅ Hårdregel: spelare som inte kan spela 1:a (konfigurerbart per spelare, localStorage) | Andreas Notes | 🔴 Hög |
 | F3 | Övningsbibliotek: enklare förklaringar + ritexempel (SVG-tavla) | Andreas Notes | 🟡 Medel |
 | F4 | Övningsbibliotek: favoritsystem | Andreas Notes | 🟡 Medel |
 | F5 | Övningsbibliotek: tydligare typbeskrivning med "vad den övar på" | Andreas Notes | 🟡 Medel |
 | F6 | 3 lagmål per match (sätts av spelarna) | Andreas Notes | 🔴 Hög |
 | F7 | Måluppföljningssystem för individuella mål (tid + metod) | Andreas Notes | 🟡 Medel |
+| F8 | Manuell positionsbyte efter scramble (inom + mellan kedjor) | Andreas Notes | 🟡 Medel |
+| F9 | UX: Förhindra matchuttag utan kedjor (tvinga kedjor eller auto-generera) | Andreas Notes | 🟡 Medel |
 
 ### Fas 2 — Mina förslag (NÄR GRUNDEN ÄR KLAR)
 
@@ -113,8 +115,11 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | 2026-03-10 | Roadmap skapad | Första versionen baserad på Andreas Apple Notes |
 | 2026-03-10 | Sprint 1 klar | HomeContent extraherad till src/components/home/HomeContent.jsx. App.jsx 648→561 rader. |
 | 2026-03-11 | Sprint 2 klar | MatchContent extraherad (561→430 rader). F1: Målvakter exkluderas från scramble — visas som "I mål" istället. |
+| 2026-03-11 | Agent Ops Backlog skapad | Notion-databas för HIBS skapad med alla T1-T6, F1-F8, P1-P8. F8 (manuell positionsbyte) tillagd som nytt önskemål. |
+| 2026-03-11 | Sprint 3 klar | MerContent extraherad (430→312 rader). F2: Hårda positionsregler — konfigurerbart "aldrig 1:a" per spelare, sparas i localStorage, enforced vid scramble. |
 | | | |
 
 ---
 
-*Nästa steg: Andreas godkänner prioriteringen, sedan börjar vi med Fas 0 (teknisk skuld).*
+*Ops Backlog: [HIBS Tränarapp — Ops Backlog](https://www.notion.so/3794e06aac9d4855afdfbae687960938) (Notion)*
+*Nästa sprint: Sprint 4 — Hooks-extraktion (useAppData, useAuth)*

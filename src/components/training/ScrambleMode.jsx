@@ -5,18 +5,25 @@ import { GROUPS, GC, gc, shuffle, CHAIN_POS, CHAIN_COL } from "../../lib/constan
 /**
  * ScrambleMode — scramblar utespelare i kedjor.
  * Sprint 2 / F1: Målvakter exkluderas automatiskt från scramblen.
- * Om en målvakt är markerad som närvarande visas de som "I mål" under kedjorna.
+ * Sprint 3 / F2: Hårda positionsregler — konfigurerbart "aldrig 1:a" per spelare.
  */
 export default function ScrambleMode({ players, field }) {
   const [present, setPresent] = useState(() => ls.get("hibs_present", []) || []);
   const [chains, setChains] = useState([]);
   const [size, setSize] = useState(4);
   const [done, setDone] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+  // F2: Positionsregler — sparas i localStorage som Set av spelare-id som aldrig får bli 1:a
+  const [neverFirst, setNeverFirst] = useState(() => new Set(ls.get("hibs_never_first", []) || []));
+
   const gk = players.filter(p => p.role === "malvakt");
   const gkIds = new Set(gk.map(p => p.id));
 
   useEffect(() => { ls.set("hibs_present", present); }, [present]);
+  useEffect(() => { ls.set("hibs_never_first", [...neverFirst]); }, [neverFirst]);
+
   const toggle = id => setPresent(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleRule = id => setNeverFirst(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   // F1: Filtrera bort målvakter från scramble — bara utespelare shufflas
   const presentFieldIds = present.filter(id => !gkIds.has(id));
@@ -27,18 +34,61 @@ export default function ScrambleMode({ players, field }) {
     const s = shuffle(presentFieldIds);
     const r = [];
     for (let i = 0; i < s.length; i += size) r.push(s.slice(i, i + size));
+    // F2: Enforcea "aldrig 1:a"-regler — byt plats inom kedjan om spelare på pos 0 är blockerad
+    for (const chain of r) {
+      if (chain.length > 1 && neverFirst.has(chain[0])) {
+        const swapIdx = chain.findIndex((id, i) => i > 0 && !neverFirst.has(id));
+        if (swapIdx > 0) {
+          [chain[0], chain[swapIdx]] = [chain[swapIdx], chain[0]];
+        }
+      }
+    }
     setChains(r);
     setDone(true);
   };
+
+  const rulesCount = neverFirst.size;
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ fontSize: 15, fontWeight: 900, color: "#fff" }}>{cnt} utespelare valda</div>
-        <button onClick={() => setPresent(p => p.length >= field.length + gk.length ? [] : [...field.map(x => x.id), ...gk.map(x => x.id)])} style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 99, padding: "6px 14px", fontFamily: "inherit", cursor: "pointer" }}>
-          {present.length >= field.length + gk.length ? "Rensa" : "Välj alla"}
-        </button>
+        <div style={{ display: "flex", gap: 6 }}>
+          {/* F2: Knapp för positionsregler */}
+          <button onClick={() => setShowRules(v => !v)} style={{ fontSize: 11, fontWeight: 700, color: showRules ? "#f472b6" : rulesCount > 0 ? "#f472b6" : "#4a5568", background: showRules ? "rgba(244,114,182,0.12)" : rulesCount > 0 ? "rgba(244,114,182,0.06)" : "transparent", border: "1px solid " + (showRules ? "rgba(244,114,182,0.3)" : rulesCount > 0 ? "rgba(244,114,182,0.2)" : "rgba(255,255,255,0.08)"), borderRadius: 99, padding: "6px 12px", fontFamily: "inherit", cursor: "pointer" }}>
+            ⚙ Regler{rulesCount > 0 ? ` (${rulesCount})` : ""}
+          </button>
+          <button onClick={() => setPresent(p => p.length >= field.length + gk.length ? [] : [...field.map(x => x.id), ...gk.map(x => x.id)])} style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 99, padding: "6px 14px", fontFamily: "inherit", cursor: "pointer" }}>
+            {present.length >= field.length + gk.length ? "Rensa" : "Välj alla"}
+          </button>
+        </div>
       </div>
+
+      {/* F2: Positionsregler-panel */}
+      {showRules && (
+        <div style={{ background: "rgba(244,114,182,0.04)", border: "1px solid rgba(244,114,182,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#f472b6", letterSpacing: "0.08em", marginBottom: 10 }}>POSITIONSREGLER</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginBottom: 12 }}>Markera spelare som aldrig ska hamna på 1:a-positionen i en kedja.</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+            {field.map(p => {
+              const blocked = neverFirst.has(p.id);
+              const pgc = gc(p.group);
+              return (
+                <button key={p.id} onClick={() => toggleRule(p.id)} style={{ padding: "7px 14px", border: "1.5px solid " + (blocked ? "#f472b6" : "rgba(255,255,255,0.08)"), borderRadius: 99, background: blocked ? "rgba(244,114,182,0.12)" : "transparent", color: blocked ? "#f472b6" : "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  {blocked && <span style={{ fontSize: 10 }}>🚫</span>}
+                  <span>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {rulesCount > 0 && (
+            <div style={{ fontSize: 11, color: "#f472b6", marginTop: 10, opacity: 0.8 }}>
+              {[...neverFirst].map(id => players.find(x => x.id === id)?.name).filter(Boolean).join(", ")} får aldrig bli 1:a
+            </div>
+          )}
+        </div>
+      )}
+
       {GROUPS.map(g => {
         const gp = field.filter(p => p.group === g);
         if (!gp.length) return null;
@@ -46,8 +96,8 @@ export default function ScrambleMode({ players, field }) {
           <div key={g} style={{ marginBottom: 14 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: GC[g].color, letterSpacing: "0.1em", marginBottom: 7 }}>GRUPP {g}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-              {gp.map(p => { const on = (present || []).includes(p.id); const inj = p.note && p.note?.startsWith("⚠"); return (
-                <button key={p.id} onClick={() => !inj && toggle(p.id)} style={{ padding: "8px 15px", border: "1.5px solid " + (on ? GC[g].color : inj ? "rgba(255,80,80,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 99, background: on ? GC[g].bg : inj ? "rgba(255,80,80,0.05)" : "transparent", color: on ? GC[g].color : inj ? "rgba(255,80,80,0.5)" : "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: inj ? "not-allowed" : "pointer" }}>{p.name}{inj ? " ⚠" : ""}</button>
+              {gp.map(p => { const on = (present || []).includes(p.id); const inj = p.note && p.note?.startsWith("⚠"); const blocked = neverFirst.has(p.id); return (
+                <button key={p.id} onClick={() => !inj && toggle(p.id)} style={{ padding: "8px 15px", border: "1.5px solid " + (on ? GC[g].color : inj ? "rgba(255,80,80,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 99, background: on ? GC[g].bg : inj ? "rgba(255,80,80,0.05)" : "transparent", color: on ? GC[g].color : inj ? "rgba(255,80,80,0.5)" : "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: inj ? "not-allowed" : "pointer" }}>{p.name}{inj ? " ⚠" : ""}{blocked && on ? " 🚫" : ""}</button>
               ); })}
             </div>
           </div>

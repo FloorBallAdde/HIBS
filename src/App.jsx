@@ -2,18 +2,18 @@ import { useState, useEffect, useCallback } from "react";
 import ls from "./lib/storage.js";
 import { sbAuth, sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
 import {
-  TODAY, mkLine, GC, gc,
-  GROUPS, CHECKLIST_INIT, ROADMAP_INIT,
+  TODAY, mkLine,
+  CHECKLIST_INIT, ROADMAP_INIT,
 } from "./lib/constants.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
-import MatchCard from "./components/match/MatchCard.jsx";
 import KedjorTab from "./components/training/KedjorTab.jsx";
 import PlaneraTab from "./components/training/PlaneraTab.jsx";
 import OvningarTab from "./components/training/OvningarTab.jsx";
 import HomeContent from "./components/home/HomeContent.jsx";
 import MatchContent from "./components/match/MatchContent.jsx";
+import MerContent from "./components/mer/MerContent.jsx";
 
 // MAIN APP
 export default function App(){
@@ -238,125 +238,7 @@ export default function App(){
   // _HomeContent — extraherad till src/components/home/HomeContent.jsx
   // _MatchContent — extraherad till src/components/match/MatchContent.jsx (Sprint 2)
 
-  // ── MER CONTENT
-  const _MerContent=()=>(
-    <div>
-      {pendingCoaches.length>0&&!merSub&&(
-        <div style={{background:"rgba(251,191,36,0.06)",border:"1px solid rgba(251,191,36,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
-          <div style={{fontSize:10,color:"#fbbf24",fontWeight:700,marginBottom:10}}>VÄNTANDE TRÄNARE</div>
-          {pendingCoaches.map(pc=>(
-            <div key={pc.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-              <span style={{fontSize:13,color:"#fff",fontWeight:700}}>{pc.username}</span>
-              <button onClick={async()=>{await sbPatch("profiles",pc.id,{approved:true},tok);setPendingCoaches(p=>p.filter(x=>x.id!==pc.id));}} style={{padding:"6px 14px",border:"none",borderRadius:99,background:"#22c55e",color:"#0b0d14",fontSize:11,fontWeight:800,fontFamily:"inherit",cursor:"pointer"}}>Godkänn</button>
-            </div>
-          ))}
-        </div>
-      )}
-      {!merSub&&(
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[["spelare","👥","Spelarlista"],["lagmal","🎯","Lagmål och checklist"],["matchhistorik","📊","Matchhistorik"],["sasongsplan","🗓","Säsongsplan"]].map(([id,icon,label])=>(
-            <button key={id} onClick={()=>setMerSub(id)} style={{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
-              <span style={{fontSize:22}}>{icon}</span>
-              <span style={{fontSize:14,fontWeight:700,color:"#fff"}}>{label}</span>
-              <span style={{marginLeft:"auto",color:"#4a5568",fontSize:16}}>›</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {merSub==="spelare"&&(
-        <div>
-          <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:2}}>
-            {["ALL",...GROUPS,"MV"].map(g=><button key={g} onClick={()=>setFilterGroup(g)} style={{padding:"5px 12px",border:"1px solid "+(filterGroup===g?(g==="ALL"?"#22c55e":gc(g).color):"rgba(255,255,255,0.07)"),borderRadius:99,background:filterGroup===g?(g==="ALL"?"rgba(34,197,94,0.12)":gc(g).bg):"transparent",color:filterGroup===g?(g==="ALL"?"#22c55e":gc(g).color):"#4a5568",fontSize:11,fontWeight:700,fontFamily:"inherit",cursor:"pointer",whiteSpace:"nowrap"}}>{g==="ALL"?"Alla":"Gr."+g}</button>)}
-          </div>
-          {players.filter(p=>filterGroup==="ALL"||p.group===filterGroup).map(p=>{
-            const pgc=gc(p.group);
-            return(
-              <div key={p.id} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,padding:"12px 14px",marginBottom:8}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:p.note||p.goals?.length?8:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:pgc.bg,border:"1.5px solid "+pgc.color,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <span style={{fontSize:11,fontWeight:900,color:pgc.color}}>{p.name.slice(0,2).toUpperCase()}</span>
-                    </div>
-                    <div>
-                      <div style={{fontSize:14,fontWeight:800,color:"#fff"}}>{p.name}</div>
-                      <div style={{fontSize:10,color:pgc.color,marginTop:1}}>Grupp {p.group} - {p.matches||0} matcher</div>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>setNoteModal(p)} style={{padding:"6px 10px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:"#94a3b8",fontSize:11,fontFamily:"inherit",cursor:"pointer"}}>✏ Notera</button>
-                    <button onClick={()=>setGoalModal(p)} style={{padding:"6px 10px",background:"rgba(167,139,250,0.08)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:8,color:"#a78bfa",fontSize:11,fontFamily:"inherit",cursor:"pointer"}}>🎯 Mål</button>
-                  </div>
-                </div>
-                {p.note&&<div style={{fontSize:12,color:p.note.startsWith("⚠")?"#fca5a5":"#64748b",background:p.note.startsWith("⚠")?"rgba(248,113,113,0.06)":"rgba(255,255,255,0.02)",borderRadius:8,padding:"6px 10px"}}>{p.note}</div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {merSub==="lagmal"&&(
-        <div>
-          {checklist.map((cat,ci)=>(
-            <div key={ci} style={{background:"rgba(255,255,255,0.02)",border:"1px solid "+cat.color+"25",borderRadius:16,padding:"14px 16px",marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:800,color:cat.color,marginBottom:12}}>{cat.category.toUpperCase()}</div>
-              {cat.items.map(item=>(
-                <div key={item.id} onClick={()=>setChecklist(c=>c.map((cc,i)=>i===ci?{...cc,items:cc.items.map(x=>x.id===item.id?{...x,done:!x.done}:x)}:cc))} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",cursor:"pointer"}}>
-                  <div style={{width:18,height:18,borderRadius:5,border:"1.5px solid "+(item.done?cat.color:"rgba(255,255,255,0.15)"),background:item.done?cat.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
-                    {item.done&&<span style={{fontSize:10,color:"#0b0d14",fontWeight:900}}>✓</span>}
-                  </div>
-                  <span style={{fontSize:13,color:item.done?"#4a5568":"#cbd5e1",lineHeight:1.4,textDecoration:item.done?"line-through":"none"}}>{item.text}</span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {merSub==="matchhistorik"&&(
-        <div>
-          {history.length===0&&<div style={{textAlign:"center",padding:"48px 0",color:"#334155",fontSize:14}}>Inga matcher sparade ännu.</div>}
-          {history.map(m=>(
-            <MatchCard key={m.id} match={m}
-              onEditNote={match=>setMatchNoteModal(match)}
-              onDelete={async id=>{await sbDel("matches",id,tok);setHistory(p=>p.filter(x=>x.id!==id));}}
-            />
-          ))}
-        </div>
-      )}
-
-      {merSub==="sasongsplan"&&(
-        <div>
-          {roadmap.map((period,pi)=>{
-            const done=period.tasks.filter(t=>t.done).length;
-            const isOpen=openPeriod===pi;
-            return(
-              <div key={pi} style={{background:"rgba(255,255,255,0.02)",border:"1px solid "+period.color+"25",borderRadius:16,overflow:"hidden",marginBottom:10}}>
-                <div onClick={()=>setOpenPeriod(isOpen?null:pi)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",cursor:"pointer"}}>
-                  <div>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{fontSize:13,fontWeight:800,color:period.color}}>{period.label}</span>
-                      <span style={{fontSize:11,color:"#4a5568"}}>{period.period}</span>
-                    </div>
-                    <div style={{fontSize:11,color:"#4a5568",marginTop:3}}>{done}/{period.tasks.length} klara</div>
-                  </div>
-                  <span style={{color:"#4a5568"}}>{isOpen?"▲":"▼"}</span>
-                </div>
-                {isOpen&&period.tasks.map(task=>(
-                  <div key={task.id} onClick={()=>setRoadmap(r=>r.map((pp,i)=>i===pi?{...pp,tasks:pp.tasks.map(t=>t.id===task.id?{...t,done:!t.done}:t)}:pp))} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderTop:"1px solid rgba(255,255,255,0.04)",cursor:"pointer"}}>
-                    <div style={{width:18,height:18,borderRadius:5,border:"1.5px solid "+(task.done?period.color:"rgba(255,255,255,0.15)"),background:task.done?period.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                      {task.done&&<span style={{fontSize:10,color:"#0b0d14",fontWeight:900}}>✓</span>}
-                    </div>
-                    <span style={{fontSize:13,color:task.done?"#4a5568":"#cbd5e1",textDecoration:task.done?"line-through":"none"}}>{task.text}</span>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  // _MerContent — extraherad till src/components/mer/MerContent.jsx (Sprint 3)
 
   return(
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
@@ -414,7 +296,7 @@ export default function App(){
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok}/>}
         {tab==="match"&&<MatchContent activeMatch={activeMatch} matchStep={matchStep} setMatchStep={setMatchStep} matchResult={matchResult} setMatchResult={setMatchResult} matchScorers={matchScorers} setMatchScorers={setMatchScorers} confirmAbort={confirmAbort} setConfirmAbort={setConfirmAbort} lines={lines} setLines={setLines} players={players} selected={selected} setSelected={setSelected} matchDate={matchDate} setMatchDate={setMatchDate} opponent={opponent} setOpponent={setOpponent} serie={serie} setSerie={setSerie} goalkeeper={goalkeeper} setGoalkeeper={setGoalkeeper} usedInLines={usedInLines} gkPlayers={gkPlayers} field={field} startMatch={startMatch} endMatch={endMatch} abortMatch={abortMatch} assignSlot={assignSlot} removeSlot={removeSlot} renameLine={renameLine} deleteLine={deleteLine} toggleSelected={toggleSelected}/>}
-        {tab==="mer"&&_MerContent()}
+        {tab==="mer"&&<MerContent pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches} merSub={merSub} setMerSub={setMerSub} players={players} filterGroup={filterGroup} setFilterGroup={setFilterGroup} setNoteModal={setNoteModal} setGoalModal={setGoalModal} checklist={checklist} setChecklist={setChecklist} history={history} setHistory={setHistory} setMatchNoteModal={setMatchNoteModal} roadmap={roadmap} setRoadmap={setRoadmap} openPeriod={openPeriod} setOpenPeriod={setOpenPeriod} tok={tok} sbPatch={sbPatch} sbDel={sbDel}/>}
       </div>
 
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(11,13,20,0.97)",backdropFilter:"blur(12px)",borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",zIndex:100}}>
