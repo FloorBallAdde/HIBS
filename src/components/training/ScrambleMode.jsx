@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ls from "../../lib/storage.js";
 import { GROUPS, GC, gc, shuffle, CHAIN_POS, CHAIN_COL } from "../../lib/constants.js";
+import { useTouchSwap } from "../../hooks/useTouchSwap.js";
 
 /**
  * ScrambleMode — scramblar utespelare i kedjor.
@@ -48,6 +49,20 @@ export default function ScrambleMode({ players, field }) {
   };
 
   const rulesCount = neverFirst.size;
+
+  // Touch drag-and-drop: swap spelare mellan positioner i kedjorna
+  const touchSwap = useTouchSwap({
+    onSwap: useCallback(({ ci: ci1, pi: pi1 }, { ci: ci2, pi: pi2 }) => {
+      if (ci1 === ci2 && pi1 === pi2) return;
+      setChains(prev => {
+        const next = prev.map(c => [...c]);
+        const tmp       = next[ci1]?.[pi1] ?? null;
+        if (next[ci1]) next[ci1][pi1] = next[ci2]?.[pi2] ?? null;
+        if (next[ci2]) next[ci2][pi2] = tmp;
+        return next;
+      });
+    }, []),
+  });
 
   return (
     <div>
@@ -138,14 +153,29 @@ export default function ScrambleMode({ players, field }) {
                 <span style={{ fontSize: 13, fontWeight: 800, color: "#e2e8f0" }}>Kedja {ci + 1}</span>
               </div>
               <div style={{ padding: "8px 0" }}>
-                {chain.map((id, pi) => { const p = players.find(x => x.id === id); if (!p) return null; const pos = CHAIN_POS[pi] || ("Pos " + (pi + 1)); const pc = CHAIN_COL[pos] || "#64748b"; return (
-                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: pi < chain.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                    <span style={{ fontSize: 10, fontWeight: 900, color: pc, background: pc + "15", border: "1px solid " + pc + "30", borderRadius: 6, padding: "3px 6px", width: 38, textAlign: "center", flexShrink: 0 }}>{pos}</span>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: gc(p.group).color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{p.name}</span>
-                    <span style={{ fontSize: 10, color: "#4a5568", marginLeft: "auto" }}>Gr.{p.group}</span>
-                  </div>
-                ); })}
+                {chain.map((id, pi) => {
+                  const p   = players.find(x => x.id === id);
+                  if (!p) return null;
+                  const pos = CHAIN_POS[pi] || ("Pos " + (pi + 1));
+                  const pc  = CHAIN_COL[pos] || "#64748b";
+                  const slotData = JSON.stringify({ ci, pi });
+                  return (
+                    <div
+                      key={id}
+                      data-swap-slot={slotData}
+                      onTouchStart={e => touchSwap.onTouchStart(e, { ci, pi }, p.name)}
+                      onTouchMove={touchSwap.onTouchMove}
+                      onTouchEnd={touchSwap.onTouchEnd}
+                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: pi < chain.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", touchAction: "none", userSelect: "none", cursor: "grab" }}
+                    >
+                      <span style={{ fontSize: 11, color: "#4a5568", flexShrink: 0 }}>⠿</span>
+                      <span style={{ fontSize: 10, fontWeight: 900, color: pc, background: pc + "15", border: "1px solid " + pc + "30", borderRadius: 6, padding: "3px 6px", width: 38, textAlign: "center", flexShrink: 0 }}>{pos}</span>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: gc(p.group).color, flexShrink: 0 }} />
+                      <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{p.name}</span>
+                      <span style={{ fontSize: 10, color: "#4a5568", marginLeft: "auto" }}>Gr.{p.group}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}

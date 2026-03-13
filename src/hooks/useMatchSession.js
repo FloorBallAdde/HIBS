@@ -78,6 +78,17 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const deleteLine = li =>
     setLines(ls2 => ls2.filter((_, i) => i !== li));
 
+  // Swap två slots — fungerar inom samma linje och över linjer
+  const swapSlots = (li1, pos1, li2, pos2) =>
+    setLines(prev => {
+      const next = prev.map(l => ({ ...l, slots: { ...l.slots } }));
+      const p1 = next[li1]?.slots[pos1] ?? null;
+      const p2 = next[li2]?.slots[pos2] ?? null;
+      if (next[li1]) next[li1].slots[pos1] = p2;
+      if (next[li2]) next[li2].slots[pos2] = p1;
+      return next;
+    });
+
   const toggleSelected = id =>
     setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
@@ -127,7 +138,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     nextMatch, setNextMatch, matchStep, setMatchStep,
     confirmAbort, setConfirmAbort,
     usedInLines,
-    assignSlot, removeSlot, renameLine, deleteLine,
+    assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
     toggleSelected, startMatch, endMatch, abortMatch,
   };
 }

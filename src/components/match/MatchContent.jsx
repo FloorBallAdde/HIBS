@@ -1,6 +1,8 @@
+import { useCallback } from "react";
 import { FMT, SERIES, GROUPS, GC, gc, mkLine } from "../../lib/constants.js";
 import StableInput from "../ui/StableInput.jsx";
 import FormationCard from "./FormationCard.jsx";
+import { useTouchSwap } from "../../hooks/useTouchSwap.js";
 
 /**
  * MatchContent — hanterar matchflödet: trupp → kedjor → live match.
@@ -16,9 +18,16 @@ export default function MatchContent({
   serie, setSerie, goalkeeper, setGoalkeeper,
   usedInLines, gkPlayers, field,
   startMatch, endMatch, abortMatch,
-  assignSlot, removeSlot, renameLine, deleteLine,
+  assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
   toggleSelected,
 }) {
+  // Touch drag-and-drop: swap spelare mellan slots (inom och över linjer)
+  const touchSwap = useTouchSwap({
+    onSwap: useCallback(({ li: li1, pos: pos1 }, { li: li2, pos: pos2 }) => {
+      if (li1 === li2 && pos1 === pos2) return; // samma slot, inget att göra
+      swapSlots(li1, pos1, li2, pos2);
+    }, [swapSlots]),
+  });
   // ── LIVE MATCH ──
   if (activeMatch) return (
     <div>
@@ -107,7 +116,7 @@ export default function MatchContent({
         <button onClick={() => setMatchStep("select")} style={{ fontSize: 12, color: "#4a5568", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Tillbaka</button>
       </div>
       {lines.map((line, li) => (
-        <FormationCard key={line.id} line={line} lineIndex={li} allPlayers={players.filter(p => selected.has(p.id))} usedIds={usedInLines} onAssign={assignSlot} onRemove={removeSlot} onRename={renameLine} onDelete={deleteLine} />
+        <FormationCard key={line.id} line={line} lineIndex={li} allPlayers={players.filter(p => selected.has(p.id))} usedIds={usedInLines} onAssign={assignSlot} onRemove={removeSlot} onRename={renameLine} onDelete={deleteLine} touchSwap={touchSwap} />
       ))}
       <button onClick={() => setLines(ls2 => [...ls2, mkLine(ls2.length + 1)])} style={{ width: "100%", padding: "12px 0", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 14, background: "transparent", color: "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", marginBottom: 14 }}>+ Ny linje</button>
       <button onClick={startMatch} style={{ width: "100%", padding: "15px 0", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}>Starta match</button>
