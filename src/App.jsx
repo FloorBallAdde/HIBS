@@ -11,6 +11,7 @@ import PlaneraTab from "./components/training/PlaneraTab.jsx";
 import OvningarTab from "./components/training/OvningarTab.jsx";
 import HomeContent from "./components/home/HomeContent.jsx";
 import MatchContent from "./components/match/MatchContent.jsx";
+import MatchNoteModal from "./components/match/MatchNoteModal.jsx";
 import MerContent from "./components/mer/MerContent.jsx";
 
 // MAIN APP
@@ -159,18 +160,7 @@ export default function App(){
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
       {noteModal&&<NoteModal player={noteModal} onClose={()=>setNoteModal(null)} onSave={async text=>{await updP(noteModal.id,{note:text});setNoteModal(null);}}/>}
       {goalModal&&<GoalModal player={goalModal} onClose={()=>setGoalModal(null)} onSave={async goals=>{await updP(goalModal.id,{goals});setGoalModal(null);}}/>}
-      {matchNoteModal&&(
-        <div onClick={()=>setMatchNoteModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#161926",border:"1px solid rgba(255,255,255,0.1)",borderRadius:"20px 20px 0 0",padding:"24px 20px 40px",width:"100%",maxWidth:430}}>
-            <div style={{fontSize:15,fontWeight:800,color:"#fff",marginBottom:14}}>Notering - vs {matchNoteModal.opponent}</div>
-            <textarea defaultValue={matchNoteModal.note||""} id="match-note-area" placeholder="T.ex. bra press, jobbig domare..." style={{width:"100%",minHeight:80,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,color:"#fff",fontSize:14,padding:12,fontFamily:"inherit",resize:"none",outline:"none",boxSizing:"border-box"}}/>
-            <div style={{display:"flex",gap:10,marginTop:12}}>
-              <button onClick={()=>setMatchNoteModal(null)} style={{flex:1,padding:"12px 0",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,background:"transparent",color:"#4a5568",fontSize:14,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>Avbryt</button>
-              <button onClick={async()=>{const txt=document.getElementById("match-note-area").value;await sbPatch("matches",matchNoteModal.id,{note:txt},tok);setHistory(p=>p.map(m=>m.id===matchNoteModal.id?{...m,note:txt}:m));setMatchNoteModal(null);}} style={{flex:1,padding:"12px 0",border:"none",borderRadius:12,background:"#a78bfa",color:"#fff",fontSize:14,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>Spara</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MatchNoteModal match={matchNoteModal} onClose={()=>setMatchNoteModal(null)} onSave={async txt=>{await sbPatch("matches",matchNoteModal.id,{note:txt},tok);setHistory(p=>p.map(m=>m.id===matchNoteModal.id?{...m,note:txt}:m));setMatchNoteModal(null);}}/>
 
       <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>

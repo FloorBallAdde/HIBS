@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-13 (Sprint 4 klar)*
+*Senast uppdaterad: 2026-03-13 (Sprint 6 klar)*
 
 ---
 
@@ -75,10 +75,10 @@ hibs-app/
     │   │   ├── NoteModal.jsx
     │   │   └── GoalModal.jsx
     │   ├── match/
-    │   │   ├── MatchSetup.jsx
-    │   │   ├── MatchCard.jsx
+    │   │   ├── MatchContent.jsx      ← Sprint 2
+    │   │   ├── MatchNoteModal.jsx    ← Sprint 6: extraherad från App.jsx
     │   │   ├── FormationCard.jsx
-    │   │   └── MatchHistory.jsx
+    │   │   └── MatchCard.jsx
     │   ├── training/
     │   │   ├── KedjorTab.jsx
     │   │   ├── ScrambleMode.jsx
@@ -125,4 +125,5 @@ hibs-app/
 | 2 | 2026-03-11 | Extrahera MatchContent + F1: Målvakter exkluderas från scramble | 561 → 430 | ✅ Klar |
 | 3 | 2026-03-11 | Extrahera MerContent + F2: Hårda positionsregler i ScrambleMode | 430 → 312 | ✅ Klar |
 | 4 | 2026-03-13 | useMatchSession hook + P1: Lagets form & senaste träning i Hem | 312 → 248 | ✅ Klar |
-| 5 | — | useAppData hook (loadData, data-state) — App.jsx → ~150 rad | — | ⏳ Nästa |
+| 5 | 2026-03-13 | useTouchSwap hook + touch drag-and-drop i kedjor och match | 248 → 248 | ✅ Klar |
+| 6 | 2026-03-13 | MatchNoteModal extraherad + F9: Soft guard ingen kedjor vid matchstart | 248 → 238 | ✅ Klar |

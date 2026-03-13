@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { FMT, SERIES, GROUPS, GC, gc, mkLine } from "../../lib/constants.js";
 import StableInput from "../ui/StableInput.jsx";
 import FormationCard from "./FormationCard.jsx";
@@ -21,6 +21,8 @@ export default function MatchContent({
   assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
   toggleSelected,
 }) {
+  const [confirmNoLines, setConfirmNoLines] = useState(false);
+
   // Touch drag-and-drop: swap spelare mellan slots (inom och över linjer)
   const touchSwap = useTouchSwap({
     onSwap: useCallback(({ li: li1, pos: pos1 }, { li: li2, pos: pos2 }) => {
@@ -156,8 +158,31 @@ export default function MatchContent({
       ); })}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <button onClick={() => { if (selected.size > 0 && opponent.trim()) setMatchStep("lines"); }} disabled={selected.size === 0 || !opponent.trim()} style={{ flex: 1, padding: "14px 0", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 14, background: "rgba(167,139,250,0.08)", color: selected.size > 0 && opponent.trim() ? "#a78bfa" : "#334155", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}>Kedjor</button>
-        <button onClick={() => { if (selected.size > 0 && opponent.trim()) startMatch(); }} disabled={selected.size === 0 || !opponent.trim()} style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 14, background: selected.size > 0 && opponent.trim() ? "linear-gradient(135deg,#22c55e,#16a34a)" : "rgba(255,255,255,0.05)", color: selected.size > 0 && opponent.trim() ? "#fff" : "#334155", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}>Starta match</button>
+        <button
+          onClick={() => {
+            if (!selected.size || !opponent.trim()) return;
+            if (usedInLines.size === 0) { setConfirmNoLines(true); return; }
+            startMatch();
+          }}
+          disabled={selected.size === 0 || !opponent.trim()}
+          style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 14, background: selected.size > 0 && opponent.trim() ? "linear-gradient(135deg,#22c55e,#16a34a)" : "rgba(255,255,255,0.05)", color: selected.size > 0 && opponent.trim() ? "#fff" : "#334155", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
+        >
+          Starta match
+        </button>
       </div>
+
+      {confirmNoLines && (
+        <div onClick={() => setConfirmNoLines(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}>
+            <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
+            <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>Du har inte satt upp kedjor för den här matchen. Vill du sätta kedjor eller starta ändå?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { setConfirmNoLines(false); setMatchStep("lines"); }} style={{ flex: 1, padding: "13px 0", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 12, background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Sätt kedjor</button>
+              <button onClick={() => { setConfirmNoLines(false); startMatch(); }} style={{ flex: 1, padding: "13px 0", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}>Starta ändå</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
