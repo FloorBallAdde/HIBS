@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-13 (Sprint 6 klar)*
+*Senast uppdaterad: 2026-03-13 (Sprint 7 klar)*
 
 ---
 
@@ -66,6 +66,7 @@ hibs-app/
     ├── components/
     │   ├── ui/
     │   │   ├── StableInput.jsx
+    │   │   ├── BottomNav.jsx       ← Sprint 7
     │   │   ├── Modal.jsx
     │   │   └── Button.jsx
     │   ├── auth/
@@ -127,3 +128,4 @@ hibs-app/
 | 4 | 2026-03-13 | useMatchSession hook + P1: Lagets form & senaste träning i Hem | 312 → 248 | ✅ Klar |
 | 5 | 2026-03-13 | useTouchSwap hook + touch drag-and-drop i kedjor och match | 248 → 248 | ✅ Klar |
 | 6 | 2026-03-13 | MatchNoteModal extraherad + F9: Soft guard ingen kedjor vid matchstart | 248 → 238 | ✅ Klar |
+| 7 | 2026-03-13 | BottomNav extraherad + F6: 3 lagmål per match | 238 → 232 | ✅ Klar |

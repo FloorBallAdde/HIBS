@@ -20,6 +20,7 @@ export default function MatchContent({
   startMatch, endMatch, abortMatch,
   assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
   toggleSelected,
+  teamGoals, setTeamGoals,
 }) {
   const [confirmNoLines, setConfirmNoLines] = useState(false);
 
@@ -58,6 +59,16 @@ export default function MatchContent({
           </div>
         </div>
       </div>
+      {activeMatch.teamGoals?.length > 0 && (
+        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 14px", marginBottom: 14 }}>
+          <div style={{ fontSize: 9, color: "#4a5568", fontWeight: 700, marginBottom: 6 }}>LAGMÅL</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {activeMatch.teamGoals.map((g, i) => (
+              <span key={i} style={{ padding: "4px 10px", borderRadius: 99, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#22c55e", fontSize: 12, fontWeight: 600 }}>{g}</span>
+            ))}
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 10, color: "#fbbf24", fontWeight: 700, marginBottom: 8 }}>MÅL</div>
@@ -156,6 +167,18 @@ export default function MatchContent({
           </div>
         </div>
       ); })}
+      <div style={{ marginTop: 16, marginBottom: 2 }}>
+        <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginBottom: 8 }}>LAGMÅL (valfritt)</div>
+        {(teamGoals || ["", "", ""]).map((goal, i) => (
+          <StableInput
+            key={i}
+            value={goal}
+            onChange={e => setTeamGoals(g => g.map((x, j) => j === i ? e.target.value : x))}
+            placeholder={"Mål " + (i + 1) + " — t.ex. Pressa högt"}
+            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, color: "#fff", fontSize: 12, padding: "9px 12px", fontFamily: "inherit", outline: "none", marginBottom: 6, boxSizing: "border-box" }}
+          />
+        ))}
+      </div>
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <button onClick={() => { if (selected.size > 0 && opponent.trim()) setMatchStep("lines"); }} disabled={selected.size === 0 || !opponent.trim()} style={{ flex: 1, padding: "14px 0", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 14, background: "rgba(167,139,250,0.08)", color: selected.size > 0 && opponent.trim() ? "#a78bfa" : "#334155", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}>Kedjor</button>
         <button

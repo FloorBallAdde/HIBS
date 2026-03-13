@@ -20,6 +20,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [nextMatch, setNextMatch] = useState(() => ls.get("hibs_next2", { opponent: "", date: "", serie: "14A" }));
   const [matchStep, setMatchStep] = useState("select");
   const [confirmAbort, setConfirmAbort] = useState(false);
+  const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
 
   // PERSISTENCE
   useEffect(() => { ls.set("hibs_lines2", lines); }, [lines]);
@@ -33,6 +34,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_result", matchResult); }, [matchResult]);
   useEffect(() => { ls.set("hibs_scorers", matchScorers); }, [matchScorers]);
   useEffect(() => { ls.set("hibs_next2", nextMatch); }, [nextMatch]);
+  useEffect(() => { ls.set("hibs_team_goals", teamGoals); }, [teamGoals]);
 
   // COMPUTED
   const usedInLines = new Set(lines.flatMap(l => Object.values(l.slots).filter(Boolean)));
@@ -47,6 +49,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setGoalkeeper([]);
     setLines([mkLine(1), mkLine(2), mkLine(3)]);
     setReserves([]);
+    setTeamGoals(["", "", ""]);
   };
 
   const assignSlot = (li, pos, val) => {
@@ -94,7 +97,8 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
 
   const startMatch = () => {
     if (!opponent.trim() || selected.size === 0) return;
-    const m = { id: Date.now(), date: matchDate, opponent: opponent.trim(), serie, players: [...selected], goalkeeper, note: "" };
+    const goals = teamGoals.map(g => g.trim()).filter(Boolean);
+    const m = { id: Date.now(), date: matchDate, opponent: opponent.trim(), serie, players: [...selected], goalkeeper, note: "", teamGoals: goals };
     setActiveMatch(m);
     setMatchStep("live");
   };
@@ -137,6 +141,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     matchResult, setMatchResult, matchScorers, setMatchScorers,
     nextMatch, setNextMatch, matchStep, setMatchStep,
     confirmAbort, setConfirmAbort,
+    teamGoals, setTeamGoals,
     usedInLines,
     assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
     toggleSelected, startMatch, endMatch, abortMatch,

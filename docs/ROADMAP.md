@@ -79,7 +79,7 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | F3 | Övningsbibliotek: enklare förklaringar + ritexempel (SVG-tavla) | Andreas Notes | 🟡 Medel |
 | F4 | Övningsbibliotek: favoritsystem | Andreas Notes | 🟡 Medel |
 | F5 | Övningsbibliotek: tydligare typbeskrivning med "vad den övar på" | Andreas Notes | 🟡 Medel |
-| F6 | 3 lagmål per match (sätts av spelarna) | Andreas Notes | 🔴 Hög |
+| F6 | ✅ 3 lagmål per match (sätts av spelarna, visas live, sparas i historik) | Andreas Notes | 🔴 Hög |
 | F7 | Måluppföljningssystem för individuella mål (tid + metod) | Andreas Notes | 🟡 Medel |
 | F8 | Manuell positionsbyte efter scramble (inom + mellan kedjor) | Andreas Notes | 🟡 Medel |
 | F9 | UX: Förhindra matchuttag utan kedjor (tvinga kedjor eller auto-generera) | Andreas Notes | 🟡 Medel |
@@ -118,9 +118,11 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | 2026-03-11 | Agent Ops Backlog skapad | Notion-databas för HIBS skapad med alla T1-T6, F1-F8, P1-P8. F8 (manuell positionsbyte) tillagd som nytt önskemål. |
 | 2026-03-11 | Sprint 3 klar | MerContent extraherad (430→312 rader). F2: Hårda positionsregler — konfigurerbart "aldrig 1:a" per spelare, sparas i localStorage, enforced vid scramble. |
 | 2026-03-13 | Sprint 4 klar | useMatchSession hook extraherad (312→248 rader). P1: Lagets form (sista 5 V/O/F) + Senaste träning (datum, övningar, tid) lagt till i Hem-fliken. |
-| | | |
+| 2026-03-13 | Sprint 5 klar | useTouchSwap hook. F8: Touch drag-and-drop byte mellan positions-slots i kedjor och live-match. |
+| 2026-03-13 | Sprint 6 klar | MatchNoteModal extraherad. F9: Soft guard — dialog om inga kedjor satta vid matchstart. |
+| 2026-03-13 | Sprint 7 klar | BottomNav extraherad (238→232 rader). F6: 3 lagmål per match — sätts i trupp-steget, visas under live-match, sparas med matchdata. |
 
 ---
 
 *Ops Backlog: [HIBS Tränarapp — Ops Backlog](https://www.notion.so/3794e06aac9d4855afdfbae687960938) (Notion)*
-*Nästa sprint: Sprint 4 — Hooks-extraktion (useAppData, useAuth)*
+*Nästa sprint: Sprint 8 — F4/F5 Övningsbibliotek (favoriter + typbeskrivning)*
