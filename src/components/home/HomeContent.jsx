@@ -2,10 +2,11 @@ import StableInput from "../ui/StableInput.jsx";
 import { SERIES, FMT, GC, gc } from "../../lib/constants.js";
 import { sbPost, sbDel } from "../../lib/supabase.js";
 
-// Hemfliken — visar skadade, nästa match, senaste match, säsongsstatistik, träningsnotiser
+// Hemfliken — dashboard med skadade, form, nästa match, senaste match, träning, säsongsstatistik
 export default function HomeContent({
   injured, nextMatch, setNextMatch, latestMatch,
   stats, totalGoals, totalAssists, history, players,
+  trainHistory,
   trainNoteInput, setTrainNoteInput, trainNotes, setTrainNotes,
   clubId, uid, tok,
 }){
@@ -20,14 +21,64 @@ export default function HomeContent({
     setTrainNoteInput("");
   };
 
+  // Beräkna form (V/O/F) per match
+  const formResult=(m)=>{
+    const us=parseInt(m.result?.us);
+    const them=parseInt(m.result?.them);
+    if(isNaN(us)||isNaN(them)||m.result?.us===""||m.result?.them==="")return null;
+    if(us>them)return"V";
+    if(us<them)return"F";
+    return"O";
+  };
+  const formColor=(res)=>res==="V"?"#22c55e":res==="F"?"#f87171":res==="O"?"#fbbf24":"#4a5568";
+
+  // Senaste träning
+  const lastTrain=trainHistory&&trainHistory.length>0?trainHistory[0]:null;
+
   return(
     <div>
+      {/* SKADADE */}
       {injured.length>0&&(
         <div style={{background:"rgba(248,113,113,0.08)",border:"1px solid rgba(248,113,113,0.2)",borderRadius:14,padding:"12px 16px",marginBottom:16}}>
           <div style={{fontSize:10,fontWeight:800,color:"#f87171",marginBottom:6}}>SKADADE SPELARE</div>
           {injured.map(p=><div key={p.id} style={{fontSize:13,color:"#fca5a5",marginBottom:2}}>{p.name} - {p.note.slice(1).trim()}</div>)}
         </div>
       )}
+
+      {/* LAGETS FORM — sista 5 matcherna */}
+      {history.length>0&&(()=>{
+        const recent=history.slice(0,5);
+        const withRes=history.filter(m=>formResult(m)!==null);
+        const wins=withRes.filter(m=>formResult(m)==="V").length;
+        const rate=withRes.length>0?Math.round(wins/withRes.length*100):0;
+        return(
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <div style={{fontSize:10,color:"#4a5568",fontWeight:700}}>LAGETS FORM</div>
+              <div style={{fontSize:11,color:"#4a5568"}}>{wins} V / {withRes.length} mat ({rate}%)</div>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+              {recent.map((m,i)=>{
+                const res=formResult(m);
+                const col=formColor(res);
+                return(
+                  <div key={m.id||i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:1}}>
+                    <div style={{width:"100%",maxWidth:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.03)",border:"2px solid "+col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:col,margin:"0 auto"}}>
+                      {res||"?"}
+                    </div>
+                    <div style={{fontSize:9,color:"#4a5568",textAlign:"center",lineHeight:1.2,wordBreak:"break-all"}}>{m.opponent?.slice(0,7)}</div>
+                    {m.result?.us!==""&&m.result?.them!==""&&(
+                      <div style={{fontSize:9,color:"#334155",textAlign:"center"}}>{m.result.us}-{m.result.them}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* NÄSTA MATCH */}
       <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
         <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:12}}>NÄSTA MATCH</div>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
@@ -46,6 +97,8 @@ export default function HomeContent({
           </div>
         )}
       </div>
+
+      {/* SENASTE MATCH */}
       {latestMatch&&(
         <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
           <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:10}}>SENASTE MATCH</div>
@@ -63,6 +116,33 @@ export default function HomeContent({
           )}
         </div>
       )}
+
+      {/* SENASTE TRÄNING */}
+      {lastTrain&&(
+        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
+          <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:8}}>SENASTE TRÄNING</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:lastTrain.exercises?.length>0?8:0}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{FMT(lastTrain.date)}</div>
+            {lastTrain.total_minutes>0&&(
+              <div style={{fontSize:12,color:"#a78bfa",background:"rgba(167,139,250,0.1)",border:"1px solid rgba(167,139,250,0.2)",borderRadius:99,padding:"2px 10px"}}>{lastTrain.total_minutes} min</div>
+            )}
+          </div>
+          {lastTrain.exercises&&lastTrain.exercises.length>0&&(
+            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              {lastTrain.exercises.slice(0,4).map((ex,i)=>{
+                const name=typeof ex==="object"?ex.name:ex;
+                return<span key={i} style={{fontSize:11,color:"#38bdf8",background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.15)",borderRadius:99,padding:"2px 8px"}}>{name}</span>;
+              })}
+              {lastTrain.exercises.length>4&&(
+                <span style={{fontSize:11,color:"#4a5568",padding:"2px 4px"}}>+{lastTrain.exercises.length-4} till</span>
+              )}
+            </div>
+          )}
+          {lastTrain.note&&<div style={{fontSize:11,color:"#64748b",marginTop:6,fontStyle:"italic"}}>{lastTrain.note}</div>}
+        </div>
+      )}
+
+      {/* SÄSONGSSTATISTIK */}
       {stats.length>0&&(
         <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
           <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:10}}>SÄSONGSSTATISTIK</div>
@@ -91,6 +171,8 @@ export default function HomeContent({
           })}
         </div>
       )}
+
+      {/* TRÄNINGSNOTISER */}
       <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
         <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:10}}>TRÄNINGSNOTISER</div>
         <div style={{display:"flex",gap:8,marginBottom:10}}>

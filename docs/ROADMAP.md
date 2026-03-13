@@ -1,6 +1,6 @@
 # HIBS Tränarapp — Roadmap & Förbättringar
 
-*Senast uppdaterad: 2026-03-11*
+*Senast uppdaterad: 2026-03-13*
 *Status: Aktiv utveckling (privat bruk)*
 *Chefsutvecklare: Claude | Produktägare: Andreas*
 
@@ -117,6 +117,7 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | 2026-03-11 | Sprint 2 klar | MatchContent extraherad (561→430 rader). F1: Målvakter exkluderas från scramble — visas som "I mål" istället. |
 | 2026-03-11 | Agent Ops Backlog skapad | Notion-databas för HIBS skapad med alla T1-T6, F1-F8, P1-P8. F8 (manuell positionsbyte) tillagd som nytt önskemål. |
 | 2026-03-11 | Sprint 3 klar | MerContent extraherad (430→312 rader). F2: Hårda positionsregler — konfigurerbart "aldrig 1:a" per spelare, sparas i localStorage, enforced vid scramble. |
+| 2026-03-13 | Sprint 4 klar | useMatchSession hook extraherad (312→248 rader). P1: Lagets form (sista 5 V/O/F) + Senaste träning (datum, övningar, tid) lagt till i Hem-fliken. |
 | | | |
 
 ---

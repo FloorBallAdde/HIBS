@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-11 (Sprint 3 klar)*
+*Senast uppdaterad: 2026-03-13 (Sprint 4 klar)*
 
 ---
 
@@ -124,4 +124,5 @@ hibs-app/
 | 1 | 2026-03-10 | Extrahera HomeContent → src/components/home/HomeContent.jsx | 648 → 561 | ✅ Klar |
 | 2 | 2026-03-11 | Extrahera MatchContent + F1: Målvakter exkluderas från scramble | 561 → 430 | ✅ Klar |
 | 3 | 2026-03-11 | Extrahera MerContent + F2: Hårda positionsregler i ScrambleMode | 430 → 312 | ✅ Klar |
-| 4 | — | Hooks (useAppData, useAuth) — App.jsx → ~100-150 rad | — | ⏳ Nästa |
+| 4 | 2026-03-13 | useMatchSession hook + P1: Lagets form & senaste träning i Hem | 312 → 248 | ✅ Klar |
+| 5 | — | useAppData hook (loadData, data-state) — App.jsx → ~150 rad | — | ⏳ Nästa |

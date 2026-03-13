@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import ls from "./lib/storage.js";
 import { sbAuth, sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
-import {
-  TODAY, mkLine,
-  CHECKLIST_INIT, ROADMAP_INIT,
-} from "./lib/constants.js";
+import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
+import { useMatchSession } from "./hooks/useMatchSession.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
@@ -30,7 +28,6 @@ export default function App(){
   // UI
   const [tab,setTab]=useState("home");
   const [merSub,setMerSub]=useState(null);
-  const [matchStep,setMatchStep]=useState("select");
   const [trainSub,setTrainSub]=useState("kedjor");
   const [openPeriod,setOpenPeriod]=useState(null);
   const [filterGroup,setFilterGroup]=useState("ALL");
@@ -38,7 +35,6 @@ export default function App(){
   const [matchNoteModal,setMatchNoteModal]=useState(null);
   const [goalModal,setGoalModal]=useState(null);
   const [trainNoteInput,setTrainNoteInput]=useState("");
-  const [confirmAbort,setConfirmAbort]=useState(false);
   const [pendingCoaches,setPendingCoaches]=useState([]);
 
   // DATA
@@ -47,19 +43,6 @@ export default function App(){
   const [trainHistory,setTrainHistory]=useState([]);
   const [trainNotes,setTrainNotes]=useState([]);
   const [exercises,setExercises]=useState([]);
-
-  // MATCH SESSION (localStorage – survives refresh mid-match)
-  const [lines,setLines]=useState(()=>ls.get("hibs_lines2",[mkLine(1),mkLine(2),mkLine(3)]));
-  const [reserves,setReserves]=useState(()=>ls.get("hibs_reserves2",[]));
-  const [selected,setSelected]=useState(()=>new Set(ls.get("hibs_sel2",[])));
-  const [matchDate,setMatchDate]=useState(()=>ls.get("hibs_mdate2",TODAY()));
-  const [opponent,setOpponent]=useState(()=>ls.get("hibs_opp2",""));
-  const [serie,setSerie]=useState(()=>ls.get("hibs_serie2","14A"));
-  const [goalkeeper,setGoalkeeper]=useState(()=>ls.get("hibs_gk2",[])||[]);
-  const [activeMatch,setActiveMatch]=useState(()=>ls.get("hibs_active",null));
-  const [matchResult,setMatchResult]=useState(()=>ls.get("hibs_result",{us:"",them:""}));
-  const [matchScorers,setMatchScorers]=useState(()=>ls.get("hibs_scorers",[])||[]);
-  const [nextMatch,setNextMatch]=useState(()=>ls.get("hibs_next2",{opponent:"",date:"",serie:"14A"}));
 
   // LOCAL-ONLY STATE (checklist, roadmap)
   const [checklist,setChecklist]=useState(()=>{
@@ -73,30 +56,23 @@ export default function App(){
     return ROADMAP_INIT.map((period,pi)=>({...period,tasks:period.tasks.map(task=>{const sp=s[pi];const st=sp&&sp.tasks?sp.tasks.find(x=>x.id===task.id):null;return st?{...task,done:st.done}:task;})}));
   });
 
-  // PERSIST MATCH SESSION
-  useEffect(()=>{ls.set("hibs_lines2",lines);},[lines]);
-  useEffect(()=>{ls.set("hibs_reserves2",reserves);},[reserves]);
-  useEffect(()=>{ls.set("hibs_sel2",[...selected]);},[selected]);
-  useEffect(()=>{ls.set("hibs_mdate2",matchDate);},[matchDate]);
-  useEffect(()=>{ls.set("hibs_opp2",opponent);},[opponent]);
-  useEffect(()=>{ls.set("hibs_serie2",serie);},[serie]);
-  useEffect(()=>{ls.set("hibs_gk2",goalkeeper);},[goalkeeper]);
-  useEffect(()=>{ls.set("hibs_active",activeMatch);},[activeMatch]);
-  useEffect(()=>{ls.set("hibs_result",matchResult);},[matchResult]);
-  useEffect(()=>{ls.set("hibs_scorers",matchScorers);},[matchScorers]);
-  useEffect(()=>{ls.set("hibs_next2",nextMatch);},[nextMatch]);
+  // PERSIST LOCAL STATE
   useEffect(()=>{ls.set("hibs_check3",checklist);},[checklist]);
   useEffect(()=>{ls.set("hibs_road2",roadmap);},[roadmap]);
 
   const tok=auth?.tok;
   const clubId=profile?.club_id;
 
+  // MATCH SESSION HOOK (encapsulates all match state, persistence & actions)
+  const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory});
+  const{nextMatch,setNextMatch,matchStep,setMatchStep,activeMatch}=matchSession;
+
   // LOAD DATA
   const loadData=useCallback(async()=>{
     if(!clubId||!tok)return;
     setLoadingApp(true);
     try{
-      const [pl,ma,tr,tn,ex]=await Promise.all([
+      const[pl,ma,tr,tn,ex]=await Promise.all([
         sbGet("players","club_id=eq."+clubId+"&order=name.asc",tok),
         sbGet("matches","club_id=eq."+clubId+"&order=date.desc",tok),
         sbGet("training_sessions","club_id=eq."+clubId+"&order=date.desc",tok),
@@ -160,61 +136,6 @@ export default function App(){
     await sbPatch("players",id,patch,tok);
   };
 
-  const usedInLines=new Set(lines.flatMap(l=>Object.values(l.slots).filter(Boolean)));
-
-  const assignSlot=(li,pos,val)=>{
-    if(pos==="__swap__"){
-      const{from,to}=val;
-      setLines(ls2=>ls2.map((l,i)=>{
-        if(i!==li)return l;
-        const s={...l.slots};
-        [s[from],s[to]]=[s[to],s[from]];
-        return{...l,slots:s};
-      }));
-    } else {
-      setLines(ls2=>ls2.map((l,i)=>{
-        if(i!==li)return l;
-        const s={...l.slots};
-        Object.keys(s).forEach(k=>{if(s[k]===val)s[k]=null;});
-        s[pos]=val;
-        return{...l,slots:s};
-      }));
-    }
-  };
-  const removeSlot=(li,pos)=>setLines(ls2=>ls2.map((l,i)=>i===li?{...l,slots:{...l.slots,[pos]:null}}:l));
-  const renameLine=(li,name)=>setLines(ls2=>ls2.map((l,i)=>i===li?{...l,name}:l));
-  const deleteLine=li=>setLines(ls2=>ls2.filter((_,i)=>i!==li));
-
-  const toggleSelected=id=>setSelected(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});
-
-  const startMatch=()=>{
-    if(!opponent.trim()||selected.size===0)return;
-    const m={id:Date.now(),date:matchDate,opponent:opponent.trim(),serie,players:[...selected],goalkeeper,note:""};
-    setActiveMatch(m);setMatchStep("live");
-  };
-
-  const endMatch=async()=>{
-    if(!activeMatch||!clubId)return;
-    const entry={club_id:clubId,date:activeMatch.date,opponent:activeMatch.opponent,serie:activeMatch.serie,result:matchResult,scorers:matchScorers,players:activeMatch.players,goalkeeper:activeMatch.goalkeeper,note:activeMatch.note||"",created_by:auth.uid};
-    const saved=await sbPost("matches",entry,tok);
-    const sm=Array.isArray(saved)&&saved[0]?saved[0]:{...entry,id:Date.now()};
-    setHistory(p=>[sm,...p]);
-    const playedIds=[...activeMatch.players,...activeMatch.goalkeeper];
-    for(const pid of playedIds){
-      const pl=players.find(x=>x.id===pid);
-      if(pl){const nm=(pl.matches||0)+1;await sbPatch("players",pid,{matches:nm,last_played:activeMatch.date},tok);setPlayers(p=>p.map(x=>x.id===pid?{...x,matches:nm,last_played:activeMatch.date}:x));}
-    }
-    setActiveMatch(null);setMatchResult({us:"",them:""});setMatchScorers([]);
-    setSelected(new Set());setOpponent("");setGoalkeeper([]);setLines([mkLine(1),mkLine(2),mkLine(3)]);setReserves([]);
-    setMatchStep("select");
-  };
-
-  const abortMatch=()=>{
-    setActiveMatch(null);setMatchResult({us:"",them:""});setMatchScorers([]);
-    setSelected(new Set());setOpponent("");setGoalkeeper([]);setLines([mkLine(1),mkLine(2),mkLine(3)]);setReserves([]);
-    setMatchStep("select");setConfirmAbort(false);
-  };
-
   // SEASON STATS
   const seasonStats=()=>{
     const pm={};
@@ -232,13 +153,7 @@ export default function App(){
   const stats=seasonStats();
   const totalGoals=stats.reduce((s,p)=>s+p.goals,0);
   const totalAssists=stats.reduce((s,p)=>s+p.assists,0);
-
   const latestMatch=history[0]||null;
-
-  // _HomeContent — extraherad till src/components/home/HomeContent.jsx
-  // _MatchContent — extraherad till src/components/match/MatchContent.jsx (Sprint 2)
-
-  // _MerContent — extraherad till src/components/mer/MerContent.jsx (Sprint 3)
 
   return(
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
@@ -288,15 +203,36 @@ export default function App(){
       </div>
 
       <div style={{padding:"0 16px"}}>
-        {tab==="home"&&<HomeContent injured={injured} nextMatch={nextMatch} setNextMatch={setNextMatch} latestMatch={latestMatch} stats={stats} totalGoals={totalGoals} totalAssists={totalAssists} history={history} players={players} trainNoteInput={trainNoteInput} setTrainNoteInput={setTrainNoteInput} trainNotes={trainNotes} setTrainNotes={setTrainNotes} clubId={clubId} uid={auth.uid} tok={tok}/>}
+        {tab==="home"&&<HomeContent
+          injured={injured} nextMatch={nextMatch} setNextMatch={setNextMatch}
+          latestMatch={latestMatch} stats={stats} totalGoals={totalGoals} totalAssists={totalAssists}
+          history={history} players={players} trainHistory={trainHistory}
+          trainNoteInput={trainNoteInput} setTrainNoteInput={setTrainNoteInput}
+          trainNotes={trainNotes} setTrainNotes={setTrainNotes}
+          clubId={clubId} uid={auth.uid} tok={tok}
+        />}
         {tab==="traning"&&trainSub==="kedjor"&&<KedjorTab players={players} onUpdatePlayerGroup={async(id,group)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,group}:x));await sbPatch("players",id,{group},tok);}}/>}
         {tab==="traning"&&trainSub==="planera"&&<PlaneraTab exercises={exercises} trainHistory={trainHistory}
           onSave={async entry=>{const row={club_id:clubId,date:entry.date,exercises:entry.exercises,total_minutes:entry.totalMinutes,note:entry.note||"",created_by:auth.uid};const saved=await sbPost("training_sessions",row,tok);const s=Array.isArray(saved)&&saved[0]?saved[0]:{...row,id:Date.now()};setTrainHistory(p=>[s,...p]);}}
           onDelete={async id=>{await sbDel("training_sessions",id,tok);setTrainHistory(p=>p.filter(x=>x.id!==id));}}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok}/>}
-        {tab==="match"&&<MatchContent activeMatch={activeMatch} matchStep={matchStep} setMatchStep={setMatchStep} matchResult={matchResult} setMatchResult={setMatchResult} matchScorers={matchScorers} setMatchScorers={setMatchScorers} confirmAbort={confirmAbort} setConfirmAbort={setConfirmAbort} lines={lines} setLines={setLines} players={players} selected={selected} setSelected={setSelected} matchDate={matchDate} setMatchDate={setMatchDate} opponent={opponent} setOpponent={setOpponent} serie={serie} setSerie={setSerie} goalkeeper={goalkeeper} setGoalkeeper={setGoalkeeper} usedInLines={usedInLines} gkPlayers={gkPlayers} field={field} startMatch={startMatch} endMatch={endMatch} abortMatch={abortMatch} assignSlot={assignSlot} removeSlot={removeSlot} renameLine={renameLine} deleteLine={deleteLine} toggleSelected={toggleSelected}/>}
-        {tab==="mer"&&<MerContent pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches} merSub={merSub} setMerSub={setMerSub} players={players} filterGroup={filterGroup} setFilterGroup={setFilterGroup} setNoteModal={setNoteModal} setGoalModal={setGoalModal} checklist={checklist} setChecklist={setChecklist} history={history} setHistory={setHistory} setMatchNoteModal={setMatchNoteModal} roadmap={roadmap} setRoadmap={setRoadmap} openPeriod={openPeriod} setOpenPeriod={setOpenPeriod} tok={tok} sbPatch={sbPatch} sbDel={sbDel}/>}
+        {tab==="match"&&<MatchContent
+          {...matchSession}
+          players={players} gkPlayers={gkPlayers} field={field}
+        />}
+        {tab==="mer"&&<MerContent
+          pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches}
+          merSub={merSub} setMerSub={setMerSub}
+          players={players} filterGroup={filterGroup} setFilterGroup={setFilterGroup}
+          setNoteModal={setNoteModal} setGoalModal={setGoalModal}
+          checklist={checklist} setChecklist={setChecklist}
+          history={history} setHistory={setHistory}
+          setMatchNoteModal={setMatchNoteModal}
+          roadmap={roadmap} setRoadmap={setRoadmap}
+          openPeriod={openPeriod} setOpenPeriod={setOpenPeriod}
+          tok={tok} sbPatch={sbPatch} sbDel={sbDel}
+        />}
       </div>
 
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(11,13,20,0.97)",backdropFilter:"blur(12px)",borderTop:"1px solid rgba(255,255,255,0.06)",display:"flex",zIndex:100}}>
