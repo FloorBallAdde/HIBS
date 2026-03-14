@@ -34,6 +34,7 @@ export default function AuthScreen({ onAuth }) {
     const res = await sbAuth("token?grant_type=password", { email, password });
     if (res.error) return err(res.error.message || "Fel email eller lösenord");
     const tok = res.access_token; const uid = res.user.id;
+    if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
     const prof = await sbGet("profiles", "id=eq." + uid + "&select=*", tok);
     const profile = Array.isArray(prof) && prof[0] ? prof[0] : null;
     if (!profile) return err("Profil: " + JSON.stringify(prof).slice(0, 150));

@@ -20,6 +20,15 @@ export async function sbAuth(path, body) {
   return r.json();
 }
 
+export async function sbRefresh(refreshToken) {
+  const r = await fetch(SB_URL + "/auth/v1/token?grant_type=refresh_token", {
+    method: "POST",
+    headers: hdrs(),
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  return r.json();
+}
+
 export async function sbGet(table, query, tok) {
   const r = await fetch(
     SB_URL + "/rest/v1/" + table + "?" + (query || "order=created_at.desc"),

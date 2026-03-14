@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ls from "./lib/storage.js";
-import { sbAuth, sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
+import { sbAuth, sbGet, sbPost, sbPatch, sbDel, sbRefresh } from "./lib/supabase.js";
 import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
 import { useSeasonStats } from "./hooks/useSeasonStats.js";
@@ -27,6 +27,23 @@ export default function App(){
   });
   const [profile,setProfile]=useState(null);
   const [loadingApp,setLoadingApp]=useState(false);
+
+  // AUTO-REFRESH: förnya JWT var 50:e minut så den aldrig hinner gå ut under en matchdag
+  useEffect(()=>{
+    const refresh = async () => {
+      const rt = ls.get("hibs_refresh", null);
+      if (!rt) return;
+      const res = await sbRefresh(rt);
+      if (res?.access_token) {
+        ls.set("hibs_token", res.access_token);
+        if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
+        setAuth(a => a ? { ...a, tok: res.access_token } : a);
+      }
+    };
+    refresh(); // kör direkt vid start för att fräscha upp en ev. gammal token
+    const id = setInterval(refresh, 50 * 60 * 1000); // var 50 min
+    return () => clearInterval(id);
+  }, []);
 
   // UI
   const [tab,setTab]=useState("home");
