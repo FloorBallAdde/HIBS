@@ -9,6 +9,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
   const [editScorers, setEditScorers] = useState([]);
   const [editTeamGoals, setEditTeamGoals] = useState(["", "", ""]);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [confirmDel, setConfirmDel] = useState(false);
 
   const sc = match.serie === "14A" ? "#f472b6" : match.serie === "15A" ? "#38bdf8" : "#fbbf24";
@@ -39,14 +40,21 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
 
   const saveEdit = async () => {
     setSaving(true);
+    setSaveError(null);
     const teamGoals = editTeamGoals.map(g => g.trim()).filter(Boolean);
     const patch = { result: editResult, scorers: editScorers, teamGoals };
     try {
-      await sbPatch("matches", match.id, patch, tok);
-      onUpdate?.({ ...match, ...patch });
+      const res = await sbPatch("matches", match.id, patch, tok);
+      // Supabase returnerar ett error-objekt (inte array) vid misslyckad patch
+      if (res && !Array.isArray(res) && res.code) {
+        setSaveError("Sparandet misslyckades: " + (res.message || res.code));
+        setSaving(false);
+        return;
+      }
+      onUpdate?.({ ...match, result: editResult, scorers: editScorers, teamGoals });
       setEditing(false);
     } catch (e) {
-      // Behåll edit-läge om sparandet misslyckas
+      setSaveError("Nätverksfel — försök igen");
     }
     setSaving(false);
   };
@@ -184,6 +192,11 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
             ))}
           </div>
 
+          {saveError && (
+            <div style={{ fontSize: 12, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10, padding: "8px 12px", marginBottom: 10 }}>
+              ⚠ {saveError}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={saveEdit} disabled={saving} style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 12, background: saving ? "rgba(34,197,94,0.3)" : "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 14, fontWeight: 800, fontFamily: "inherit", cursor: saving ? "not-allowed" : "pointer" }}>
               {saving ? "Sparar..." : "Spara"}
