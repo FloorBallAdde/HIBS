@@ -7,6 +7,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
   const [editing, setEditing] = useState(false);
   const [editResult, setEditResult] = useState({ us: 0, them: 0 });
   const [editScorers, setEditScorers] = useState([]);
+  const [editTeamGoals, setEditTeamGoals] = useState(["", "", ""]);
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
 
@@ -29,13 +30,17 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
     const them = parseInt(match.result?.them);
     setEditResult({ us: isNaN(us) ? 0 : us, them: isNaN(them) ? 0 : them });
     setEditScorers([...(match.scorers || [])]);
+    // Fyll lagmål med befintliga värden (eller tomma fält om de saknas)
+    const tg = match.teamGoals || [];
+    setEditTeamGoals([tg[0] || "", tg[1] || "", tg[2] || ""]);
     setEditing(true);
     setOpen(true);
   };
 
   const saveEdit = async () => {
     setSaving(true);
-    const patch = { result: editResult, scorers: editScorers };
+    const teamGoals = editTeamGoals.map(g => g.trim()).filter(Boolean);
+    const patch = { result: editResult, scorers: editScorers, teamGoals };
     try {
       await sbPatch("matches", match.id, patch, tok);
       onUpdate?.({ ...match, ...patch });
@@ -168,15 +173,16 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
             </>
           )}
 
-          {/* Lagmål — read-only i edit-läge */}
-          {(match.teamGoals || []).length > 0 && (
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px 12px", marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "#4a5568", fontWeight: 700, marginBottom: 4 }}>LAGMÅL</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {match.teamGoals.map((g, i) => <span key={i} style={{ fontSize: 12, color: "#22c55e", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 99, padding: "3px 10px" }}>{g}</span>)}
-              </div>
-            </div>
-          )}
+          {/* Lagmål — redigerbara fält */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 700, marginBottom: 6 }}>LAGMÅL</div>
+            {editTeamGoals.map((g, i) => (
+              <input key={i} value={g} onChange={e => setEditTeamGoals(gs => gs.map((x, j) => j === i ? e.target.value : x))}
+                placeholder={"Mål " + (i + 1) + " — t.ex. Pressa högt"}
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 10, color: "#fff", fontSize: 12, padding: "9px 12px", fontFamily: "inherit", outline: "none", marginBottom: 6, boxSizing: "border-box" }}
+              />
+            ))}
+          </div>
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={saveEdit} disabled={saving} style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 12, background: saving ? "rgba(34,197,94,0.3)" : "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 14, fontWeight: 800, fontFamily: "inherit", cursor: saving ? "not-allowed" : "pointer" }}>
