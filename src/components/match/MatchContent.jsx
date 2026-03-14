@@ -21,6 +21,7 @@ export default function MatchContent({
   assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
   toggleSelected,
   teamGoals, setTeamGoals,
+  saveError, setSaveError,
 }) {
   const [confirmNoLines, setConfirmNoLines] = useState(false);
 
@@ -76,7 +77,7 @@ export default function MatchContent({
             {players.filter(p => (activeMatch.players || []).includes(p.id) || (activeMatch.goalkeeper || []).includes(p.id)).map(p => {
               const cnt = matchScorers.filter(s => s.name === p.name && s.type === "goal").length;
               return (
-                <button key={p.id} onClick={() => setMatchScorers(s => [...s, { name: p.name, type: "goal" }])} style={{ padding: "6px 12px", border: "1px solid " + (cnt > 0 ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.07)"), borderRadius: 99, background: cnt > 0 ? "rgba(251,191,36,0.1)" : "transparent", color: cnt > 0 ? "#fbbf24" : "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
+                <button key={p.id} onClick={() => { setMatchScorers(s => [...s, { name: p.name, type: "goal" }]); setMatchResult(r => ({ ...r, us: (parseInt(r.us) || 0) + 1 })); }} style={{ padding: "6px 12px", border: "1px solid " + (cnt > 0 ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.07)"), borderRadius: 99, background: cnt > 0 ? "rgba(251,191,36,0.1)" : "transparent", color: cnt > 0 ? "#fbbf24" : "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
                   {p.name}{cnt > 0 ? " (" + cnt + ")" : ""}
                 </button>
               );
@@ -99,7 +100,16 @@ export default function MatchContent({
       </div>
       {matchScorers.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <button onClick={() => setMatchScorers(s => s.slice(0, -1))} style={{ padding: "8px 16px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, background: "transparent", color: "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Ångra senaste</button>
+          <button onClick={() => {
+            const last = matchScorers[matchScorers.length - 1];
+            if (last?.type === "goal") setMatchResult(r => ({ ...r, us: Math.max(0, (parseInt(r.us) || 0) - 1) }));
+            setMatchScorers(s => s.slice(0, -1));
+          }} style={{ padding: "8px 16px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, background: "transparent", color: "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Ångra senaste</button>
+        </div>
+      )}
+      {saveError && (
+        <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#f87171" }}>
+          ⚠ {saveError}
         </div>
       )}
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
@@ -132,7 +142,10 @@ export default function MatchContent({
         <FormationCard key={line.id} line={line} lineIndex={li} allPlayers={players.filter(p => selected.has(p.id))} usedIds={usedInLines} onAssign={assignSlot} onRemove={removeSlot} onRename={renameLine} onDelete={deleteLine} touchSwap={touchSwap} />
       ))}
       <button onClick={() => setLines(ls2 => [...ls2, mkLine(ls2.length + 1)])} style={{ width: "100%", padding: "12px 0", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 14, background: "transparent", color: "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", marginBottom: 14 }}>+ Ny linje</button>
-      <button onClick={startMatch} style={{ width: "100%", padding: "15px 0", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}>Starta match</button>
+      <button onClick={() => {
+        if (usedInLines.size === 0) { setConfirmNoLines(true); return; }
+        startMatch();
+      }} style={{ width: "100%", padding: "15px 0", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}>Starta match</button>
     </div>
   );
 

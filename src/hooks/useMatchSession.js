@@ -21,6 +21,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [matchStep, setMatchStep] = useState("select");
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
+  const [saveError, setSaveError] = useState(null);
 
   // PERSISTENCE
   useEffect(() => { ls.set("hibs_lines2", lines); }, [lines]);
@@ -105,15 +106,25 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
 
   const endMatch = async () => {
     if (!activeMatch || !clubId) return;
+    setSaveError(null);
     const entry = {
       club_id: clubId, date: activeMatch.date, opponent: activeMatch.opponent,
       serie: activeMatch.serie, result: matchResult, scorers: matchScorers,
       players: activeMatch.players, goalkeeper: activeMatch.goalkeeper,
       note: activeMatch.note || "", created_by: auth.uid,
     };
-    const saved = await sbPost("matches", entry, tok);
-    const sm = Array.isArray(saved) && saved[0] ? saved[0] : { ...entry, id: Date.now() };
-    setHistory(p => [sm, ...p]);
+    let saved;
+    try {
+      saved = await sbPost("matches", entry, tok);
+    } catch (e) {
+      setSaveError("Nätverksfel — kontrollera anslutningen och försök igen.");
+      return;
+    }
+    if (!Array.isArray(saved) || !saved[0]) {
+      setSaveError("Kunde inte spara matchen (fel: " + (saved?.message || saved?.code || "okänt") + "). Försök igen.");
+      return;
+    }
+    setHistory(p => [saved[0], ...p]);
     const playedIds = [...activeMatch.players, ...activeMatch.goalkeeper];
     for (const pid of playedIds) {
       const pl = players.find(x => x.id === pid);
@@ -145,5 +156,6 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     usedInLines,
     assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
     toggleSelected, startMatch, endMatch, abortMatch,
+    saveError, setSaveError,
   };
 }
