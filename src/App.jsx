@@ -3,6 +3,7 @@ import ls from "./lib/storage.js";
 import { sbAuth, sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
 import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
+import { useSeasonStats } from "./hooks/useSeasonStats.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
@@ -138,24 +139,8 @@ export default function App(){
     await sbPatch("players",id,patch,tok);
   };
 
-  // SEASON STATS
-  const seasonStats=()=>{
-    const pm={};
-    history.forEach(m=>{
-      (m.scorers||[]).forEach(s=>{
-        const name=typeof s==="object"?s.name:s;
-        const type=typeof s==="object"?s.type:"goal";
-        if(!pm[name])pm[name]={name,goals:0,assists:0};
-        if(type==="goal")pm[name].goals++;
-        else pm[name].assists++;
-      });
-    });
-    return Object.values(pm).map(p=>({...p,points:p.goals+p.assists})).sort((a,b)=>b.points-a.points||b.goals-a.goals);
-  };
-  const stats=seasonStats();
-  const totalGoals=stats.reduce((s,p)=>s+p.goals,0);
-  const totalAssists=stats.reduce((s,p)=>s+p.assists,0);
-  const latestMatch=history[0]||null;
+  // SEASON STATS (extracted to useSeasonStats hook)
+  const{stats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history);
 
   return(
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
