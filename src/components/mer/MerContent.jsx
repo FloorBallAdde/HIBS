@@ -93,8 +93,11 @@ export default function MerContent({
           {history.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", color: "#334155", fontSize: 14 }}>Inga matcher sparade ännu.</div>}
           {history.map(m => (
             <MatchCard key={m.id} match={m}
+              players={players}
+              tok={tok}
               onEditNote={match => setMatchNoteModal(match)}
               onDelete={async id => { await sbDel("matches", id, tok); setHistory(p => p.filter(x => x.id !== id)); }}
+              onUpdate={updated => setHistory(p => p.map(x => x.id === updated.id ? updated : x))}
             />
           ))}
         </div>

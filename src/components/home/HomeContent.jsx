@@ -63,8 +63,8 @@ export default function HomeContent({
                 const col=formColor(res);
                 return(
                   <div key={m.id||i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:1}}>
-                    <div style={{width:"100%",maxWidth:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.03)",border:"2px solid "+col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:900,color:col,margin:"0 auto"}}>
-                      {res||"?"}
+                    <div style={{width:"100%",maxWidth:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.03)",border:"2px "+(res?"solid":"dashed")+" "+col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:res?14:11,fontWeight:900,color:col,margin:"0 auto"}}>
+                      {res||"–"}
                     </div>
                     <div style={{fontSize:9,color:"#4a5568",textAlign:"center",lineHeight:1.2,wordBreak:"break-all"}}>{m.opponent?.slice(0,7)}</div>
                     {m.result?.us!==""&&m.result?.them!==""&&(
