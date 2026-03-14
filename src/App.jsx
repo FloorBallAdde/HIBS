@@ -121,6 +121,9 @@ export default function App(){
     setAuth(null);setProfile(null);setPlayers([]);setHistory([]);setTrainHistory([]);setTrainNotes([]);setExercises([]);
   };
 
+  // SEASON STATS — must be before early returns (Rules of Hooks)
+  const{stats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history);
+
   if(!auth||!profile)return<AuthScreen onAuth={handleAuth}/>;
   if(loadingApp)return(
     <div style={{minHeight:"100vh",background:"#0b0d14",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,fontFamily:"system-ui,sans-serif"}}>
@@ -138,9 +141,6 @@ export default function App(){
     setPlayers(p=>p.map(x=>x.id===id?{...x,...patch}:x));
     await sbPatch("players",id,patch,tok);
   };
-
-  // SEASON STATS (extracted to useSeasonStats hook)
-  const{stats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history);
 
   return(
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
