@@ -50,7 +50,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setGoalkeeper([]);
     setLines([mkLine(1), mkLine(2), mkLine(3)]);
     setReserves([]);
-    setTeamGoals(["", "", ""]);
+    // OBS: teamGoals nollställs INTE — lagmål gäller ofta hela turneringen
   };
 
   const assignSlot = (li, pos, val) => {
