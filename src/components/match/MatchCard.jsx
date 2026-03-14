@@ -8,6 +8,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
   const [editResult, setEditResult] = useState({ us: 0, them: 0 });
   const [editScorers, setEditScorers] = useState([]);
   const [editTeamGoals, setEditTeamGoals] = useState(["", "", ""]);
+  const [editNote, setEditNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -34,6 +35,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
     // Fyll lagmål med befintliga värden (eller tomma fält om de saknas)
     const tg = match.teamGoals || [];
     setEditTeamGoals([tg[0] || "", tg[1] || "", tg[2] || ""]);
+    setEditNote(match.note || "");
     setEditing(true);
     setOpen(true);
   };
@@ -42,7 +44,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
     setSaving(true);
     setSaveError(null);
     const teamGoals = editTeamGoals.map(g => g.trim()).filter(Boolean);
-    const patch = { result: editResult, scorers: editScorers, teamGoals };
+    const patch = { result: editResult, scorers: editScorers, teamGoals, note: editNote };
     try {
       const res = await sbPatch("matches", match.id, patch, tok);
       // Supabase returnerar ett error-objekt (inte array) vid misslyckad patch
@@ -51,7 +53,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
         setSaving(false);
         return;
       }
-      onUpdate?.({ ...match, result: editResult, scorers: editScorers, teamGoals });
+      onUpdate?.({ ...match, result: editResult, scorers: editScorers, teamGoals, note: editNote });
       setEditing(false);
     } catch (e) {
       setSaveError("Nätverksfel — försök igen");
@@ -116,7 +118,7 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
             <button onClick={startEdit} style={{ padding: "7px 14px", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 99, background: "rgba(34,197,94,0.08)", color: "#22c55e", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>✏ Redigera</button>
-            <button onClick={() => onEditNote(match)} style={{ padding: "7px 14px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, background: "transparent", color: "#4a5568", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>📝 Notering</button>
+            <button onClick={() => onEditNote(match)} style={{ padding: "7px 14px", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 99, background: "rgba(167,139,250,0.06)", color: "#a78bfa", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>📋 Kopiera för Claude</button>
             {!confirmDel
               ? <button onClick={() => setConfirmDel(true)} style={{ padding: "7px 14px", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 99, background: "transparent", color: "#f87171", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>Ta bort</button>
               : <button onClick={() => { onDelete(match.id); setConfirmDel(false); }} style={{ padding: "7px 14px", border: "none", borderRadius: 99, background: "#f87171", color: "#fff", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Bekräfta borttagning</button>
@@ -180,6 +182,17 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
               )}
             </>
           )}
+
+          {/* Notering */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, marginBottom: 6 }}>NOTERING</div>
+            <textarea
+              value={editNote}
+              onChange={e => setEditNote(e.target.value)}
+              placeholder="T.ex. bra press, jobbig domare, fantastisk energi..."
+              style={{ width: "100%", minHeight: 70, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 10, color: "#fff", fontSize: 12, padding: "9px 12px", fontFamily: "inherit", outline: "none", resize: "none", boxSizing: "border-box" }}
+            />
+          </div>
 
           {/* Lagmål — redigerbara fält */}
           <div style={{ marginBottom: 14 }}>
