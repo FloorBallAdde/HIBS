@@ -17,7 +17,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [activeMatch, setActiveMatch] = useState(() => ls.get("hibs_active", null));
   const [matchResult, setMatchResult] = useState(() => ls.get("hibs_result", { us: "", them: "" }));
   const [matchScorers, setMatchScorers] = useState(() => ls.get("hibs_scorers", []) || []);
-  const [nextMatch, setNextMatch] = useState(() => ls.get("hibs_next2", { opponent: "", date: "", serie: "14A" }));
+  const [upcomingMatches, setUpcomingMatches] = useState(() => ls.get("hibs_upcoming", []));
   const [matchStep, setMatchStep] = useState("select");
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
@@ -34,7 +34,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_active", activeMatch); }, [activeMatch]);
   useEffect(() => { ls.set("hibs_result", matchResult); }, [matchResult]);
   useEffect(() => { ls.set("hibs_scorers", matchScorers); }, [matchScorers]);
-  useEffect(() => { ls.set("hibs_next2", nextMatch); }, [nextMatch]);
+  useEffect(() => { ls.set("hibs_upcoming", upcomingMatches); }, [upcomingMatches]);
   useEffect(() => { ls.set("hibs_team_goals", teamGoals); }, [teamGoals]);
 
   // COMPUTED
@@ -125,6 +125,10 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       return;
     }
     setHistory(p => [saved[0], ...p]);
+    // Ta bort matchande kommande match från schemat (same opponent + date)
+    setUpcomingMatches(prev => prev.filter(
+      m => !(m.opponent === activeMatch.opponent && m.date === activeMatch.date)
+    ));
     const playedIds = [...activeMatch.players, ...activeMatch.goalkeeper];
     for (const pid of playedIds) {
       const pl = players.find(x => x.id === pid);
@@ -144,18 +148,34 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setConfirmAbort(false);
   };
 
+  // KOMMANDE MATCHER — lägg till, ta bort, ladda in till match-trupp
+  const addUpcoming = (m) =>
+    setUpcomingMatches(prev => [...prev, { id: Date.now(), ...m }].sort((a, b) => a.date.localeCompare(b.date)));
+
+  const removeUpcoming = (id) =>
+    setUpcomingMatches(prev => prev.filter(m => m.id !== id));
+
+  const loadFromSchedule = (scheduled) => {
+    setOpponent(scheduled.opponent);
+    setMatchDate(scheduled.date);
+    setSerie(scheduled.serie || "14A");
+    setMatchStep("select");
+  };
+
   return {
     lines, setLines, reserves, setReserves,
     selected, setSelected, matchDate, setMatchDate,
     opponent, setOpponent, serie, setSerie,
     goalkeeper, setGoalkeeper, activeMatch, setActiveMatch,
     matchResult, setMatchResult, matchScorers, setMatchScorers,
-    nextMatch, setNextMatch, matchStep, setMatchStep,
+    upcomingMatches, setUpcomingMatches,
+    matchStep, setMatchStep,
     confirmAbort, setConfirmAbort,
     teamGoals, setTeamGoals,
     usedInLines,
     assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
     toggleSelected, startMatch, endMatch, abortMatch,
+    addUpcoming, removeUpcoming, loadFromSchedule,
     saveError, setSaveError,
   };
 }

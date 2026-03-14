@@ -1,15 +1,28 @@
 import StableInput from "../ui/StableInput.jsx";
-import { SERIES, FMT, GC, gc } from "../../lib/constants.js";
+import { SERIES, FMT, GC, gc, TODAY } from "../../lib/constants.js";
 import { sbPost, sbDel } from "../../lib/supabase.js";
+import { useState } from "react";
 
-// Hemfliken — dashboard med skadade, form, nästa match, senaste match, träning, säsongsstatistik
+// Hemfliken — dashboard med skadade, form, kommande matcher, senaste match, träning, säsongsstatistik
 export default function HomeContent({
-  injured, nextMatch, setNextMatch, latestMatch,
+  injured, upcomingMatches, addUpcoming, removeUpcoming, latestMatch,
   stats, totalGoals, totalAssists, history, players,
   trainHistory,
   trainNoteInput, setTrainNoteInput, trainNotes, setTrainNotes,
   clubId, uid, tok,
 }){
+  // State för "lägg till kommande match"-formuläret
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newOpp, setNewOpp] = useState("");
+  const [newDate, setNewDate] = useState(TODAY());
+  const [newSerie, setNewSerie] = useState("14A");
+
+  const handleAddMatch = () => {
+    if (!newOpp.trim() || !newDate) return;
+    addUpcoming({ opponent: newOpp.trim(), date: newDate, serie: newSerie });
+    setNewOpp(""); setNewDate(TODAY()); setNewSerie("14A");
+    setShowAddForm(false);
+  };
   // Hjälpfunktion: spara ny träningsnotis
   const addNote=()=>{
     if(!trainNoteInput.trim())return;
@@ -78,24 +91,50 @@ export default function HomeContent({
         );
       })()}
 
-      {/* NÄSTA MATCH */}
+      {/* KOMMANDE MATCHER */}
       <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:16,padding:"16px 18px",marginBottom:16}}>
-        <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:12}}>NÄSTA MATCH</div>
-        <div style={{display:"flex",gap:8,marginBottom:8}}>
-          <StableInput value={nextMatch.opponent} onChange={e=>setNextMatch(n=>({...n,opponent:e.target.value}))} placeholder="Motståndare" style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,color:"#fff",fontSize:13,padding:"8px 12px",fontFamily:"inherit",outline:"none"}}/>
-          <input type="date" value={nextMatch.date} onChange={e=>setNextMatch(n=>({...n,date:e.target.value}))} style={{width:120,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,color:"#fff",fontSize:13,padding:"8px 10px",fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontSize:10,color:"#4a5568",fontWeight:700}}>KOMMANDE MATCHER</div>
+          <button onClick={()=>setShowAddForm(f=>!f)} style={{padding:"4px 12px",border:"1px solid rgba(34,197,94,0.3)",borderRadius:99,background:"rgba(34,197,94,0.08)",color:"#22c55e",fontSize:11,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>{showAddForm?"Avbryt":"+ Lägg till"}</button>
         </div>
-        <div style={{display:"flex",gap:6}}>
-          {SERIES.map(s=><button key={s} onClick={()=>setNextMatch(n=>({...n,serie:s}))} style={{flex:1,padding:"7px 0",border:"1px solid "+(nextMatch.serie===s?"#f472b6":"rgba(255,255,255,0.07)"),borderRadius:8,background:nextMatch.serie===s?"rgba(244,114,182,0.1)":"transparent",color:nextMatch.serie===s?"#f472b6":"#4a5568",fontSize:11,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>{s}</button>)}
-        </div>
-        {nextMatch.opponent&&nextMatch.date&&(
-          <div style={{marginTop:12,textAlign:"center"}}>
-            <div style={{fontSize:17,fontWeight:900,color:"#fff"}}>vs {nextMatch.opponent}</div>
-            <div style={{fontSize:13,color:"#4a5568",marginTop:3}}>{FMT(nextMatch.date)}</div>
-            <div style={{fontSize:12,color:"#f472b6",marginTop:2}}>{nextMatch.serie}</div>
-            {(()=>{const d=Math.ceil((new Date(nextMatch.date)-new Date())/(1000*60*60*24));return d>0?<div style={{fontSize:12,color:"#4a5568",marginTop:3}}>Om {d} dagar</div>:d===0?<div style={{fontSize:13,color:"#22c55e",fontWeight:700,marginTop:3}}>Idag!</div>:null;})()}
+
+        {/* Formulär: lägg till match */}
+        {showAddForm&&(
+          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:12,padding:"12px",marginBottom:12}}>
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <StableInput value={newOpp} onChange={e=>setNewOpp(e.target.value)} placeholder="Motståndare" style={{flex:1,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,color:"#fff",fontSize:13,padding:"8px 12px",fontFamily:"inherit",outline:"none"}}/>
+              <input type="date" value={newDate} onChange={e=>setNewDate(e.target.value)} style={{width:120,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,color:"#fff",fontSize:13,padding:"8px 10px",fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:10}}>
+              {SERIES.map(s=><button key={s} onClick={()=>setNewSerie(s)} style={{flex:1,padding:"7px 0",border:"1px solid "+(newSerie===s?"#f472b6":"rgba(255,255,255,0.07)"),borderRadius:8,background:newSerie===s?"rgba(244,114,182,0.1)":"transparent",color:newSerie===s?"#f472b6":"#4a5568",fontSize:11,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>{s}</button>)}
+            </div>
+            <button onClick={handleAddMatch} style={{width:"100%",padding:"10px 0",border:"none",borderRadius:10,background:"linear-gradient(135deg,#22c55e,#16a34a)",color:"#fff",fontSize:13,fontWeight:800,fontFamily:"inherit",cursor:"pointer"}}>Lägg till match</button>
           </div>
         )}
+
+        {/* Lista kommande matcher */}
+        {upcomingMatches.length===0&&!showAddForm&&(
+          <div style={{fontSize:12,color:"#334155",textAlign:"center",padding:"8px 0"}}>Inga planerade matcher</div>
+        )}
+        {upcomingMatches.map(m=>{
+          const sc=m.serie==="14A"?"#f472b6":m.serie==="15A"?"#38bdf8":"#fbbf24";
+          const d=Math.ceil((new Date(m.date)-new Date())/(1000*60*60*24));
+          return(
+            <div key={m.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                  <span style={{fontSize:11,fontWeight:800,color:sc,background:sc+"18",border:"1px solid "+sc+"40",borderRadius:99,padding:"1px 7px"}}>{m.serie}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>vs {m.opponent}</span>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <span style={{fontSize:11,color:"#4a5568"}}>{FMT(m.date)}</span>
+                  {d===0?<span style={{fontSize:11,color:"#22c55e",fontWeight:700}}>Idag!</span>:d>0?<span style={{fontSize:11,color:"#4a5568"}}>om {d} d</span>:null}
+                </div>
+              </div>
+              <button onClick={()=>removeUpcoming(m.id)} style={{background:"none",border:"none",color:"#334155",cursor:"pointer",fontSize:17,padding:4,lineHeight:1}}>×</button>
+            </div>
+          );
+        })}
       </div>
 
       {/* SENASTE MATCH */}

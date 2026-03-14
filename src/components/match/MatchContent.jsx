@@ -22,6 +22,7 @@ export default function MatchContent({
   toggleSelected,
   teamGoals, setTeamGoals,
   saveError, setSaveError,
+  upcomingMatches, loadFromSchedule,
 }) {
   const [confirmNoLines, setConfirmNoLines] = useState(false);
 
@@ -153,6 +154,24 @@ export default function MatchContent({
   return (
     <div>
       <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 16 }}>Trupp</div>
+
+      {/* FRÅN SCHEMA — snabbval från kommande matcher */}
+      {upcomingMatches && upcomingMatches.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginBottom: 6 }}>FRÅN SCHEMA</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {upcomingMatches.map(m => {
+              const sc = m.serie === "14A" ? "#f472b6" : m.serie === "15A" ? "#38bdf8" : "#fbbf24";
+              return (
+                <button key={m.id} onClick={() => loadFromSchedule(m)} style={{ padding: "7px 14px", border: "1px solid " + sc + "50", borderRadius: 99, background: sc + "10", color: sc, fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
+                  vs {m.opponent} · {FMT(m.date)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         <input type="date" value={matchDate} onChange={e => setMatchDate(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "10px 12px", fontFamily: "inherit", outline: "none", colorScheme: "dark" }} />
         <StableInput value={opponent} onChange={e => setOpponent(e.target.value)} placeholder="Motståndare" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "10px 12px", fontFamily: "inherit", outline: "none" }} />

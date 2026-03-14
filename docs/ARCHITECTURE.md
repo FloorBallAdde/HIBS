@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-14 (Sprint 8 klar)*
+*Senast uppdaterad: 2026-03-14 (Sprint 9 klar)*
 
 ---
 
@@ -132,3 +132,4 @@ hibs-app/
 | 6 | 2026-03-13 | MatchNoteModal extraherad + F9: Soft guard ingen kedjor vid matchstart | 248 → 238 | ✅ Klar |
 | 7 | 2026-03-13 | BottomNav extraherad + F6: 3 lagmål per match | 238 → 232 | ✅ Klar |
 | 8 | 2026-03-14 | useSeasonStats hook extraherad + F4: Favoritsystem i Övningsbibliotek | 232 → 217 | ✅ Klar |
+| 9 | 2026-03-14 | Matchschema (upcomingMatches) + AI-genererade matchtexter (Netlify fn + Claude API) | 217 → 210 | ✅ Klar |
