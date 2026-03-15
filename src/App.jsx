@@ -140,7 +140,7 @@ export default function App(){
   };
 
   // SEASON STATS — must be before early returns (Rules of Hooks)
-  const{stats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history);
+  const{stats,keeperStats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history,players);
 
   if(!auth||!profile)return<AuthScreen onAuth={handleAuth}/>;
   if(loadingApp)return(
@@ -216,7 +216,8 @@ export default function App(){
           players={players} gkPlayers={gkPlayers} field={field}
         />}
         {tab==="stats"&&<StatsContent
-          history={history} stats={stats} totalGoals={totalGoals} totalAssists={totalAssists}
+          history={history} stats={stats} keeperStats={keeperStats}
+          totalGoals={totalGoals} totalAssists={totalAssists}
           players={players} trainHistory={trainHistory}
         />}
         {tab==="mer"&&<MerContent

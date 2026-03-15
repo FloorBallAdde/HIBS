@@ -14,6 +14,7 @@ export default function LiveMatchView({
   endMatch,
   abortMatch,
   saveError,
+  matchShots, setMatchShots,
   cupMode,
 }) {
   const allMatchPlayers = players.filter(p =>
@@ -97,6 +98,61 @@ export default function LiveMatchView({
           </div>
         ))}
       </div>
+
+      {/* RÄDDNINGAR — skottknapp för målvaktsstatistik */}
+      {(() => {
+        const keeperNames = players
+          .filter(p => (activeMatch.goalkeeper || []).includes(p.id))
+          .map(p => p.name);
+        const goalsAgainst = parseInt(matchResult.them) || 0;
+        const saves = Math.max(0, (matchShots || 0) - goalsAgainst);
+        const savePct = matchShots > 0
+          ? Math.round(saves / matchShots * 100)
+          : null;
+        return (
+          <div style={{
+            background: "rgba(167,139,250,0.06)",
+            border: "1px solid rgba(167,139,250,0.18)",
+            borderRadius: 14,
+            padding: "12px 14px",
+            marginBottom: 14,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", marginBottom: 2 }}>
+                  🧤 RÄDDNINGAR
+                </div>
+                {keeperNames.length > 0 && (
+                  <div style={{ fontSize: 11, color: "#64748b" }}>{keeperNames.join(" / ")}</div>
+                )}
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 24, fontWeight: 900, color: "#a78bfa", lineHeight: 1 }}>
+                  {saves}
+                </div>
+                {savePct !== null && (
+                  <div style={{ fontSize: 10, color: "#64748b", marginTop: 1 }}>{savePct}% räddade</div>
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                onClick={() => setMatchShots(s => Math.max(0, (s || 0) - 1))}
+                style={{ width: 40, height: 40, border: "1px solid rgba(255,255,255,0.08)", borderRadius: "50%", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 20, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}
+              >−</button>
+              <button
+                onClick={() => setMatchShots(s => (s || 0) + 1)}
+                style={{ flex: 1, height: 40, border: "none", borderRadius: 10, background: "rgba(167,139,250,0.18)", color: "#a78bfa", fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}
+              >
+                + Skott mot mål &nbsp;({matchShots || 0} tot)
+              </button>
+            </div>
+            <div style={{ fontSize: 10, color: "#334155", marginTop: 6 }}>
+              Tryck varje gång motståndet skjuter på mål — inkl. mål insläppta
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Lagmål — visas som interaktiva chips */}
       {activeMatch.teamGoals?.length > 0 && (

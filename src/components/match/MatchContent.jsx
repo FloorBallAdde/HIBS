@@ -26,6 +26,7 @@ export default function MatchContent({
   assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
   toggleSelected, teamGoals, setTeamGoals,
   saveError, setSaveError,
+  matchShots, setMatchShots,
   upcomingMatches, loadFromSchedule,
   cupMode, setCupMode,
 }) {
@@ -53,6 +54,8 @@ export default function MatchContent({
       endMatch={endMatch}
       abortMatch={abortMatch}
       saveError={saveError}
+      matchShots={matchShots}
+      setMatchShots={setMatchShots}
       cupMode={cupMode}
     />
   );

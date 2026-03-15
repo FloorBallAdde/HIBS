@@ -5,7 +5,7 @@ import { FMT, gc, GC } from "../../lib/constants.js";
  * StatsContent — Sprint 10. Säsongsstatistik, spelarleaderboard, matchhistorik.
  */
 export default function StatsContent({
-  history, stats, totalGoals, totalAssists, players, trainHistory,
+  history, stats, keeperStats, totalGoals, totalAssists, players, trainHistory,
 }) {
   const [sortBy, setSortBy] = useState("points");
 
@@ -27,7 +27,13 @@ export default function StatsContent({
   const goalsFor     = withRes.reduce((s, m) => s + (parseInt(m.result?.us)   || 0), 0);
   const goalsAgainst = withRes.reduce((s, m) => s + (parseInt(m.result?.them) || 0), 0);
 
-  const sortedStats = [...stats].sort((a, b) => {
+  // Filtrera bort målvakter från utespelarlistan
+  const fieldStats = stats.filter(p => {
+    const pl = players.find(x => x.name === p.name);
+    return !pl || pl.role !== "malvakt";
+  });
+
+  const sortedStats = [...fieldStats].sort((a, b) => {
     if (sortBy === "goals")   return b.goals   - a.goals;
     if (sortBy === "assists") return b.assists - a.assists;
     if (sortBy === "matches") return (b.matches || 0) - (a.matches || 0);
@@ -186,6 +192,54 @@ export default function StatsContent({
         <div style={{ textAlign: "center", padding: "48px 0", color: "#334155" }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
           <div style={{ fontSize: 13 }}>Inga matcher spelade än</div>
+        </div>
+      )}
+
+      {/* MÅLVAKTSSTATISTIK */}
+      {keeperStats && keeperStats.length > 0 && (
+        <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", marginBottom: 12 }}>🧤 MÅLVAKTSSTATISTIK</div>
+
+          {/* Kolumnhuvud */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(167,139,250,0.1)", marginBottom: 4 }}>
+            <span style={{ flex: 1, fontSize: 9, color: "#334155" }}>KEEPER</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#a78bfa" }}>MAT</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#f87171" }}>INS</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#22c55e" }}>RÄD</span>
+            <span style={{ width: 32, textAlign: "center", fontSize: 9, color: "#38bdf8" }}>%</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#fbbf24" }}>NOLL</span>
+          </div>
+
+          {keeperStats.map((k, i) => (
+            <div key={k.name}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: "#fff" }}>{k.name}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#a78bfa", fontWeight: 700 }}>{k.matches}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#f87171" }}>{k.goalsAgainst}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#22c55e" }}>{k.saves}</span>
+                <span style={{ width: 32, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: k.savePct !== null ? 700 : 400 }}>
+                  {k.savePct !== null ? k.savePct + "%" : "–"}
+                </span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: 700 }}>{k.cleanSheets}</span>
+              </div>
+              {/* V/O/F + GAA */}
+              <div style={{ display: "flex", gap: 10, padding: "4px 0 8px", borderBottom: i < keeperStats.length - 1 ? "1px solid rgba(167,139,250,0.08)" : "none" }}>
+                <span style={{ fontSize: 11, color: "#22c55e" }}>{k.wins}V</span>
+                <span style={{ fontSize: 11, color: "#fbbf24" }}>{k.draws}O</span>
+                <span style={{ fontSize: 11, color: "#f87171" }}>{k.losses}F</span>
+                {k.gaa !== null && (
+                  <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>GAA {k.gaa}</span>
+                )}
+                {k.shots === 0 && (
+                  <span style={{ fontSize: 10, color: "#334155", marginLeft: "auto", fontStyle: "italic" }}>Skott ej trackade ännu</span>
+                )}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ fontSize: 10, color: "#334155", marginTop: 6 }}>
+            INS = insläppta · RÄD = räddningar · NOLL = nollor (clean sheets) · GAA = mål/match
+          </div>
         </div>
       )}
 

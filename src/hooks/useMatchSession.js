@@ -21,6 +21,8 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
   const [saveError, setSaveError] = useState(null);
+  // Skott mot mål (motståndaren) under pågående match — tryck en gång per skott
+  const [matchShots, setMatchShots] = useState(() => ls.get("hibs_match_shots", 0) || 0);
 
   // Cup-läge: sparar trupp + kedjor mellan matcher (turnering/cup-dag)
   const [cupMode, setCupMode] = useState(() => ls.get("hibs_cup_mode", false));
@@ -38,6 +40,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_scorers", matchScorers); }, [matchScorers]);
   useEffect(() => { ls.set("hibs_upcoming", upcomingMatches); }, [upcomingMatches]);
   useEffect(() => { ls.set("hibs_team_goals", teamGoals); }, [teamGoals]);
+  useEffect(() => { ls.set("hibs_match_shots", matchShots); }, [matchShots]);
   useEffect(() => { ls.set("hibs_cup_mode", cupMode); }, [cupMode]);
 
   // COMPUTED
@@ -48,6 +51,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setActiveMatch(null);
     setMatchResult({ us: "", them: "" });
     setMatchScorers([]);
+    setMatchShots(0);
     setOpponent(""); // Töm alltid motståndare — ny match, ny motståndare
 
     if (!cupMode) {
@@ -126,6 +130,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       serie: activeMatch.serie,
       result: matchResult,
       scorers: matchScorers,
+      shots: matchShots,
       players: activeMatch.players,
       goalkeeper: activeMatch.goalkeeper,
       note: activeMatch.note || "",
@@ -202,6 +207,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     startMatch, endMatch, abortMatch,
     addUpcoming, removeUpcoming, loadFromSchedule,
     saveError, setSaveError,
+    matchShots, setMatchShots,
     cupMode, setCupMode,
   };
 }
