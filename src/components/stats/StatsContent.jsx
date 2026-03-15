@@ -30,13 +30,15 @@ export default function StatsContent({
   const sortedStats = [...stats].sort((a, b) => {
     if (sortBy === "goals")   return b.goals   - a.goals;
     if (sortBy === "assists") return b.assists - a.assists;
+    if (sortBy === "matches") return (b.matches || 0) - (a.matches || 0);
     return b.points - a.points;
   });
 
   const SORT_TABS = [
-    { id: "points",  label: "Poäng" },
-    { id: "goals",   label: "Mål"   },
-    { id: "assists", label: "Assist"},
+    { id: "points",  label: "Poäng"  },
+    { id: "goals",   label: "Mål"    },
+    { id: "assists", label: "Assist" },
+    { id: "matches", label: "Matcher"},
   ];
 
   return (
@@ -107,12 +109,13 @@ export default function StatsContent({
           </div>
 
           {/* Column header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>
             <span style={{ width: 24, fontSize: 9, color: "#334155" }}>#</span>
             <span style={{ flex: 1, fontSize: 9, color: "#334155" }}>SPELARE</span>
-            <span style={{ width: 30, textAlign: "center", fontSize: 9, color: "#fbbf24" }}>MÅL</span>
-            <span style={{ width: 30, textAlign: "center", fontSize: 9, color: "#38bdf8" }}>ASS</span>
-            <span style={{ width: 30, textAlign: "center", fontSize: 9, color: "#22c55e", fontWeight: 700 }}>PNT</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#a78bfa" }}>MAT</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#fbbf24" }}>MÅL</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#38bdf8" }}>ASS</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#22c55e", fontWeight: 700 }}>PNT</span>
           </div>
 
           {sortedStats.map((p, i) => {
@@ -122,7 +125,7 @@ export default function StatsContent({
             const isTop = i < 3;
             return (
               <div key={p.name} style={{
-                display: "flex", alignItems: "center", gap: 8,
+                display: "flex", alignItems: "center", gap: 6,
                 padding: "9px 0",
                 borderBottom: i < sortedStats.length - 1 ? "1px solid rgba(255,255,255,0.035)" : "none",
               }}>
@@ -131,9 +134,10 @@ export default function StatsContent({
                 </span>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: pgc.color, flexShrink: 0 }} />
                 <span style={{ flex: 1, fontSize: 13, fontWeight: isTop ? 800 : 500, color: isTop ? "#fff" : "#94a3b8" }}>{p.name}</span>
-                <span style={{ width: 30, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: sortBy === "goals"   ? 900 : 500 }}>{p.goals}</span>
-                <span style={{ width: 30, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: sortBy === "assists" ? 900 : 500 }}>{p.assists}</span>
-                <span style={{ width: 30, textAlign: "center", fontSize: 14, fontWeight: 900, color: sortBy === "points" ? "#22c55e" : "#4a5568" }}>{p.points}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#a78bfa", fontWeight: sortBy === "matches" ? 900 : 400 }}>{p.matches || 0}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: sortBy === "goals"   ? 900 : 400 }}>{p.goals}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: sortBy === "assists" ? 900 : 400 }}>{p.assists}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 900, color: sortBy === "points" ? "#22c55e" : "#4a5568" }}>{p.points}</span>
               </div>
             );
           })}
