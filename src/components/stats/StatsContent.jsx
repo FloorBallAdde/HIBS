@@ -5,7 +5,7 @@ import { FMT, gc, GC } from "../../lib/constants.js";
  * StatsContent — Sprint 10. Säsongsstatistik, spelarleaderboard, matchhistorik.
  */
 export default function StatsContent({
-  history, stats, keeperStats, totalGoals, totalAssists, players, trainHistory,
+  history, stats, keeperStats, shotStats, totalGoals, totalAssists, players, trainHistory,
 }) {
   const [sortBy, setSortBy] = useState("points");
 
@@ -94,6 +94,37 @@ export default function StatsContent({
           </div>
         ))}
       </div>
+
+      {/* SKOTTSTATISTIK — visas bara om skott trackats */}
+      {shotStats && (shotStats.shotsFor > 0 || shotStats.shotsAgainst > 0) && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+
+          {/* HIBS skott */}
+          <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 14, padding: "14px 12px" }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: "#22c55e", marginBottom: 8 }}>🏒 HIBS SKOTT</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#22c55e", lineHeight: 1 }}>{shotStats.shotsFor}</div>
+            <div style={{ fontSize: 10, color: "#4a5568", marginTop: 3 }}>skott på mål</div>
+            {shotStats.shotConversion !== null && (
+              <div style={{ marginTop: 8, fontSize: 13, fontWeight: 800, color: "#22c55e" }}>
+                {shotStats.shotConversion}% <span style={{ fontSize: 10, fontWeight: 400, color: "#4a5568" }}>konvertering</span>
+              </div>
+            )}
+          </div>
+
+          {/* Keeperns räddningsprocent */}
+          <div style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 14, padding: "14px 12px" }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: "#a78bfa", marginBottom: 8 }}>🧤 KEEPER</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#a78bfa", lineHeight: 1 }}>{shotStats.shotsAgainst}</div>
+            <div style={{ fontSize: 10, color: "#4a5568", marginTop: 3 }}>skott mot</div>
+            {shotStats.savePct !== null && (
+              <div style={{ marginTop: 8, fontSize: 13, fontWeight: 800, color: "#a78bfa" }}>
+                {shotStats.savePct}% <span style={{ fontSize: 10, fontWeight: 400, color: "#4a5568" }}>räddade</span>
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
 
       {/* PLAYER LEADERBOARD */}
       {stats.length > 0 && (

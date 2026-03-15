@@ -15,6 +15,7 @@ export default function LiveMatchView({
   abortMatch,
   saveError,
   matchShots, setMatchShots,
+  matchShotsFor, setMatchShotsFor,
   cupMode,
 }) {
   const allMatchPlayers = players.filter(p =>
@@ -99,56 +100,72 @@ export default function LiveMatchView({
         ))}
       </div>
 
-      {/* RÄDDNINGAR — skottknapp för målvaktsstatistik */}
+      {/* SKOTTSTATISTIK — HIBS framåt + Keeper bakåt */}
       {(() => {
         const keeperNames = players
           .filter(p => (activeMatch.goalkeeper || []).includes(p.id))
           .map(p => p.name);
+
+        const goalsFor    = parseInt(matchResult.us)   || 0;
         const goalsAgainst = parseInt(matchResult.them) || 0;
-        const saves = Math.max(0, (matchShots || 0) - goalsAgainst);
-        const savePct = matchShots > 0
-          ? Math.round(saves / matchShots * 100)
-          : null;
+
+        const sf  = matchShotsFor || 0;   // HIBS skott framåt
+        const sa  = matchShots    || 0;   // skott mot vår keeper
+
+        const shotConv = sf > 0 ? Math.round(goalsFor    / sf  * 100) : null;
+        const savePct  = sa > 0 ? Math.round(Math.max(0, sa - goalsAgainst) / sa * 100) : null;
+        const saves    = Math.max(0, sa - goalsAgainst);
+
+        const BtnStyle = (color) => ({
+          flex: 1, height: 56, border: "none", borderRadius: 12,
+          background: color + "22", color, fontSize: 14, fontWeight: 900,
+          fontFamily: "inherit", cursor: "pointer", letterSpacing: "0.02em",
+        });
+        const UndoStyle = {
+          width: 44, height: 44, border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "#4a5568",
+          fontSize: 18, fontFamily: "inherit", cursor: "pointer", flexShrink: 0,
+        };
+
         return (
-          <div style={{
-            background: "rgba(167,139,250,0.06)",
-            border: "1px solid rgba(167,139,250,0.18)",
-            borderRadius: 14,
-            padding: "12px 14px",
-            marginBottom: 14,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", marginBottom: 2 }}>
-                  🧤 RÄDDNINGAR
+          <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px", marginBottom: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#4a5568", marginBottom: 12, letterSpacing: "0.08em" }}>
+              SKOTTSTATISTIK
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+
+              {/* HIBS — skott framåt */}
+              <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.14)", borderRadius: 12, padding: "12px 10px" }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: "#22c55e", marginBottom: 6 }}>🏒 HIBS SKOTT</div>
+                <div style={{ fontSize: 32, fontWeight: 900, color: "#22c55e", lineHeight: 1, marginBottom: 2 }}>{sf}</div>
+                {shotConv !== null
+                  ? <div style={{ fontSize: 10, color: "#4a5568", marginBottom: 10 }}>{goalsFor} mål · {shotConv}%</div>
+                  : <div style={{ fontSize: 10, color: "#334155", marginBottom: 10 }}>{goalsFor} mål</div>
+                }
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => setMatchShotsFor(s => Math.max(0, s - 1))} style={UndoStyle}>−</button>
+                  <button onClick={() => setMatchShotsFor(s => s + 1)} style={BtnStyle("#22c55e")}>+ Skott</button>
                 </div>
+              </div>
+
+              {/* KEEPER — skott mot */}
+              <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.14)", borderRadius: 12, padding: "12px 10px" }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: "#a78bfa", marginBottom: 2 }}>🧤 RÄDDNINGAR</div>
                 {keeperNames.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#64748b" }}>{keeperNames.join(" / ")}</div>
+                  <div style={{ fontSize: 9, color: "#4a5568", marginBottom: 4 }}>{keeperNames.join(" / ")}</div>
                 )}
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "#a78bfa", lineHeight: 1 }}>
-                  {saves}
+                <div style={{ fontSize: 32, fontWeight: 900, color: "#a78bfa", lineHeight: 1, marginBottom: 2 }}>{saves}</div>
+                {savePct !== null
+                  ? <div style={{ fontSize: 10, color: "#4a5568", marginBottom: 10 }}>{sa} skott · {savePct}%</div>
+                  : <div style={{ fontSize: 10, color: "#334155", marginBottom: 10 }}>{goalsAgainst} insläppta</div>
+                }
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => setMatchShots(s => Math.max(0, s - 1))} style={UndoStyle}>−</button>
+                  <button onClick={() => setMatchShots(s => s + 1)} style={BtnStyle("#a78bfa")}>+ Skott</button>
                 </div>
-                {savePct !== null && (
-                  <div style={{ fontSize: 10, color: "#64748b", marginTop: 1 }}>{savePct}% räddade</div>
-                )}
               </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button
-                onClick={() => setMatchShots(s => Math.max(0, (s || 0) - 1))}
-                style={{ width: 40, height: 40, border: "1px solid rgba(255,255,255,0.08)", borderRadius: "50%", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 20, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}
-              >−</button>
-              <button
-                onClick={() => setMatchShots(s => (s || 0) + 1)}
-                style={{ flex: 1, height: 40, border: "none", borderRadius: 10, background: "rgba(167,139,250,0.18)", color: "#a78bfa", fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}
-              >
-                + Skott mot mål &nbsp;({matchShots || 0} tot)
-              </button>
-            </div>
-            <div style={{ fontSize: 10, color: "#334155", marginTop: 6 }}>
-              Tryck varje gång motståndet skjuter på mål — inkl. mål insläppta
+
             </div>
           </div>
         );

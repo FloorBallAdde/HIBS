@@ -27,6 +27,7 @@ export default function MatchContent({
   toggleSelected, teamGoals, setTeamGoals,
   saveError, setSaveError,
   matchShots, setMatchShots,
+  matchShotsFor, setMatchShotsFor,
   upcomingMatches, loadFromSchedule,
   cupMode, setCupMode,
 }) {
@@ -56,6 +57,8 @@ export default function MatchContent({
       saveError={saveError}
       matchShots={matchShots}
       setMatchShots={setMatchShots}
+      matchShotsFor={matchShotsFor}
+      setMatchShotsFor={setMatchShotsFor}
       cupMode={cupMode}
     />
   );

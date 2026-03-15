@@ -101,5 +101,19 @@ export function useSeasonStats(history, players = []) {
   const totalAssists = useMemo(() => stats.reduce((s, p) => s + p.assists, 0), [stats]);
   const latestMatch  = history[0] || null;
 
-  return { stats, keeperStats, totalGoals, totalAssists, latestMatch };
+  // Lagövergripande skottstatistik (aggregat över hela säsongen)
+  const shotStats = useMemo(() => {
+    const shotsFor     = history.reduce((s, m) => s + (parseInt(m.shots_for) || 0), 0);
+    const shotsAgainst = history.reduce((s, m) => s + (parseInt(m.shots)     || 0), 0);
+    const goalsFor     = history.reduce((s, m) => s + (parseInt(m.result?.us)   || 0), 0);
+    const goalsAgainst = history.reduce((s, m) => s + (parseInt(m.result?.them) || 0), 0);
+    return {
+      shotsFor,
+      shotsAgainst,
+      shotConversion: shotsFor     > 0 ? Math.round(goalsFor     / shotsFor     * 100) : null,
+      savePct:        shotsAgainst > 0 ? Math.round(Math.max(0, shotsAgainst - goalsAgainst) / shotsAgainst * 100) : null,
+    };
+  }, [history]);
+
+  return { stats, keeperStats, shotStats, totalGoals, totalAssists, latestMatch };
 }
