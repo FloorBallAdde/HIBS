@@ -4,7 +4,6 @@ import { sbPost, sbPatch } from "../lib/supabase.js";
 import { TODAY, mkLine } from "../lib/constants.js";
 
 // Kapslar in all match-session state, persistence och actions.
-// Minskar App.jsx med ~90 rader.
 export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHistory }) {
   // STATE
   const [lines, setLines] = useState(() => ls.get("hibs_lines2", [mkLine(1), mkLine(2), mkLine(3)]));
@@ -23,6 +22,9 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
   const [saveError, setSaveError] = useState(null);
 
+  // Cup-läge: sparar trupp + kedjor mellan matcher (turnering/cup-dag)
+  const [cupMode, setCupMode] = useState(() => ls.get("hibs_cup_mode", false));
+
   // PERSISTENCE
   useEffect(() => { ls.set("hibs_lines2", lines); }, [lines]);
   useEffect(() => { ls.set("hibs_reserves2", reserves); }, [reserves]);
@@ -36,6 +38,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_scorers", matchScorers); }, [matchScorers]);
   useEffect(() => { ls.set("hibs_upcoming", upcomingMatches); }, [upcomingMatches]);
   useEffect(() => { ls.set("hibs_team_goals", teamGoals); }, [teamGoals]);
+  useEffect(() => { ls.set("hibs_cup_mode", cupMode); }, [cupMode]);
 
   // COMPUTED
   const usedInLines = new Set(lines.flatMap(l => Object.values(l.slots).filter(Boolean)));
@@ -45,11 +48,15 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setActiveMatch(null);
     setMatchResult({ us: "", them: "" });
     setMatchScorers([]);
-    setSelected(new Set());
-    setOpponent("");
-    setGoalkeeper([]);
-    setLines([mkLine(1), mkLine(2), mkLine(3)]);
-    setReserves([]);
+    setOpponent(""); // Töm alltid motståndare — ny match, ny motståndare
+
+    if (!cupMode) {
+      // Normalt läge: nollställ trupp och kedjor
+      setSelected(new Set());
+      setGoalkeeper([]);
+      setLines([mkLine(1), mkLine(2), mkLine(3)]);
+      setReserves([]);
+    }
     // OBS: teamGoals nollställs INTE — lagmål gäller ofta hela turneringen
   };
 
@@ -73,33 +80,38 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     }
   };
 
-  const removeSlot = (li, pos) =>
-    setLines(ls2 => ls2.map((l, i) => i === li ? { ...l, slots: { ...l.slots, [pos]: null } } : l));
+  const removeSlot = (li, pos) => setLines(ls2 => ls2.map((l, i) => i === li ? { ...l, slots: { ...l.slots, [pos]: null } } : l));
+  const renameLine = (li, name) => setLines(ls2 => ls2.map((l, i) => i === li ? { ...l, name } : l));
+  const deleteLine = li => setLines(ls2 => ls2.filter((_, i) => i !== li));
 
-  const renameLine = (li, name) =>
-    setLines(ls2 => ls2.map((l, i) => i === li ? { ...l, name } : l));
+  const swapSlots = (li1, pos1, li2, pos2) => setLines(prev => {
+    const next = prev.map(l => ({ ...l, slots: { ...l.slots } }));
+    const p1 = next[li1]?.slots[pos1] ?? null;
+    const p2 = next[li2]?.slots[pos2] ?? null;
+    if (next[li1]) next[li1].slots[pos1] = p2;
+    if (next[li2]) next[li2].slots[pos2] = p1;
+    return next;
+  });
 
-  const deleteLine = li =>
-    setLines(ls2 => ls2.filter((_, i) => i !== li));
-
-  // Swap två slots — fungerar inom samma linje och över linjer
-  const swapSlots = (li1, pos1, li2, pos2) =>
-    setLines(prev => {
-      const next = prev.map(l => ({ ...l, slots: { ...l.slots } }));
-      const p1 = next[li1]?.slots[pos1] ?? null;
-      const p2 = next[li2]?.slots[pos2] ?? null;
-      if (next[li1]) next[li1].slots[pos1] = p2;
-      if (next[li2]) next[li2].slots[pos2] = p1;
-      return next;
-    });
-
-  const toggleSelected = id =>
-    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleSelected = id => setSelected(s => {
+    const n = new Set(s);
+    n.has(id) ? n.delete(id) : n.add(id);
+    return n;
+  });
 
   const startMatch = () => {
     if (!opponent.trim() || selected.size === 0) return;
     const goals = teamGoals.map(g => g.trim()).filter(Boolean);
-    const m = { id: Date.now(), date: matchDate, opponent: opponent.trim(), serie, players: [...selected], goalkeeper, note: "", teamGoals: goals };
+    const m = {
+      id: Date.now(),
+      date: matchDate,
+      opponent: opponent.trim(),
+      serie,
+      players: [...selected],
+      goalkeeper,
+      note: "",
+      teamGoals: goals,
+    };
     setActiveMatch(m);
     setMatchStep("live");
   };
@@ -108,10 +120,16 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     if (!activeMatch || !clubId) return;
     setSaveError(null);
     const entry = {
-      club_id: clubId, date: activeMatch.date, opponent: activeMatch.opponent,
-      serie: activeMatch.serie, result: matchResult, scorers: matchScorers,
-      players: activeMatch.players, goalkeeper: activeMatch.goalkeeper,
-      note: activeMatch.note || "", created_by: auth.uid,
+      club_id: clubId,
+      date: activeMatch.date,
+      opponent: activeMatch.opponent,
+      serie: activeMatch.serie,
+      result: matchResult,
+      scorers: matchScorers,
+      players: activeMatch.players,
+      goalkeeper: activeMatch.goalkeeper,
+      note: activeMatch.note || "",
+      created_by: auth.uid,
     };
     let saved;
     try {
@@ -121,14 +139,15 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       return;
     }
     if (!Array.isArray(saved) || !saved[0]) {
-      setSaveError("Kunde inte spara matchen (fel: " + (saved?.message || saved?.code || "okänt") + "). Försök igen.");
+      setSaveError("Kunde inte spara matchen (" + (saved?.message || saved?.code || "okänt") + "). Försök igen.");
       return;
     }
     setHistory(p => [saved[0], ...p]);
-    // Ta bort matchande kommande match från schemat (same opponent + date)
+
     setUpcomingMatches(prev => prev.filter(
       m => !(m.opponent === activeMatch.opponent && m.date === activeMatch.date)
     ));
+
     const playedIds = [...activeMatch.players, ...activeMatch.goalkeeper];
     for (const pid of playedIds) {
       const pl = players.find(x => x.id === pid);
@@ -138,23 +157,23 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
         setPlayers(p => p.map(x => x.id === pid ? { ...x, matches: nm, last_played: activeMatch.date } : x));
       }
     }
+
     _resetMatch();
-    setMatchStep("select");
+    // Cup-läge: hoppa direkt till kedjor (trupp sparad) — annars tillbaka till trupp
+    setMatchStep(cupMode ? "lines" : "select");
   };
 
   const abortMatch = () => {
     _resetMatch();
-    setMatchStep("select");
+    setMatchStep(cupMode ? "lines" : "select");
     setConfirmAbort(false);
   };
 
-  // KOMMANDE MATCHER — lägg till, ta bort, ladda in till match-trupp
-  const addUpcoming = (m) =>
-    setUpcomingMatches(prev => [...prev, { id: Date.now(), ...m }].sort((a, b) => a.date.localeCompare(b.date)));
-
-  const removeUpcoming = (id) =>
-    setUpcomingMatches(prev => prev.filter(m => m.id !== id));
-
+  // KOMMANDE MATCHER
+  const addUpcoming = (m) => setUpcomingMatches(prev =>
+    [...prev, { id: Date.now(), ...m }].sort((a, b) => a.date.localeCompare(b.date))
+  );
+  const removeUpcoming = (id) => setUpcomingMatches(prev => prev.filter(m => m.id !== id));
   const loadFromSchedule = (scheduled) => {
     setOpponent(scheduled.opponent);
     setMatchDate(scheduled.date);
@@ -163,19 +182,26 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   };
 
   return {
-    lines, setLines, reserves, setReserves,
-    selected, setSelected, matchDate, setMatchDate,
-    opponent, setOpponent, serie, setSerie,
-    goalkeeper, setGoalkeeper, activeMatch, setActiveMatch,
-    matchResult, setMatchResult, matchScorers, setMatchScorers,
+    lines, setLines,
+    reserves, setReserves,
+    selected, setSelected,
+    matchDate, setMatchDate,
+    opponent, setOpponent,
+    serie, setSerie,
+    goalkeeper, setGoalkeeper,
+    activeMatch, setActiveMatch,
+    matchResult, setMatchResult,
+    matchScorers, setMatchScorers,
     upcomingMatches, setUpcomingMatches,
     matchStep, setMatchStep,
     confirmAbort, setConfirmAbort,
     teamGoals, setTeamGoals,
     usedInLines,
     assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
-    toggleSelected, startMatch, endMatch, abortMatch,
+    toggleSelected,
+    startMatch, endMatch, abortMatch,
     addUpcoming, removeUpcoming, loadFromSchedule,
     saveError, setSaveError,
+    cupMode, setCupMode,
   };
 }
