@@ -163,12 +163,15 @@ export default function ScrambleMode({ players, field }) {
                     <div
                       key={id}
                       data-swap-slot={slotData}
-                      onTouchStart={e => touchSwap.onTouchStart(e, { ci, pi }, p.name)}
                       onTouchMove={touchSwap.onTouchMove}
                       onTouchEnd={touchSwap.onTouchEnd}
-                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: pi < chain.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", touchAction: "none", userSelect: "none", cursor: "grab" }}
+                      style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: pi < chain.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", userSelect: "none" }}
                     >
-                      <span style={{ fontSize: 11, color: "#4a5568", flexShrink: 0 }}>⠿</span>
+                      {/* ⠿ Drag-handtag — ENDA elementet som startar drag */}
+                      <span
+                        onTouchStart={e => touchSwap.onTouchStart(e, { ci, pi }, p.name)}
+                        style={{ fontSize: 16, color: "#2e3d50", padding: "8px 6px", touchAction: "none", cursor: "grab", flexShrink: 0, lineHeight: 1, letterSpacing: "1px" }}
+                      >⠿</span>
                       <span style={{ fontSize: 10, fontWeight: 900, color: pc, background: pc + "15", border: "1px solid " + pc + "30", borderRadius: 6, padding: "3px 6px", width: 38, textAlign: "center", flexShrink: 0 }}>{pos}</span>
                       <div style={{ width: 8, height: 8, borderRadius: "50%", background: gc(p.group).color, flexShrink: 0 }} />
                       <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{p.name}</span>

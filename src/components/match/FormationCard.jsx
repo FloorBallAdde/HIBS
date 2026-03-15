@@ -97,22 +97,19 @@ export default function FormationCard({
                   onTouchEnd={touchSwap?.onTouchEnd}
                   style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, userSelect: "none" }}
                 >
-                  {/* ⠿ Drag-handtag — ENDA elementen som startar drag.
-                      Begränsar oavsiktlig flytt vid scrollning eller tryckning på spelarnamn. */}
+                  {/* ⠿ Drag-handtag — ENDA elementet som startar drag */}
                   <span
                     onTouchStart={e => touchSwap?.onTouchStart(e, { li: lineIndex, pos }, player.name)}
                     style={{
-                      fontSize: 15, color: "#4a5568",
-                      padding: "6px 6px",
+                      fontSize: 16,
+                      color: "#2e3d50",
+                      padding: "8px 6px",
                       touchAction: "none",
                       cursor: "grab",
-                      borderRadius: 6,
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.06)",
                       flexShrink: 0,
                       lineHeight: 1,
+                      letterSpacing: "1px",
                     }}
-                    title="Dra för att byta position"
                   >
                     ⠿
                   </span>
