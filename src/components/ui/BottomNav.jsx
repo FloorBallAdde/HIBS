@@ -1,6 +1,6 @@
 /**
- * BottomNav — 2026-stil med SVG-ikoner och pill-indikator.
- * Props: tab, setTab, setMerSub
+ * BottomNav — 5 tabs: Hem, Träning, Match, Statistik, Mer.
+ * Sprint 10: Statistik-tab tillagd.
  */
 
 function HomeIcon({ active }) {
@@ -41,6 +41,20 @@ function MatchIcon({ active }) {
   );
 }
 
+function StatsIcon({ active }) {
+  const c = active ? "#22c55e" : "#3a4257";
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="4" y="13" width="3.5" height="7" rx="1"
+        fill={active ? "rgba(34,197,94,0.3)" : "none"} stroke={c} strokeWidth="1.6"/>
+      <rect x="10.25" y="8" width="3.5" height="12" rx="1"
+        fill={active ? "rgba(34,197,94,0.3)" : "none"} stroke={c} strokeWidth="1.6"/>
+      <rect x="16.5" y="4" width="3.5" height="16" rx="1"
+        fill={active ? "rgba(34,197,94,0.55)" : "none"} stroke={c} strokeWidth="1.6"/>
+    </svg>
+  );
+}
+
 function MerIcon({ active }) {
   const c = active ? "#22c55e" : "#3a4257";
   const pts = [[7,7],[12,7],[17,7],[7,12],[12,12],[17,12],[7,17],[12,17],[17,17]];
@@ -55,10 +69,11 @@ function MerIcon({ active }) {
 }
 
 const TABS = [
-  { id: "home",    label: "Hem",     Icon: HomeIcon     },
-  { id: "traning", label: "Träning", Icon: TrainingIcon },
-  { id: "match",   label: "Match",   Icon: MatchIcon    },
-  { id: "mer",     label: "Mer",     Icon: MerIcon      },
+  { id: "home",    label: "Hem",      Icon: HomeIcon     },
+  { id: "traning", label: "Träning",  Icon: TrainingIcon },
+  { id: "match",   label: "Match",    Icon: MatchIcon    },
+  { id: "stats",   label: "Statistik", Icon: StatsIcon   },
+  { id: "mer",     label: "Mer",      Icon: MerIcon      },
 ];
 
 export default function BottomNav({ tab, setTab, setMerSub }) {
@@ -70,8 +85,8 @@ export default function BottomNav({ tab, setTab, setMerSub }) {
       WebkitBackdropFilter: "blur(24px)",
       borderTop: "1px solid rgba(255,255,255,0.055)",
       display: "flex",
-      padding: "6px 10px 18px",
-      gap: 6,
+      padding: "6px 4px 18px",
+      gap: 2,
       zIndex: 100,
     }}>
       {TABS.map(({ id, label, Icon }) => {
@@ -87,12 +102,12 @@ export default function BottomNav({ tab, setTab, setMerSub }) {
               background: active
                 ? "linear-gradient(160deg,rgba(34,197,94,0.13),rgba(34,197,94,0.06))"
                 : "transparent",
-              borderRadius: 16,
+              borderRadius: 14,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 5,
+              gap: 4,
               padding: "10px 0 12px",
               cursor: "pointer",
               fontFamily: "inherit",
@@ -101,26 +116,20 @@ export default function BottomNav({ tab, setTab, setMerSub }) {
               transition: "background 0.2s ease",
             }}
           >
-            {/* Top accent line when active */}
             <div style={{
-              position: "absolute",
-              top: 0,
-              left: "50%",
+              position: "absolute", top: 0, left: "50%",
               transform: "translateX(-50%)",
-              width: active ? 24 : 0,
-              height: 2,
+              width: active ? 20 : 0, height: 2,
               borderRadius: "0 0 4px 4px",
               background: "linear-gradient(90deg,#16a34a,#22c55e,#4ade80)",
               transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1)",
               opacity: active ? 1 : 0,
             }}/>
-
             <Icon active={active} />
-
             <span style={{
-              fontSize: 9,
+              fontSize: 8,
               fontWeight: active ? 800 : 600,
-              letterSpacing: "0.07em",
+              letterSpacing: "0.05em",
               color: active ? "#22c55e" : "#3a4257",
               transition: "color 0.2s ease",
             }}>

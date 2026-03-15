@@ -11,6 +11,7 @@ import KedjorTab from "./components/training/KedjorTab.jsx";
 import PlaneraTab from "./components/training/PlaneraTab.jsx";
 import OvningarTab from "./components/training/OvningarTab.jsx";
 import HomeContent from "./components/home/HomeContent.jsx";
+import StatsContent from "./components/stats/StatsContent.jsx";
 import MatchContent from "./components/match/MatchContent.jsx";
 import MatchNoteModal from "./components/match/MatchNoteModal.jsx";
 import MerContent from "./components/mer/MerContent.jsx";
@@ -213,6 +214,10 @@ export default function App(){
         {tab==="match"&&<MatchContent
           {...matchSession}
           players={players} gkPlayers={gkPlayers} field={field}
+        />}
+        {tab==="stats"&&<StatsContent
+          history={history} stats={stats} totalGoals={totalGoals} totalAssists={totalAssists}
+          players={players} trainHistory={trainHistory}
         />}
         {tab==="mer"&&<MerContent
           pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches}
