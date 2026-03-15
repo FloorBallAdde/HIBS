@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#0b0d14"/>
+
+  <!-- Green glow ring (decorative) -->
+  <circle cx="256" cy="256" r="188" fill="none" stroke="rgba(34,197,94,0.12)" stroke-width="1.5"/>
+
+  <!-- H letterform — left pillar -->
+  <rect x="110" y="130" width="68" height="252" rx="16" fill="#ffffff"/>
+
+  <!-- H letterform — right pillar -->
+  <rect x="334" y="130" width="68" height="252" rx="16" fill="#ffffff"/>
+
+  <!-- H crossbar — green accent -->
+  <rect x="110" y="222" width="292" height="68" rx="16" fill="#22c55e"/>
+
+  <!-- Floorball ball — bottom right corner accent -->
+  <circle cx="396" cy="396" r="44" fill="none" stroke="#22c55e" stroke-width="6" opacity="0.6"/>
+  <circle cx="396" cy="396" r="6" fill="#22c55e" opacity="0.5"/>
+  <!-- Ball holes -->
+  <circle cx="380" cy="383" r="4" fill="rgba(34,197,94,0.4)"/>
+  <circle cx="407" cy="388" r="4" fill="rgba(34,197,94,0.4)"/>
+  <circle cx="390" cy="410" r="4" fill="rgba(34,197,94,0.4)"/>
+</svg>
