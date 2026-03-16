@@ -371,7 +371,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   /* ── Portrait/landscape detection ── */
   const isPortrait = typeof window !== "undefined" && window.innerHeight > window.innerWidth;
 
-  /* ── Styles ── */
+  /* ── Shared style helpers (stable, no sub-components) ── */
   const tb = (active, accent) => ({
     display: "flex", alignItems: "center", justifyContent: "center",
     borderRadius: 9, height: 34,
@@ -383,8 +383,8 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   });
   const sep = <div style={{ width: 1, height: 22, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />;
 
-  /* ── Toolbar ── */
-  const Toolbar = ({ compact = false }) => (
+  /* ── Inline JSX helpers (NOT sub-components — avoids remount-on-render) ── */
+  const toolbarJSX = (compact = false) => (
     <div style={{
       display: "flex", alignItems: "center", gap: compact ? 3 : 4,
       padding: compact ? "4px 4px" : "6px 4px",
@@ -409,7 +409,6 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
       {sep}
       <button onClick={() => setTool("eraser")} style={{ ...tb(tool === "eraser"), width: 34, fontSize: 16 }}>⌫</button>
       {sep}
-      {/* Spelarfärg-prickar */}
       {PLAYER_COLS.map(c => (
         <button key={c.hex} onClick={() => { setTool("player"); setPlayerColor(c.hex); }}
           style={{
@@ -418,7 +417,6 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
             border: playerColor === c.hex ? "2.5px solid #fff" : "1.5px solid rgba(255,255,255,0.2)",
           }} />
       ))}
-      {/* Spelare-knappar 1–10 med auto-increment indikator */}
       {[1,2,3,4,5,6,7,8,9,10].map(n => (
         <button key={n} onClick={() => { setTool("player"); setPlayerNum(n); }}
           style={{
@@ -428,8 +426,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
             background: tool === "player" && playerNum === n ? playerColor : "rgba(255,255,255,0.04)",
             border: "1.5px solid " + (tool === "player" && playerNum === n ? playerColor : "rgba(255,255,255,0.1)"),
             color: tool === "player" && playerNum === n ? "#fff" : "#4a5568",
-          }}>
-          {n}
+          }}>{n}
         </button>
       ))}
       {sep}
@@ -438,20 +435,17 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
       <button onClick={undo}  style={{ ...tb(false), width: 34, fontSize: 15 }}>↩</button>
       <button onClick={clear} style={{ ...tb(false), width: 34, fontSize: 14, color: "#f87171" }}>🗑</button>
       {sep}
-      <button
-        onClick={() => setFullscreen(f => !f)}
+      <button onClick={() => setFullscreen(f => !f)}
         style={{ ...tb(fullscreen, "#a78bfa"), width: 34, fontSize: 15 }}
-        title={fullscreen ? "Stäng helskärm" : "Helskärm"}
-      >
+        title={fullscreen ? "Stäng helskärm" : "Helskärm"}>
         {fullscreen ? "✕" : "⛶"}
       </button>
-      {/* Save button — only shown when onSave prop provided */}
       {onSave && (<>
         {sep}
-        <button
-          onClick={() => { const d = exportDrawing(); if (d) onSave(d); }}
-          style={{ ...tb(false, "#22c55e"), padding: "0 12px", background: "rgba(34,197,94,0.15)", border: "1.5px solid rgba(34,197,94,0.5)", color: "#22c55e", fontWeight: 800, fontSize: 13 }}
-        >💾 Spara</button>
+        <button onClick={() => { const d = exportDrawing(); if (d) onSave(d); }}
+          style={{ ...tb(false, "#22c55e"), padding: "0 12px", background: "rgba(34,197,94,0.15)", border: "1.5px solid rgba(34,197,94,0.5)", color: "#22c55e", fontWeight: 800, fontSize: 13 }}>
+          💾 Spara
+        </button>
         {onCancel && (
           <button onClick={onCancel} style={{ ...tb(false), padding: "0 10px", color: "#f87171", border: "1.5px solid rgba(248,113,113,0.3)" }}>Avbryt</button>
         )}
@@ -459,13 +453,8 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     </div>
   );
 
-  /* ── Board (canvas + overlay) ── */
-  const Board = ({ style = {} }) => (
-    <div ref={wrapperRef}
-      style={{
-        flex: 1, position: "relative", overflow: "hidden",
-        touchAction: "none", ...style,
-      }}>
+  const boardJSX = (
+    <div ref={wrapperRef} style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "none" }}>
       <canvas ref={canvasRef}
         style={{
           position: "absolute", inset: 0,
@@ -488,8 +477,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     </div>
   );
 
-  /* ── Status bar ── */
-  const StatusBar = () => (
+  const statusJSX = (
     <div style={{ padding: "4px 8px", fontSize: 10, color: "#2a5498", textAlign: "center", flexShrink: 0, background: "#0d1117" }}>
       {tool === "player"
         ? `Placerar spelare ${playerNum} — tryck tom yta = ny, dra befintlig = flytta`
@@ -501,33 +489,26 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
 
   /* ── Fullscreen overlay ── */
   if (fullscreen) {
-    // On portrait phone: rotate 90° so the board appears landscape
     const fsStyle = isPortrait
       ? {
-          position: "fixed",
-          width:  "100vh",
-          height: "100vw",
-          top:    "50%",
-          left:   "50%",
+          position: "fixed", width: "100vh", height: "100vw",
+          top: "50%", left: "50%",
           transform: "translate(-50%, -50%) rotate(90deg)",
           transformOrigin: "center center",
-          zIndex: 999,
-          background: "#0d1117",
+          zIndex: 999, background: "#0d1117",
           display: "flex", flexDirection: "column",
         }
       : {
-          position: "fixed",
-          inset: 0,
-          zIndex: 999,
-          background: "#0d1117",
+          position: "fixed", inset: 0,
+          zIndex: 999, background: "#0d1117",
           display: "flex", flexDirection: "column",
         };
 
     return (
       <div style={fsStyle}>
-        <Toolbar compact />
-        <Board />
-        <StatusBar />
+        {toolbarJSX(true)}
+        {boardJSX}
+        {statusJSX}
       </div>
     );
   }
@@ -535,9 +516,9 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   /* ── Normal inline view ── */
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 128px)", background: "#0d1117" }}>
-      <Toolbar />
-      <Board />
-      <StatusBar />
+      {toolbarJSX(false)}
+      {boardJSX}
+      {statusJSX}
     </div>
   );
 }
