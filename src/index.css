@@ -22,8 +22,8 @@ button {
   transition: opacity 0.12s ease, transform 0.12s ease;
 }
 button:active {
-  opacity: 0.6;
-  transform: scale(0.96);
+  opacity: 0.55;
+  transform: scale(0.93);
 }
 
 /* ── Animationer ─────────────────────────────────────────────*/
