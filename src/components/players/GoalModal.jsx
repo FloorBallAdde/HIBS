@@ -74,24 +74,40 @@ export default function GoalModal({ player, onSave, onClose }) {
   });
 
   const debounceRef = useRef(null);
+  const goalsRef = useRef(goals); // Håller alltid senaste goals för close-save
+  const dirtyRef = useRef(false);  // Har det gjorts ändringar som inte sparats?
+
+  /** Sparar direkt — används vid stängning och manuell spara */
+  const saveNow = useCallback(async (latestGoals) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setSaveStatus("saving");
+    try {
+      await onSave(latestGoals);
+      setSaveStatus("saved");
+      setLastSaved(new Date());
+      dirtyRef.current = false;
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (e) {
+      setSaveStatus("error");
+    }
+  }, [onSave]);
 
   /** Auto-save med 1.5s debounce */
   const triggerSave = useCallback((updatedGoals) => {
+    goalsRef.current = updatedGoals;
+    dirtyRef.current = true;
     setSaveStatus("dirty");
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      setSaveStatus("saving");
-      try {
-        await onSave(updatedGoals);
-        setSaveStatus("saved");
-        setLastSaved(new Date());
-        // Återgå till idle efter 3s
-        setTimeout(() => setSaveStatus("idle"), 3000);
-      } catch (e) {
-        setSaveStatus("error");
-      }
-    }, 1500);
-  }, [onSave]);
+    debounceRef.current = setTimeout(() => saveNow(updatedGoals), 1500);
+  }, [saveNow]);
+
+  /** Stäng säkert — spara alltid eventuella osparade ändringar först */
+  const handleClose = useCallback(async () => {
+    if (dirtyRef.current) {
+      await saveNow(goalsRef.current);
+    }
+    onClose();
+  }, [saveNow, onClose]);
 
   const updateGoal = (id, patch) => {
     const updated = goals.map(g =>
@@ -153,7 +169,7 @@ export default function GoalModal({ player, onSave, onClose }) {
 
   return (
     <div
-      onClick={onClose}
+      onClick={handleClose}
       className="hibs-overlay"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
     >
@@ -168,7 +184,7 @@ export default function GoalModal({ player, onSave, onClose }) {
             <div style={{ fontSize: 15, fontWeight: 900, color: "#fff" }}>Individuella mål</div>
             <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700 }}>{player.name}</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#4a5568", fontSize: 22, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>×</button>
+          <button onClick={handleClose} style={{ background: "none", border: "none", color: "#4a5568", fontSize: 22, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>×</button>
         </div>
 
         {/* Save status */}
@@ -335,7 +351,7 @@ export default function GoalModal({ player, onSave, onClose }) {
         {/* Manual save + close */}
         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{ flex: 1, padding: "13px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#4a5568", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
           >
             Stäng
