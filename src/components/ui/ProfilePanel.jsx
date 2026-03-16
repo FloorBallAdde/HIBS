@@ -20,7 +20,7 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
           <div>
             <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>{profile?.clubs?.name || "Min klubb"}</div>
             <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>
-              {profile?.username || "Tränare"} · {profile?.role === "owner" ? "👑 Ägare" : "🏒 Tränare"}
+              {profile?.username || "Tränare"} · {profile?.role === "owner" ? "👑 Ägare" : profile?.role === "admin" ? "⚡ Admin" : "🏒 Tränare"}
             </div>
           </div>
           <button
@@ -29,8 +29,8 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
           >✕</button>
         </div>
 
-        {/* Inbjudningskod — bara för ägare */}
-        {profile?.role === "owner" && (
+        {/* Inbjudningskod — för ägare och admin */}
+        {(profile?.role === "owner" || profile?.role === "admin") && (
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
             <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 700, marginBottom: 6 }}>BJUD IN TRÄNARE</div>
             <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 10, lineHeight: 1.5 }}>
@@ -61,7 +61,7 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{profile?.username}</div>
-              <div style={{ fontSize: 10, color: "#a78bfa" }}>👑 Ägare</div>
+              <div style={{ fontSize: 10, color: profile?.role === "admin" ? "#60a5fa" : "#a78bfa" }}>{profile?.role === "admin" ? "⚡ Admin" : "👑 Ägare"}</div>
             </div>
           </div>
           {/* Godkända co-coaches */}
@@ -72,7 +72,7 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{c.username}</div>
-                <div style={{ fontSize: 10, color: "#22c55e" }}>🏒 Tränare</div>
+                <div style={{ fontSize: 10, color: c.role === "admin" ? "#60a5fa" : "#22c55e" }}>{c.role === "admin" ? "⚡ Admin" : "🏒 Tränare"}</div>
               </div>
             </div>
           ))}

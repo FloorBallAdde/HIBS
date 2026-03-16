@@ -166,18 +166,27 @@ export default function App(){
 
   // Load pending coaches if owner
   useEffect(()=>{
-    if(profile?.role==="owner"&&clubId&&tok){
+    if((profile?.role==="owner"||profile?.role==="admin")&&clubId&&tok){
       sbGet("profiles","club_id=eq."+clubId+"&approved=eq.false&role=eq.coach&select=*",tok).then(r=>{if(Array.isArray(r))setPendingCoaches(r);});
       sbGet("profiles","club_id=eq."+clubId+"&approved=eq.true&id=neq."+auth.uid+"&select=id,username,role",tok).then(r=>{if(Array.isArray(r))setCoachStaff(r);});
     }
   },[profile]);
 
-  // Load profile on startup
+  // Load profile on startup — hämtar klubb separat (ingen FK-join nödvändig)
   useEffect(()=>{
     if(auth?.tok&&!profile){
-      sbGet("profiles","id=eq."+auth.uid+"&select=*,clubs(*)",auth.tok).then(res=>{
-        if(Array.isArray(res)&&res[0])setProfile(res[0]);
-        else{ls.clear();setAuth(null);}
+      sbGet("profiles","id=eq."+auth.uid+"&select=*",auth.tok).then(async res=>{
+        if(Array.isArray(res)&&res[0]){
+          const p=res[0];
+          if(p.club_id){
+            const club=await sbGet("clubs","id=eq."+p.club_id,auth.tok);
+            if(Array.isArray(club)&&club[0])p.clubs=club[0];
+          }
+          setProfile(p);
+        } else{
+          ["hibs_token","hibs_uid","hibs_refresh"].forEach(k=>ls.remove(k));
+          setAuth(null);
+        }
       });
     }
   },[auth]);
@@ -259,8 +268,8 @@ export default function App(){
         <div>
           <div style={{fontSize:16,fontWeight:900,color:"#fff",letterSpacing:"-0.3px"}}>{profile?.clubs?.name||"HIBS Tränarapp"}</div>
           <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-            <span style={{fontSize:10,color:profile?.role==="owner"?"#a78bfa":"#22c55e",fontWeight:700,background:profile?.role==="owner"?"rgba(167,139,250,0.1)":"rgba(34,197,94,0.1)",padding:"2px 7px",borderRadius:99,border:"1px solid "+(profile?.role==="owner"?"rgba(167,139,250,0.3)":"rgba(34,197,94,0.3)")}}>
-              {profile?.role==="owner"?"👑 Ägare":"🏒 Tränare"}
+            <span style={{fontSize:10,color:profile?.role==="owner"?"#a78bfa":profile?.role==="admin"?"#60a5fa":"#22c55e",fontWeight:700,background:profile?.role==="owner"?"rgba(167,139,250,0.1)":profile?.role==="admin"?"rgba(96,165,250,0.1)":"rgba(34,197,94,0.1)",padding:"2px 7px",borderRadius:99,border:"1px solid "+(profile?.role==="owner"?"rgba(167,139,250,0.3)":profile?.role==="admin"?"rgba(96,165,250,0.3)":"rgba(34,197,94,0.3)")}}>
+              {profile?.role==="owner"?"👑 Ägare":profile?.role==="admin"?"⚡ Admin":"🏒 Tränare"}
             </span>
             <span style={{fontSize:10,color:"#4a5568"}}>{profile?.username||""}</span>
           </div>

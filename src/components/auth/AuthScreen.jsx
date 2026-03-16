@@ -49,7 +49,7 @@ export default function AuthScreen({ onAuth }) {
     const profile = Array.isArray(prof) && prof[0] ? prof[0] : null;
     if (!profile) return err("Profil: " + JSON.stringify(prof).slice(0, 150));
     if (!profile.club_id) { setAuthData({ tok, uid, username: profile.username || username }); setMode("choose_club"); setLoading(false); return; }
-    if (!profile.approved && profile.role !== "owner") { setLoading(false); setMode("pending"); return; }
+    if (!profile.approved && profile.role !== "owner" && profile.role !== "admin") { setLoading(false); setMode("pending"); return; }
     ls.set("hibs_token", tok); ls.set("hibs_uid", uid);
     onAuth({ tok, uid, profile });
   };
