@@ -24,8 +24,18 @@ export default function AuthScreen({ onAuth }) {
     setLoading(true); setError("");
     const res = await sbAuth("signup", { email, password, data: { username } });
     if (res.error) return err(res.error.message || "Registrering misslyckades");
-    setMode("check_email");
-    setLoading(false);
+    // Om mailbekräftelse är AV returnerar Supabase session direkt
+    if (res.access_token) {
+      const tok = res.access_token; const uid = res.user.id;
+      if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
+      setAuthData({ tok, uid, username });
+      setLoading(false);
+      setMode("choose_club");
+    } else {
+      // Mailbekräftelse är PÅ — visa "kolla mailen"
+      setMode("check_email");
+      setLoading(false);
+    }
   };
 
   const doLogin = async () => {
@@ -120,7 +130,7 @@ export default function AuthScreen({ onAuth }) {
             {mode === "register" && <input value={username} onChange={e => setUsername(e.target.value)} placeholder="Användarnamn" type="text" style={inpStyle} />}
             <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" type="email" style={inpStyle} />
             <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Lösenord" type="password" style={inpStyle} />
-            {mode === "register" && <div style={{ fontSize: 11, color: "#4a5568", marginBottom: 12, lineHeight: 1.5 }}>Efter registrering skickas ett bekräftelsemail. Logga in när du bekräftat.</div>}
+            {mode === "register" && <div style={{ fontSize: 11, color: "#4a5568", marginBottom: 12, lineHeight: 1.5 }}>Välj ett säkert lösenord med minst 6 tecken.</div>}
             {error && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 12 }}>{error}</div>}
             <Btn label={mode === "login" ? "Logga in" : "Skapa konto"} onClick={mode === "login" ? doLogin : doRegister} />
           </div>
