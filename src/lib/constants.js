@@ -114,6 +114,39 @@ export const CHECKLIST_INIT = [
   },
 ];
 
+// ── Fitness status (P10 — Skadelogg & tillgänglighet) ────────────────────────
+export const FITNESS_OPTIONS = ["fit", "limited", "injured"];
+export const FITNESS_META = {
+  fit:     { label: "Fit",       color: "#22c55e", bg: "rgba(34,197,94,0.08)",   emoji: "✓" },
+  limited: { label: "Begränsad", color: "#fbbf24", bg: "rgba(251,191,36,0.08)",  emoji: "⚡" },
+  injured: { label: "Skadad",    color: "#f87171", bg: "rgba(248,113,113,0.08)", emoji: "🤕" },
+};
+export const nextFitness = (f) => {
+  const opts = FITNESS_OPTIONS;
+  return opts[(opts.indexOf(f || "fit") + 1) % opts.length];
+};
+
+// ── UI design tokens (T6 — CSS token migration, step 1) ──────────────────────
+// Use these in new components to gradually replace hardcoded colour strings.
+export const THEME = {
+  bg:         "#0b0d14",
+  card:       "rgba(255,255,255,0.02)",
+  cardBorder: "rgba(255,255,255,0.06)",
+  divider:    "rgba(255,255,255,0.04)",
+  muted:      "#4a5568",
+  subtle:     "#64748b",
+  text:       "#fff",
+  textSub:    "#94a3b8",
+  green:      "#22c55e",  greenBg:    "rgba(34,197,94,0.10)",
+  purple:     "#a78bfa",  purpleBg:   "rgba(167,139,250,0.10)",
+  pink:       "#f472b6",  pinkBg:     "rgba(244,114,182,0.10)",
+  yellow:     "#fbbf24",  yellowBg:   "rgba(251,191,36,0.10)",
+  red:        "#f87171",  redBg:      "rgba(248,113,113,0.10)",
+  blue:       "#38bdf8",  blueBg:     "rgba(56,189,248,0.10)",
+  orange:     "#fb923c",  orangeBg:   "rgba(251,146,60,0.10)",
+  r: { sm: 8, md: 12, lg: 16, xl: 20, pill: 99 },
+};
+
 // Roadmap initial data
 export const ROADMAP_INIT = [
   {

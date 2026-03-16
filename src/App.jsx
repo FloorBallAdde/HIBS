@@ -7,6 +7,7 @@ import { useSeasonStats } from "./hooks/useSeasonStats.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
+import ObservationModal from "./components/players/ObservationModal.jsx";
 import KedjorTab from "./components/training/KedjorTab.jsx";
 import PlaneraTab from "./components/training/PlaneraTab.jsx";
 import OvningarTab from "./components/training/OvningarTab.jsx";
@@ -55,6 +56,7 @@ export default function App(){
   const [noteModal,setNoteModal]=useState(null);
   const [matchNoteModal,setMatchNoteModal]=useState(null);
   const [goalModal,setGoalModal]=useState(null);
+  const [obsModal,setObsModal]=useState(null); // P9: Spelarobservationer
   const [trainNoteInput,setTrainNoteInput]=useState("");
   const [pendingCoaches,setPendingCoaches]=useState([]);
 
@@ -164,6 +166,7 @@ export default function App(){
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
       {noteModal&&<NoteModal player={noteModal} onClose={()=>setNoteModal(null)} onSave={async text=>{await updP(noteModal.id,{note:text});setNoteModal(null);}}/>}
       {goalModal&&<GoalModal player={goalModal} onClose={()=>setGoalModal(null)} onSave={async goals=>{await updP(goalModal.id,{goals});}}/>}
+      {obsModal&&<ObservationModal player={obsModal} onClose={()=>setObsModal(null)} onSave={async observations=>{await updP(obsModal.id,{observations});setObsModal(p=>p?{...p,observations}:null);}}/>}
       <MatchNoteModal key={matchNoteModal?.id} match={matchNoteModal} onClose={()=>setMatchNoteModal(null)} onSave={async txt=>{await sbPatch("matches",matchNoteModal.id,{note:txt},tok);setHistory(p=>p.map(m=>m.id===matchNoteModal.id?{...m,note:txt}:m));setMatchNoteModal(null);}}/>
 
       <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -224,13 +227,13 @@ export default function App(){
           pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches}
           merSub={merSub} setMerSub={setMerSub}
           players={players} filterGroup={filterGroup} setFilterGroup={setFilterGroup}
-          setNoteModal={setNoteModal} setGoalModal={setGoalModal}
+          setNoteModal={setNoteModal} setGoalModal={setGoalModal} setObsModal={setObsModal}
           checklist={checklist} setChecklist={setChecklist}
           history={history} setHistory={setHistory}
           setMatchNoteModal={setMatchNoteModal}
           roadmap={roadmap} setRoadmap={setRoadmap}
           openPeriod={openPeriod} setOpenPeriod={setOpenPeriod}
-          tok={tok} sbPatch={sbPatch} sbDel={sbDel}
+          tok={tok} sbPatch={sbPatch} sbDel={sbDel} updP={updP}
         />}
       </div>
 

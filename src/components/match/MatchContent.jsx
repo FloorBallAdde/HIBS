@@ -314,14 +314,26 @@ export default function MatchContent({
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {gp.map(p => {
                 const on = selected.has(p.id);
-                const inj = p.note && p.note?.startsWith("⚠");
+                const inj = (p.note && p.note?.startsWith("⚠")) || p.fitness === "injured";
+                const ltd = !inj && p.fitness === "limited";
                 return (
                   <button
                     key={p.id}
                     onClick={() => !inj && toggleSelected(p.id)}
-                    style={{ padding: "7px 14px", border: "1.5px solid " + (on ? GC[g].color : inj ? "rgba(255,80,80,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 99, background: on ? GC[g].bg : inj ? "rgba(255,80,80,0.05)" : "transparent", color: on ? GC[g].color : inj ? "rgba(255,80,80,0.4)" : "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: inj ? "not-allowed" : "pointer" }}
+                    style={{
+                      padding: "7px 14px",
+                      border: "1.5px solid " + (on ? GC[g].color : inj ? "rgba(255,80,80,0.3)" : ltd ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.08)"),
+                      borderRadius: 99,
+                      background: on ? GC[g].bg : inj ? "rgba(255,80,80,0.05)" : ltd ? "rgba(251,191,36,0.05)" : "transparent",
+                      color: on ? GC[g].color : inj ? "rgba(255,80,80,0.4)" : ltd ? "#fbbf24" : "#4a5568",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      fontFamily: "inherit",
+                      cursor: inj ? "not-allowed" : "pointer",
+                      opacity: inj ? 0.6 : 1,
+                    }}
                   >
-                    {p.name}{inj ? " ⚠" : ""}
+                    {p.name}{inj ? " 🤕" : ltd ? " ⚡" : ""}
                   </button>
                 );
               })}
