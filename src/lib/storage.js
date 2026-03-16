@@ -13,6 +13,11 @@ const ls = {
       localStorage.setItem(k, JSON.stringify(v));
     } catch {}
   },
+  remove: (k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch {}
+  },
   clear: () => {
     try {
       localStorage.clear();

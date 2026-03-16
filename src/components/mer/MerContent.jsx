@@ -129,7 +129,9 @@ function PlayerChip({ p, col, isDragging, onDragStart, onDragEnd, updP }) {
  * Sprint 11: P10 fitness-badge + P9 observations-knapp tillagda.
  */
 export default function MerContent({
-  pendingCoaches, setPendingCoaches, merSub, setMerSub,
+  pendingCoaches, setPendingCoaches,
+  coachStaff, setCoachStaff,
+  merSub, setMerSub,
   players, filterGroup, setFilterGroup,
   setNoteModal, setGoalModal, setObsModal,
   checklist, setChecklist,
@@ -145,7 +147,11 @@ export default function MerContent({
           {pendingCoaches.map(pc => (
             <div key={pc.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <span style={{ fontSize: 13, color: "#fff", fontWeight: 700 }}>{pc.username}</span>
-              <button onClick={async () => { await sbPatch("profiles", pc.id, { approved: true }, tok); setPendingCoaches(p => p.filter(x => x.id !== pc.id)); }} style={{ padding: "6px 14px", border: "none", borderRadius: 99, background: "#22c55e", color: "#0b0d14", fontSize: 11, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}>Godkänn</button>
+              <button onClick={async () => {
+                await sbPatch("profiles", pc.id, { approved: true }, tok);
+                setPendingCoaches(p => p.filter(x => x.id !== pc.id));
+                if (setCoachStaff) setCoachStaff(prev => [...prev, { id: pc.id, username: pc.username, role: "coach" }]);
+              }} style={{ padding: "6px 14px", border: "none", borderRadius: 99, background: "#22c55e", color: "#0b0d14", fontSize: 11, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}>Godkänn</button>
             </div>
           ))}
         </div>

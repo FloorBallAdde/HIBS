@@ -103,7 +103,7 @@ export default function App(){
     try{
       const[pl,ma,tr,tn,ex]=await Promise.all([
         sbGet("players","club_id=eq."+clubId+"&order=name.asc",tok),
-        sbGet("matches","club_id=eq."+clubId+"&order=date.desc",tok),
+        sbGet("matches","club_id=eq."+clubId+"&is_upcoming=eq.false&order=date.desc",tok),
         sbGet("training_sessions","club_id=eq."+clubId+"&order=date.desc",tok),
         sbGet("training_notes","club_id=eq."+clubId+"&order=created_at.desc",tok),
         sbGet("exercises","order=name.asc",tok),
@@ -189,7 +189,13 @@ export default function App(){
 
   const handleSignOut=async()=>{
     if(tok)await sbAuth("logout",{}).catch(()=>{});
-    ls.clear();
+    // Clear only auth & session keys — preserve checklist/roadmap local state
+    ["hibs_token","hibs_uid","hibs_refresh",
+     "hibs_active","hibs_result","hibs_scorers","hibs_lines2",
+     "hibs_reserves2","hibs_sel2","hibs_mdate2","hibs_opp2",
+     "hibs_serie2","hibs_gk2","hibs_team_goals","hibs_match_shots",
+     "hibs_match_shots_for","hibs_live_match_id","hibs_cup_mode",
+     "hibs_upcoming"].forEach(k=>ls.remove(k));
     setAuth(null);setProfile(null);setPlayers([]);setHistory([]);setTrainHistory([]);setTrainNotes([]);setExercises([]);
   };
 
@@ -315,6 +321,7 @@ export default function App(){
         />}
         {tab==="mer"&&<MerContent
           pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches}
+          coachStaff={coachStaff} setCoachStaff={setCoachStaff}
           merSub={merSub} setMerSub={setMerSub}
           players={players} filterGroup={filterGroup} setFilterGroup={setFilterGroup}
           setNoteModal={setNoteModal} setGoalModal={setGoalModal} setObsModal={setObsModal}

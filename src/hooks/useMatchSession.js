@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import ls from "../lib/storage.js";
-import { sbPost, sbPatch } from "../lib/supabase.js";
+import { sbGet, sbPost, sbPatch, sbDel } from "../lib/supabase.js";
 import { TODAY, mkLine } from "../lib/constants.js";
 
 // Kapslar in all match-session state, persistence och actions.
@@ -16,7 +16,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [activeMatch, setActiveMatch] = useState(() => ls.get("hibs_active", null));
   const [matchResult, setMatchResult] = useState(() => ls.get("hibs_result", { us: "", them: "" }));
   const [matchScorers, setMatchScorers] = useState(() => ls.get("hibs_scorers", []) || []);
-  const [upcomingMatches, setUpcomingMatches] = useState(() => ls.get("hibs_upcoming", []));
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [matchStep, setMatchStep] = useState("select");
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
@@ -32,6 +32,14 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   // Cup-läge: sparar trupp + kedjor mellan matcher (turnering/cup-dag)
   const [cupMode, setCupMode] = useState(() => ls.get("hibs_cup_mode", false));
 
+  // Ladda kommande matcher från Supabase när clubId och tok finns tillgängliga
+  useEffect(() => {
+    if (!clubId || !tok) return;
+    sbGet("matches", "club_id=eq." + clubId + "&is_upcoming=eq.true&order=date.asc", tok)
+      .then(r => { if (Array.isArray(r)) setUpcomingMatches(r); })
+      .catch(() => {});
+  }, [clubId, tok]);
+
   // PERSISTENCE
   useEffect(() => { ls.set("hibs_lines2", lines); }, [lines]);
   useEffect(() => { ls.set("hibs_reserves2", reserves); }, [reserves]);
@@ -43,7 +51,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_active", activeMatch); }, [activeMatch]);
   useEffect(() => { ls.set("hibs_result", matchResult); }, [matchResult]);
   useEffect(() => { ls.set("hibs_scorers", matchScorers); }, [matchScorers]);
-  useEffect(() => { ls.set("hibs_upcoming", upcomingMatches); }, [upcomingMatches]);
+  // upcomingMatches sparas i Supabase — ingen localStorage-persistens
   useEffect(() => { ls.set("hibs_team_goals", teamGoals); }, [teamGoals]);
   useEffect(() => { ls.set("hibs_match_shots", matchShots); }, [matchShots]);
   useEffect(() => { ls.set("hibs_match_shots_for", matchShotsFor); }, [matchShotsFor]);
@@ -207,6 +215,13 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setLiveMatchId(null);
     setHistory(p => [saved[0], ...p]);
 
+    // Ta bort kommande match från Supabase om den finns
+    const matchingUpcoming = upcomingMatches.find(
+      m => m.opponent === activeMatch.opponent && m.date === activeMatch.date
+    );
+    if (matchingUpcoming?.id && tok) {
+      sbDel("matches", matchingUpcoming.id, tok).catch(() => {});
+    }
     setUpcomingMatches(prev => prev.filter(
       m => !(m.opponent === activeMatch.opponent && m.date === activeMatch.date)
     ));
@@ -233,10 +248,24 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   };
 
   // KOMMANDE MATCHER
-  const addUpcoming = (m) => setUpcomingMatches(prev =>
-    [...prev, { id: Date.now(), ...m }].sort((a, b) => a.date.localeCompare(b.date))
-  );
-  const removeUpcoming = (id) => setUpcomingMatches(prev => prev.filter(m => m.id !== id));
+  const addUpcoming = async (m) => {
+    if (clubId && tok) {
+      try {
+        const row = { club_id: clubId, date: m.date, opponent: m.opponent, serie: m.serie || "14A", is_upcoming: true, created_by: auth?.uid };
+        const saved = await sbPost("matches", row, tok);
+        const newMatch = Array.isArray(saved) && saved[0] ? saved[0] : { ...m, id: Date.now() };
+        setUpcomingMatches(prev => [...prev, newMatch].sort((a, b) => a.date.localeCompare(b.date)));
+      } catch {
+        setUpcomingMatches(prev => [...prev, { id: Date.now(), ...m }].sort((a, b) => a.date.localeCompare(b.date)));
+      }
+    } else {
+      setUpcomingMatches(prev => [...prev, { id: Date.now(), ...m }].sort((a, b) => a.date.localeCompare(b.date)));
+    }
+  };
+  const removeUpcoming = async (id) => {
+    if (tok) sbDel("matches", id, tok).catch(() => {});
+    setUpcomingMatches(prev => prev.filter(m => m.id !== id));
+  };
   const loadFromSchedule = (scheduled) => {
     setOpponent(scheduled.opponent);
     setMatchDate(scheduled.date);
