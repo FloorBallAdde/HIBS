@@ -57,6 +57,7 @@ export default function App(){
   const [matchNoteModal,setMatchNoteModal]=useState(null);
   const [goalModal,setGoalModal]=useState(null);
   const [obsModal,setObsModal]=useState(null); // P9: Spelarobservationer
+  const [profileOpen,setProfileOpen]=useState(false); // Profilpanel i header
   const [trainNoteInput,setTrainNoteInput]=useState("");
   const [pendingCoaches,setPendingCoaches]=useState([]);
 
@@ -169,16 +170,73 @@ export default function App(){
       {obsModal&&<ObservationModal player={obsModal} onClose={()=>setObsModal(null)} onSave={async observations=>{await updP(obsModal.id,{observations});setObsModal(p=>p?{...p,observations}:null);}}/>}
       <MatchNoteModal key={matchNoteModal?.id} match={matchNoteModal} onClose={()=>setMatchNoteModal(null)} onSave={async txt=>{await sbPatch("matches",matchNoteModal.id,{note:txt},tok);setHistory(p=>p.map(m=>m.id===matchNoteModal.id?{...m,note:txt}:m));setMatchNoteModal(null);}}/>
 
+      {/* ── Profilpanel ─────────────────────────────────────────────── */}
+      {profileOpen&&(
+        <div onClick={()=>setProfileOpen(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.72)",zIndex:300,display:"flex",alignItems:"flex-end"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"#111827",borderRadius:"20px 20px 0 0",padding:"24px 20px 40px",boxSizing:"border-box"}}>
+            {/* Rubrik */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <div>
+                <div style={{fontSize:16,fontWeight:900,color:"#fff"}}>{profile?.clubs?.name||"Min klubb"}</div>
+                <div style={{fontSize:11,color:"#4a5568",marginTop:2}}>
+                  {profile?.username||"Tränare"} · {profile?.role==="owner"?"👑 Ägare":"🏒 Tränare"}
+                </div>
+              </div>
+              <button onClick={()=>setProfileOpen(false)} style={{background:"none",border:"none",color:"#4a5568",fontSize:22,cursor:"pointer",padding:4,lineHeight:1,fontFamily:"inherit"}}>✕</button>
+            </div>
+
+            {/* Inbjudningskod — bara för ägare */}
+            {profile?.role==="owner"&&(
+              <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+                <div style={{fontSize:10,color:"#22c55e",fontWeight:700,marginBottom:6}}>BJUD IN TRÄNARE</div>
+                <div style={{fontSize:12,color:"#94a3b8",marginBottom:10,lineHeight:1.5}}>
+                  Be kollegan ladda ner appen, registrera sig och sedan söka på klubbnamnet nedan i "Gå med i befintlig klubb".
+                </div>
+                <div style={{fontSize:15,fontWeight:900,color:"#fff",letterSpacing:"0.02em",marginBottom:10,fontFamily:"monospace",background:"rgba(255,255,255,0.04)",borderRadius:8,padding:"8px 12px"}}>
+                  {profile?.clubs?.name}
+                </div>
+                <button
+                  onClick={()=>{
+                    if(navigator.clipboard){navigator.clipboard.writeText(profile?.clubs?.name||"");}
+                    else{const ta=document.createElement("textarea");ta.value=profile?.clubs?.name||"";document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);}
+                  }}
+                  style={{width:"100%",padding:"11px 0",background:"rgba(34,197,94,0.1)",border:"1px solid rgba(34,197,94,0.3)",borderRadius:10,color:"#22c55e",fontSize:13,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}
+                >
+                  📋 Kopiera klubbnamn
+                </button>
+              </div>
+            )}
+
+            {/* Väntande tränare-notis */}
+            {pendingCoaches.length>0&&(
+              <div style={{background:"rgba(251,191,36,0.06)",border:"1px solid rgba(251,191,36,0.2)",borderRadius:12,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#fbbf24"}}>
+                ⏳ {pendingCoaches.length} tränare väntar på godkännande — se Mer-fliken
+              </div>
+            )}
+
+            {/* Logga ut */}
+            <button onClick={()=>{setProfileOpen(false);handleSignOut();}} style={{width:"100%",padding:"13px 0",background:"rgba(248,113,113,0.08)",border:"1px solid rgba(248,113,113,0.2)",borderRadius:12,color:"#f87171",fontSize:14,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>
+              Logga ut
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sticky header ───────────────────────────────────────────── */}
       <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
           <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.3px"}}>HIBS Tränarapp</div>
-          <div style={{fontSize:11,color:"#4a5568",marginTop:2}}>{profile?.clubs?.name||"P2015"} - {profile?.username||"Tränare"}</div>
+          <div style={{fontSize:11,color:"#4a5568",marginTop:2}}>{profile?.clubs?.name||"P2015"} · {profile?.username||"Tränare"}</div>
         </div>
-        {tab==="mer"&&!merSub
-          ?<button onClick={handleSignOut} style={{fontSize:11,color:"#f87171",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Logga ut</button>
-          :tab==="mer"&&merSub
-          ?<button onClick={()=>setMerSub(null)} style={{fontSize:12,color:"#4a5568",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>Tillbaka</button>
-          :null
+        {tab==="mer"&&merSub
+          ?<button onClick={()=>setMerSub(null)} style={{fontSize:12,color:"#4a5568",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>‹ Tillbaka</button>
+          :<button
+            onClick={()=>setProfileOpen(true)}
+            title="Profil & inbjudan"
+            style={{width:34,height:34,borderRadius:"50%",background:"rgba(167,139,250,0.15)",border:"1.5px solid rgba(167,139,250,0.3)",color:"#a78bfa",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit",fontWeight:900,flexShrink:0}}
+          >
+            {(profile?.username||"T")[0].toUpperCase()}
+          </button>
         }
       </div>
 

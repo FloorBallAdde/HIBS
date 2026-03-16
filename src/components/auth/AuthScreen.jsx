@@ -149,17 +149,34 @@ export default function AuthScreen({ onAuth }) {
         {mode === "join_club" && (
           <div>
             <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Gå med i klubb</div>
-            <div style={{ fontSize: 12, color: "#4a5568", marginBottom: 16 }}>Sök på klubbnamn.</div>
+            <div style={{ fontSize: 12, color: "#4a5568", marginBottom: 16, lineHeight: 1.5 }}>
+              Skriv in klubbnamnet du fått av tränaren — t.ex. <span style={{ color: "#fff", fontWeight: 700 }}>HIBS P2015</span>
+            </div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input value={clubSearch} onChange={e => setClubSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && searchClubs()} placeholder="Sök klubb..." style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 14, padding: "12px 14px", fontFamily: "inherit", outline: "none" }} />
+              <input
+                value={clubSearch}
+                onChange={e => setClubSearch(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && searchClubs()}
+                placeholder="Klistra in eller skriv klubbnamn..."
+                autoFocus
+                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 14, padding: "12px 14px", fontFamily: "inherit", outline: "none" }}
+              />
               <button onClick={searchClubs} style={{ padding: "12px 16px", background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: 12, color: "#38bdf8", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Sök</button>
             </div>
             {clubs.map(club => (
-              <div key={club.id} onClick={() => doJoinClub(club)} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, marginBottom: 8, cursor: "pointer" }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{club.name}</div>
+              <div key={club.id} onClick={() => doJoinClub(club)} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 12, marginBottom: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{club.name}</div>
+                  <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>Tryck för att skicka förfrågan</div>
+                </div>
+                <span style={{ color: "#22c55e", fontSize: 18 }}>›</span>
               </div>
             ))}
-            {clubs.length === 0 && clubSearch && <div style={{ fontSize: 12, color: "#4a5568", textAlign: "center", padding: 16 }}>Inga klubbar hittades</div>}
+            {clubs.length === 0 && clubSearch && (
+              <div style={{ fontSize: 12, color: "#4a5568", textAlign: "center", padding: 16, background: "rgba(255,255,255,0.02)", borderRadius: 12 }}>
+                Inga klubbar hittades — kontrollera stavningen
+              </div>
+            )}
             {error && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 10 }}>{error}</div>}
             <button onClick={() => setMode("choose_club")} style={{ width: "100%", padding: "10px 0", border: "none", background: "none", color: "#4a5568", fontSize: 13, fontFamily: "inherit", cursor: "pointer", marginTop: 8 }}>Tillbaka</button>
           </div>

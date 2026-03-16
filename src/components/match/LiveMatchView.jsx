@@ -263,29 +263,55 @@ export default function LiveMatchView({
         </div>
       </div>
 
-      {/* Ångra senaste */}
+      {/* Händelselogg — tryck ✕ för att ta bort valfri händelse */}
       {matchScorers.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <button
-            onClick={() => {
-              const last = matchScorers[matchScorers.length - 1];
-              if (last?.type === "goal") setMatchResult(r => ({ ...r, us: Math.max(0, (parseInt(r.us) || 0) - 1) }));
-              setMatchScorers(s => s.slice(0, -1));
-            }}
-            style={{
-              padding: "8px 16px",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 99,
-              background: "transparent",
-              color: "#4a5568",
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            Ångra senaste
-          </button>
+          <div style={{ fontSize: 9, color: "#4a5568", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>
+            HÄNDELSELOGG — tryck ✕ för att ångra
+          </div>
+          {[...matchScorers].reverse().map((s, ri) => {
+            const origIdx = matchScorers.length - 1 - ri;
+            const isGoal = s.type === "goal";
+            return (
+              <div
+                key={origIdx}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: isGoal ? "rgba(251,191,36,0.05)" : "rgba(56,189,248,0.04)",
+                  border: "1px solid " + (isGoal ? "rgba(251,191,36,0.15)" : "rgba(56,189,248,0.12)"),
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                  marginBottom: 4,
+                }}
+              >
+                <span style={{ fontSize: 13, color: isGoal ? "#fbbf24" : "#38bdf8", fontWeight: 600 }}>
+                  {isGoal ? "⚽" : "🎯"} {s.name}
+                </span>
+                <button
+                  onClick={() => {
+                    if (isGoal) setMatchResult(r => ({ ...r, us: Math.max(0, (parseInt(r.us) || 0) - 1) }));
+                    setMatchScorers(prev => prev.filter((_, idx) => idx !== origIdx));
+                  }}
+                  style={{
+                    background: "rgba(248,113,113,0.08)",
+                    border: "1px solid rgba(248,113,113,0.2)",
+                    borderRadius: 6,
+                    color: "#f87171",
+                    cursor: "pointer",
+                    padding: "3px 8px",
+                    fontSize: 13,
+                    lineHeight: 1,
+                    fontFamily: "inherit",
+                    fontWeight: 700,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
