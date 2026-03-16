@@ -63,7 +63,10 @@ export default function AuthScreen({ onAuth }) {
       if (cr?.code || (cr?.message && !cr?.id)) return err("Klubb fel: " + (cr.message || cr.code || JSON.stringify(cr)));
       const club = Array.isArray(cr) ? cr[0] : cr;
       if (!club?.id) return err("Klubb skapades inte: " + JSON.stringify(cr));
-      const pr = await sbPatch("profiles", uid, { username: uname, club_id: club.id, role: "owner", approved: true }, tok);
+      const existingP = await sbGet("profiles", "id=eq." + uid, tok);
+      const pr = (Array.isArray(existingP) && existingP.length > 0)
+        ? await sbPatch("profiles", uid, { username: uname, club_id: club.id, role: "owner", approved: true }, tok)
+        : await sbPost("profiles", { id: uid, username: uname, club_id: club.id, role: "owner", approved: true }, tok);
       if (pr?.code) return err("Profil fel: " + (pr.message || pr.code));
       for (const p of DEFAULT_PLAYERS) {
         await sbPost("players", { club_id: club.id, name: p.name, group: p.group, role: p.role || "utespelare", matches: 0, note: "", goals: [] }, tok);
@@ -77,7 +80,12 @@ export default function AuthScreen({ onAuth }) {
   const doJoinClub = async (club) => {
     setLoading(true); setError("");
     const { tok, uid, username: uname } = authData;
-    await sbPatch("profiles", uid, { username: uname, club_id: club.id, role: "coach", approved: false }, tok);
+    const existing = await sbGet("profiles", "id=eq." + uid, tok);
+    if (Array.isArray(existing) && existing.length > 0) {
+      await sbPatch("profiles", uid, { username: uname, club_id: club.id, role: "coach", approved: false }, tok);
+    } else {
+      await sbPost("profiles", { id: uid, username: uname, club_id: club.id, role: "coach", approved: false }, tok);
+    }
     setLoading(false); setMode("pending");
   };
 
