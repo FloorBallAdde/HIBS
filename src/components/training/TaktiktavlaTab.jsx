@@ -35,7 +35,7 @@ function drawRink(ctx, W, H) {
   });
 }
 
-/* ─────────── Arrow helper ─────────── */
+/* ─────────── Arrow helpers ─────────── */
 function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
   const dx = x2-x1, dy = y2-y1;
   const len = Math.sqrt(dx*dx+dy*dy);
@@ -45,16 +45,67 @@ function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
   ctx.save();
   ctx.strokeStyle = color; ctx.fillStyle = color;
   ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
-  // shaft (stop before arrowhead)
   const stopX = x2 - Math.cos(angle) * head * 0.6;
   const stopY = y2 - Math.sin(angle) * head * 0.6;
   ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(stopX, stopY); ctx.stroke();
-  // arrowhead
   ctx.beginPath();
   ctx.moveTo(x2, y2);
   ctx.lineTo(x2 - head*Math.cos(angle-Math.PI/6), y2 - head*Math.sin(angle-Math.PI/6));
   ctx.lineTo(x2 - head*Math.cos(angle+Math.PI/6), y2 - head*Math.sin(angle+Math.PI/6));
   ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* Curved arrow for running paths — quadratic bezier, control point offset perpendicular */
+function drawCurvedArrow(ctx, x1, y1, x2, y2, color, lw) {
+  const dx = x2-x1, dy = y2-y1;
+  const len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 4) return;
+  // Control point: midpoint + 35% of length perpendicular to the left of travel direction
+  const mx = (x1+x2)/2, my = (y1+y2)/2;
+  const px = -dy/len, py = dx/len; // perpendicular unit vector (left)
+  const offset = len * 0.35;
+  const cx = mx + px * offset, cy = my + py * offset;
+
+  // Tangent at end point for arrowhead direction
+  const tx = x2 - cx, ty = y2 - cy;
+  const tLen = Math.sqrt(tx*tx+ty*ty);
+  const angle = Math.atan2(ty/tLen, tx/tLen);
+  const head = Math.max(12, lw * 5);
+
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+  // Draw bezier shaft (stop slightly before tip for clean arrowhead)
+  const t = 1 - (head * 0.6) / len;
+  const shaftEndX = (1-t)*(1-t)*x1 + 2*(1-t)*t*cx + t*t*x2;
+  const shaftEndY = (1-t)*(1-t)*y1 + 2*(1-t)*t*cy + t*t*y2;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.quadraticCurveTo(cx, cy, shaftEndX, shaftEndY);
+  ctx.stroke();
+
+  // Arrowhead at end
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head*Math.cos(angle-Math.PI/6), y2 - head*Math.sin(angle-Math.PI/6));
+  ctx.lineTo(x2 - head*Math.cos(angle+Math.PI/6), y2 - head*Math.sin(angle+Math.PI/6));
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* Dashed line for passes — no arrowhead, just dashed stroke */
+function drawDashedLine(ctx, x1, y1, x2, y2, color, lw) {
+  const dx = x2-x1, dy = y2-y1;
+  const len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 4) return;
+  const dashLen = Math.max(8, lw * 4), gapLen = Math.max(5, lw * 2.5);
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.lineCap = "round"; ctx.setLineDash([dashLen, gapLen]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.setLineDash([]); // reset
   ctx.restore();
 }
 
@@ -259,13 +310,19 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
       const { xF, yF } = getWrapperFraction(e);
       const newTok = { id: ++tokenIdRef.current, type: tool, num: tool==="player" ? playerNum : undefined, color: tool==="player" ? playerColor : undefined, xF, yF };
       setTokens(prev => [...prev, newTok]);
-      if (tool === "player") setPlayerNum(n => n >= 10 ? 1 : n + 1);
+      if (tool === "player") {
+        setPlayerNum(n => n >= 10 ? 1 : n + 1);
+      } else {
+        // After placing a cone or ball → auto-switch to select so user can drag it right away
+        setTool("select");
+      }
       return;
     }
 
     snap();
 
-    if (tool === "arrow") {
+    // Two-point tools: arrow, run (curved arrow), pass (dashed line)
+    if (tool === "arrow" || tool === "run" || tool === "pass") {
       const pt = getCanvasPos(e);
       arrowStart.current = pt;
       arrowPreSnap.current = canvasRef.current.getContext("2d").getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -285,11 +342,12 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     const c = canvasRef.current;
     const ctx = c.getContext("2d");
 
-    if (tool === "arrow" && arrowStart.current && arrowPreSnap.current) {
-      // Restore pre-snap and draw live preview
+    if ((tool === "arrow" || tool === "run" || tool === "pass") && arrowStart.current && arrowPreSnap.current) {
       ctx.putImageData(arrowPreSnap.current, 0, 0);
       const pt = getCanvasPos(e);
-      drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      if (tool === "arrow") drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      else if (tool === "run")  drawCurvedArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      else if (tool === "pass") drawDashedLine(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
       return;
     }
 
@@ -315,11 +373,13 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
 
   const onCanvasUp = useCallback((e) => {
     e.preventDefault();
-    if (tool === "arrow" && arrowStart.current && arrowPreSnap.current && isDrawing.current) {
+    if ((tool === "arrow" || tool === "run" || tool === "pass") && arrowStart.current && arrowPreSnap.current && isDrawing.current) {
       const c = canvasRef.current; const ctx = c.getContext("2d");
       const pt = getCanvasPos(e);
       ctx.putImageData(arrowPreSnap.current, 0, 0);
-      drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      if (tool === "arrow") drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      else if (tool === "run")  drawCurvedArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      else if (tool === "pass") drawDashedLine(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
     }
     isDrawing.current = false; lastPt.current = null; arrowStart.current = null; arrowPreSnap.current = null;
   }, [tool, penColor, penSize]); // eslint-disable-line
@@ -371,8 +431,13 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
 
       {/* Select / move tool */}
       <button onClick={() => setTool("select")}
-        style={{ ...tb(tool==="select","#a78bfa"), width:34, fontSize:16 }} title="Markera & flytta">
-        ↖
+        style={{ ...tb(tool==="select","#a78bfa"), padding:"0 8px", gap:4, fontSize:13, fontWeight: tool==="select"?800:600,
+          background: tool==="select"?"rgba(167,139,250,0.18)":"transparent",
+          border:"1.5px solid "+(tool==="select"?"#a78bfa":"rgba(255,255,255,0.15)"),
+          color: tool==="select"?"#a78bfa":"#6b7280",
+        }} title="Flytta – klicka aldrig ut nya tokens">
+        <span style={{fontSize:15}}>↖</span>
+        <span style={{fontSize:11}}>Flytta</span>
       </button>
       {sep}
 
@@ -391,8 +456,29 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
       ))}
       {sep}
 
-      {/* Arrow */}
-      <button onClick={() => setTool("arrow")} style={{ ...tb(tool==="arrow", penColor), width:34, fontSize:16 }} title="Pil">↗</button>
+      {/* Arrow (straight) */}
+      <button onClick={() => setTool("arrow")} style={{ ...tb(tool==="arrow", penColor), width:34, fontSize:16 }} title="Rak pil (löpning)">↗</button>
+
+      {/* Curved arrow for running paths */}
+      <button onClick={() => setTool("run")}
+        style={{ ...tb(tool==="run", penColor), padding:"0 7px", gap:3, fontSize:12, fontWeight:600 }}
+        title="Böjd löpningspil">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{flexShrink:0}}>
+          <path d="M2 14 Q5 2 14 5" stroke={tool==="run" ? penColor : "#4a5568"} strokeWidth="2" strokeLinecap="round" fill="none"/>
+          <polygon points="14,5 10,3 13,8" fill={tool==="run" ? penColor : "#4a5568"}/>
+        </svg>
+      </button>
+
+      {/* Dashed line for passes */}
+      <button onClick={() => setTool("pass")}
+        style={{ ...tb(tool==="pass", penColor), padding:"0 7px", gap:3, fontSize:12 }}
+        title="Streckad passlinje">
+        <svg width="22" height="10" viewBox="0 0 22 10" fill="none" style={{flexShrink:0}}>
+          <line x1="1" y1="5" x2="5" y2="5" stroke={tool==="pass" ? penColor : "#4a5568"} strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="8" y1="5" x2="12" y2="5" stroke={tool==="pass" ? penColor : "#4a5568"} strokeWidth="2.5" strokeLinecap="round"/>
+          <line x1="15" y1="5" x2="21" y2="5" stroke={tool==="pass" ? penColor : "#4a5568"} strokeWidth="2.5" strokeLinecap="round"/>
+        </svg>
+      </button>
       {sep}
 
       {/* Eraser */}
@@ -461,7 +547,8 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     <div ref={wrapperRef} style={{ flex:1, position:"relative", overflow:"hidden", touchAction:"none" }}>
       <canvas ref={canvasRef}
         style={{ position:"absolute", inset:0, width:"100%", height:"100%", display:"block", touchAction:"none",
-          cursor: tool==="select" ? "default" : (tool==="player"||tool==="cone"||tool==="ball") ? "cell" : "crosshair" }}
+          cursor: tool==="select" ? "default" : (tool==="player"||tool==="cone"||tool==="ball") ? "cell" : "crosshair",
+        }}
         onPointerDown={onCanvasDown} onPointerMove={onCanvasMove}
         onPointerUp={onCanvasUp} onPointerCancel={onCanvasUp} onPointerLeave={onCanvasUp} />
       <TokenOverlay tokens={tokens} tool={tool} onTokenDown={onTokenDown} onTokenMove={onTokenMove} onTokenUp={onTokenUp} onTokenDelete={onTokenDelete} />
@@ -472,10 +559,12 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   const statusJSX = (
     <div style={{ padding:"4px 8px", fontSize:10, color:"#2a5498", textAlign:"center", flexShrink:0, background:"#0d1117" }}>
       {tool==="player" ? `Placerar spelare ${playerNum} — tryck = ny, dra befintlig = flytta`
-       : tool==="cone" ? "Tryck = ny kon, dra befintlig = flytta"
-       : tool==="ball" ? "Tryck = ny boll, dra befintlig = flytta"
-       : tool==="select" ? "Dra tokens för att flytta — tryck × för att radera"
-       : tool==="arrow" ? "Tryck och dra för att rita en pil"
+       : tool==="cone"   ? "Tryck = ny kon — byter till Flytta direkt"
+       : tool==="ball"   ? "Tryck = ny boll — byter till Flytta direkt"
+       : tool==="select" ? "↖ Flytta-läge: dra tokens, tryck × för att radera"
+       : tool==="arrow"  ? "Dra för rak löpningspil"
+       : tool==="run"    ? "Dra för böjd löpningspil (kurvar automatiskt)"
+       : tool==="pass"   ? "Dra för streckad passlinje"
        : "Hårdare tryck = tjockare linje (Apple Pencil)"}
     </div>
   );
