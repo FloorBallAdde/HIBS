@@ -1,328 +1,261 @@
 /**
- * TaktiktavlaTab — iPad-optimerad taktiktavla med innebandyplan.
- * Stödjer Apple Pencil via Pointer Events API.
- * Verktyg: penna (4 färger), sudd, ångra, rensa.
+ * TaktiktavlaTab — Officiell innebandyplan (IFF-standard).
+ * Blå yta, vita linjer, rektangulära målområden.
+ * Verktyg: penna, sudd, ångra, rensa + spelare 1–10 (röd/blå) + koner.
+ * Apple Pencil-stöd via Pointer Events API med tryckkänslighet.
  */
 import { useRef, useState, useEffect, useCallback } from "react";
 
-const COLORS = [
-  { id: "red",    hex: "#ef4444", label: "Röd"    },
-  { id: "white",  hex: "#ffffff", label: "Vit"    },
-  { id: "yellow", hex: "#fbbf24", label: "Gul"    },
-  { id: "blue",   hex: "#38bdf8", label: "Blå"    },
-];
+function drawRink(ctx, W, H) {
+  const m = 14;
+  const rw = W - m * 2;
+  const rh = H - m * 2;
 
-const SIZES = [2, 4, 7];
+  // Mörkblå bakgrund
+  ctx.fillStyle = "#1a4a8a";
+  ctx.fillRect(0, 0, W, H);
 
-function drawRink(ctx, w, h) {
-  const m = 18;  // margin
-  const rw = w - m * 2;
-  const rh = h - m * 2;
-  const cr = Math.min(rw, rh) * 0.1; // corner radius
+  // Ljusare blå planyta
+  ctx.fillStyle = "#1e55a0";
+  ctx.fillRect(m, m, rw, rh);
 
-  // Bakgrund
-  ctx.fillStyle = "#0f2535";
-  ctx.fillRect(0, 0, w, h);
+  const line = (w, a = 1) => { ctx.lineWidth = w; ctx.strokeStyle = `rgba(255,255,255,${a})`; };
 
-  // Hjälpfunktion: rundad rektangel
-  const roundRect = (x, y, bw, bh, r) => {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + bw - r, y);
-    ctx.arcTo(x + bw, y, x + bw, y + r, r);
-    ctx.lineTo(x + bw, y + bh - r);
-    ctx.arcTo(x + bw, y + bh, x + bw - r, y + bh, r);
-    ctx.lineTo(x + r, y + bh);
-    ctx.arcTo(x, y + bh, x, y + bh - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-  };
+  // Planens kant
+  line(2.5); ctx.strokeRect(m, m, rw, rh);
 
-  // Plan-yta (ljusgrön)
-  ctx.fillStyle = "#0d3d1e";
-  roundRect(m, m, rw, rh, cr);
-  ctx.fill();
+  // Mittlinje (röd, IFF-standard)
+  ctx.strokeStyle = "rgba(220,40,40,0.85)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W / 2, m); ctx.lineTo(W / 2, m + rh); ctx.stroke();
 
-  // Plan-kant (vit)
-  ctx.strokeStyle = "rgba(255,255,255,0.85)";
-  ctx.lineWidth = 2.5;
-  roundRect(m, m, rw, rh, cr);
-  ctx.stroke();
+  // Mittcirkel
+  line(1.8, 0.75);
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, rw * 0.09, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 3, 0, Math.PI * 2); ctx.fill();
 
-  // Mittlinje (röd)
-  ctx.strokeStyle = "rgba(220,40,40,0.8)";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.moveTo(w / 2, m);
-  ctx.lineTo(w / 2, m + rh);
-  ctx.stroke();
-
-  // Mittkrets
-  const midR = rh * 0.18;
-  ctx.strokeStyle = "rgba(220,40,40,0.7)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(w / 2, h / 2, midR, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Mittdot
-  ctx.fillStyle = "rgba(220,40,40,0.9)";
-  ctx.beginPath();
-  ctx.arc(w / 2, h / 2, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Målområden
-  const gaW = rw * 0.14;
-  const gaH = rh * 0.42;
+  // Målområden (5m×7.5m / 40×20 → 12.5% × 37.5%)
+  const gaW = rw * 0.125;
+  const gaH = rh * 0.375;
   const gaY = m + (rh - gaH) / 2;
-  ctx.strokeStyle = "rgba(255,255,255,0.6)";
-  ctx.lineWidth = 1.5;
-  // Vänster
+  line(1.5, 0.8);
   ctx.strokeRect(m, gaY, gaW, gaH);
-  // Höger
   ctx.strokeRect(m + rw - gaW, gaY, gaW, gaH);
 
-  // Mål (nätfyllning)
-  const netW = 8;
-  const netH = rh * 0.17;
-  const netY = m + (rh - netH) / 2;
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  // Keeperzoner (inre, ca 40% × 45% av målområde)
+  const kkW = gaW * 0.42; const kkH = gaH * 0.46;
+  const kkY = m + (rh - kkH) / 2;
+  line(1, 0.45);
+  ctx.strokeRect(m, kkY, kkW, kkH);
+  ctx.strokeRect(m + rw - kkW, kkY, kkW, kkH);
+
+  // Mål
+  const netH = rh * 0.13; const netW = 5;
+  const netY = H / 2 - netH / 2;
+  ctx.fillStyle = "rgba(255,255,255,0.09)";
   ctx.fillRect(m - netW, netY, netW, netH);
   ctx.fillRect(m + rw, netY, netW, netH);
-  ctx.strokeStyle = "rgba(255,255,255,0.7)";
-  ctx.lineWidth = 2;
+  line(1.5, 0.7);
   ctx.strokeRect(m - netW, netY, netW, netH);
   ctx.strokeRect(m + rw, netY, netW, netH);
 
-  // Anspelningspunkter (4 st)
-  const fpX = rw * 0.22;
-  const fpY = rh * 0.27;
-  const fps = [
-    [m + fpX,       m + fpY],
-    [m + fpX,       m + rh - fpY],
-    [m + rw - fpX,  m + fpY],
-    [m + rw - fpX,  m + rh - fpY],
-  ];
-  ctx.fillStyle = "rgba(220,40,40,0.85)";
-  fps.forEach(([x, y]) => {
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fill();
+  // Anspelningspunkter
+  const fpX = rw * 0.22; const fpY = rh * 0.075;
+  [[m + fpX, m + fpY], [m + fpX, m + rh - fpY],
+   [m + rw - fpX, m + fpY], [m + rw - fpX, m + rh - fpY]].forEach(([x, y]) => {
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
   });
 }
 
+function stampPlayer(ctx, x, y, num, color) {
+  const r = 14;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.font = `bold ${num > 9 ? 10 : 12}px system-ui`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(String(num), x, y);
+  ctx.restore();
+}
+
+function stampCone(ctx, x, y) {
+  ctx.save();
+  ctx.fillStyle = "#f97316"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 11); ctx.lineTo(x + 9, y + 7); ctx.lineTo(x - 9, y + 7);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+const PEN_COLORS = [
+  { hex: "#ffffff" }, { hex: "#ef4444" }, { hex: "#fbbf24" }, { hex: "#22c55e" },
+];
+const PEN_SIZES = [2, 4, 7];
+const PLAYER_COLS = [{ hex: "#ef4444", label: "Röd" }, { hex: "#38bdf8", label: "Blå" }];
+
 export default function TaktiktavlaTab() {
-  const canvasRef   = useRef(null);
-  const rinkRef     = useRef(null); // off-screen canvas för rink-bakgrunden
-  const undoStack   = useRef([]);
-  const isDrawing   = useRef(false);
-  const lastPt      = useRef(null);
+  const canvasRef = useRef(null);
+  const rinkRef   = useRef(null);
+  const undoStack = useRef([]);
+  const isDrawing = useRef(false);
+  const lastPt    = useRef(null);
 
-  const [color,  setColor]  = useState("#ef4444");
-  const [size,   setSize]   = useState(4);
-  const [tool,   setTool]   = useState("pen"); // "pen" | "eraser"
+  const [tool,        setTool]        = useState("pen");
+  const [penColor,    setPenColor]    = useState("#ffffff");
+  const [penSize,     setPenSize]     = useState(3);
+  const [playerNum,   setPlayerNum]   = useState(1);
+  const [playerColor, setPlayerColor] = useState("#ef4444");
 
-  // Initialisera canvas + rink
   const initCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const parent = canvas.parentElement;
-    canvas.width  = parent.clientWidth;
-    canvas.height = parent.clientHeight;
-
-    // Rita rinkbakgrunden på off-screen canvas
+    const c = canvasRef.current;
+    if (!c) return;
+    const p = c.parentElement;
+    c.width = p.clientWidth; c.height = p.clientHeight;
     const rink = document.createElement("canvas");
-    rink.width  = canvas.width;
-    rink.height = canvas.height;
+    rink.width = c.width; rink.height = c.height;
     drawRink(rink.getContext("2d"), rink.width, rink.height);
     rinkRef.current = rink;
-
-    // Rita rink på huvudcanvas
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(rink, 0, 0);
+    c.getContext("2d").drawImage(rink, 0, 0);
     undoStack.current = [];
   }, []);
 
   useEffect(() => {
     initCanvas();
-    const onResize = () => initCanvas();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.addEventListener("resize", initCanvas);
+    return () => window.removeEventListener("resize", initCanvas);
   }, [initCanvas]);
 
-  // Spara snapshot för undo
-  const saveSnapshot = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const snap = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
-    undoStack.current.push(snap);
-    if (undoStack.current.length > 30) undoStack.current.shift();
+  const snap = useCallback(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    const s = c.getContext("2d").getImageData(0, 0, c.width, c.height);
+    undoStack.current.push(s);
+    if (undoStack.current.length > 40) undoStack.current.shift();
   }, []);
 
-  const undo = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || undoStack.current.length === 0) return;
-    const snap = undoStack.current.pop();
-    canvas.getContext("2d").putImageData(snap, 0, 0);
-  }, []);
+  const undo  = () => { const c = canvasRef.current; if (c && undoStack.current.length) c.getContext("2d").putImageData(undoStack.current.pop(), 0, 0); };
+  const clear = () => { const c = canvasRef.current; if (c && rinkRef.current) { snap(); c.getContext("2d").drawImage(rinkRef.current, 0, 0); } };
 
-  const clear = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !rinkRef.current) return;
-    saveSnapshot();
-    canvas.getContext("2d").drawImage(rinkRef.current, 0, 0);
-  }, [saveSnapshot]);
-
-  // Hämta koordinater (stödjer touch, mus och Apple Pencil)
   const getPos = (e) => {
-    const canvas = canvasRef.current;
-    const rect   = canvas.getBoundingClientRect();
-    const scaleX = canvas.width  / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top)  * scaleY,
-    };
+    const c = canvasRef.current; const r = c.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
   };
 
-  const startDraw = useCallback((e) => {
+  const onDown = useCallback((e) => {
     e.preventDefault();
-    saveSnapshot();
-    isDrawing.current = true;
-    lastPt.current    = getPos(e);
+    const pt = getPos(e);
+    if (tool === "player") { snap(); stampPlayer(canvasRef.current.getContext("2d"), pt.x, pt.y, playerNum, playerColor); return; }
+    if (tool === "cone")   { snap(); stampCone(canvasRef.current.getContext("2d"), pt.x, pt.y); return; }
+    snap(); isDrawing.current = true; lastPt.current = pt;
     canvasRef.current?.setPointerCapture?.(e.pointerId);
-  }, [saveSnapshot]);
+  }, [tool, playerNum, playerColor, snap]);
 
-  const draw = useCallback((e) => {
+  const onMove = useCallback((e) => {
     e.preventDefault();
     if (!isDrawing.current || !lastPt.current) return;
-    const canvas = canvasRef.current;
-    const ctx    = canvas.getContext("2d");
-    const pt     = getPos(e);
-
+    const c = canvasRef.current; const ctx = c.getContext("2d"); const pt = getPos(e);
     ctx.save();
     if (tool === "eraser") {
       ctx.globalCompositeOperation = "destination-out";
-      ctx.strokeStyle = "rgba(0,0,0,1)";
-      ctx.lineWidth   = size * 5;
+      ctx.strokeStyle = "rgba(0,0,0,1)"; ctx.lineWidth = penSize * 6;
     } else {
       ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = color;
-      // Apple Pencil pressure (0–1), fallback till 1
-      const pressure = e.pressure > 0 ? e.pressure : 1;
-      ctx.lineWidth  = size * (0.5 + pressure * 0.8);
+      ctx.strokeStyle = penColor;
+      ctx.lineWidth = penSize * (0.4 + (e.pressure > 0 ? e.pressure : 1) * 0.9);
     }
-    ctx.lineCap  = "round";
-    ctx.lineJoin = "round";
-
-    ctx.beginPath();
-    ctx.moveTo(lastPt.current.x, lastPt.current.y);
-    ctx.lineTo(pt.x, pt.y);
-    ctx.stroke();
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath(); ctx.moveTo(lastPt.current.x, lastPt.current.y); ctx.lineTo(pt.x, pt.y); ctx.stroke();
     ctx.restore();
-
-    // Återrit rink under suddning för att bevara planen
     if (tool === "eraser") {
-      const tempCtx = canvas.getContext("2d");
-      tempCtx.save();
-      tempCtx.globalCompositeOperation = "destination-over";
-      tempCtx.drawImage(rinkRef.current, 0, 0);
-      tempCtx.restore();
+      const t2 = c.getContext("2d"); t2.save();
+      t2.globalCompositeOperation = "destination-over"; t2.drawImage(rinkRef.current, 0, 0); t2.restore();
     }
-
     lastPt.current = pt;
-  }, [color, size, tool]);
+  }, [tool, penColor, penSize]);
 
-  const stopDraw = useCallback((e) => {
-    e.preventDefault();
-    isDrawing.current = false;
-    lastPt.current    = null;
-  }, []);
+  const onUp = useCallback((e) => { e.preventDefault(); isDrawing.current = false; lastPt.current = null; }, []);
 
-  const btnStyle = (active, col) => ({
-    width: 36, height: 36, borderRadius: 10,
-    border: "2px solid " + (active ? col || "#fff" : "rgba(255,255,255,0.12)"),
-    background: active ? "rgba(255,255,255,0.12)" : "transparent",
-    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-    fontFamily: "inherit", flexShrink: 0,
+  const tb = (active, accent) => ({
+    display: "flex", alignItems: "center", justifyContent: "center",
+    borderRadius: 9, height: 34,
+    border: "1.5px solid " + (active ? (accent || "#fff") : "rgba(255,255,255,0.1)"),
+    background: active ? "rgba(255,255,255,0.1)" : "transparent",
+    color: active ? "#fff" : "#4a5568", cursor: "pointer",
+    fontFamily: "inherit", fontSize: 13, flexShrink: 0, padding: "0 7px",
   });
+  const sep = <div style={{ width: 1, height: 22, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 130px)", gap: 0 }}>
-
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 128px)" }}>
       {/* Verktygsfält */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 6,
-        padding: "8px 4px", overflowX: "auto", flexShrink: 0,
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-      }}>
-        {/* Pennstorlekar */}
-        {SIZES.map(s => (
-          <button key={s} onClick={() => { setTool("pen"); setSize(s); }}
-            style={{
-              ...btnStyle(tool === "pen" && size === s),
-              width: 32, height: 32,
-            }}>
-            <div style={{
-              width: s * 2.5, height: s * 2.5, borderRadius: "50%",
-              background: tool === "pen" && size === s ? color : "rgba(255,255,255,0.3)",
-            }}/>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 4px", borderBottom: "1px solid rgba(255,255,255,0.06)", overflowX: "auto", flexShrink: 0 }}>
+
+        {PEN_SIZES.map(s => (
+          <button key={s} onClick={() => { setTool("pen"); setPenSize(s); }}
+            style={{ ...tb(tool === "pen" && penSize === s), width: 30 }}>
+            <div style={{ width: s * 2.8, height: s * 2.8, borderRadius: "50%", background: tool === "pen" && penSize === s ? penColor : "#4a5568" }} />
           </button>
         ))}
 
-        <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", margin: "0 2px" }}/>
+        {sep}
 
-        {/* Färger */}
-        {COLORS.map(c => (
-          <button key={c.id} onClick={() => { setTool("pen"); setColor(c.hex); }}
-            title={c.label}
-            style={{
-              width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-              background: c.hex,
-              border: tool === "pen" && color === c.hex ? "3px solid #fff" : "2px solid rgba(255,255,255,0.2)",
-              cursor: "pointer",
-            }}/>
+        {PEN_COLORS.map(c => (
+          <button key={c.hex} onClick={() => { setTool("pen"); setPenColor(c.hex); }}
+            style={{ width: 24, height: 24, borderRadius: "50%", flexShrink: 0, background: c.hex, cursor: "pointer",
+              border: tool === "pen" && penColor === c.hex ? "3px solid #fff" : "1.5px solid rgba(255,255,255,0.25)" }} />
         ))}
 
-        <div style={{ width: 1, height: 24, background: "rgba(255,255,255,0.1)", margin: "0 2px" }}/>
+        {sep}
 
-        {/* Sudd */}
-        <button onClick={() => setTool("eraser")} title="Sudd"
-          style={btnStyle(tool === "eraser")}>
-          <span style={{ fontSize: 16 }}>⌫</span>
-        </button>
+        <button onClick={() => setTool("eraser")} style={{ ...tb(tool === "eraser"), width: 34, fontSize: 16 }}>⌫</button>
 
-        {/* Ångra */}
-        <button onClick={undo} title="Ångra"
-          style={btnStyle(false)}>
-          <span style={{ fontSize: 14 }}>↩</span>
-        </button>
+        {sep}
 
-        {/* Rensa */}
-        <button onClick={clear} title="Rensa allt"
-          style={{ ...btnStyle(false), marginLeft: "auto" }}>
-          <span style={{ fontSize: 13, color: "#f87171" }}>🗑</span>
-        </button>
+        {/* Spelarfärg */}
+        {PLAYER_COLS.map(c => (
+          <button key={c.hex} onClick={() => { setTool("player"); setPlayerColor(c.hex); }}
+            style={{ width: 12, height: 12, borderRadius: "50%", flexShrink: 0, background: c.hex, cursor: "pointer",
+              border: playerColor === c.hex ? "2px solid #fff" : "1px solid rgba(255,255,255,0.2)" }} />
+        ))}
+
+        {/* Spelar-tokens 1–10 */}
+        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+          <button key={n} onClick={() => { setTool("player"); setPlayerNum(n); }}
+            style={{ ...tb(tool === "player" && playerNum === n, playerColor),
+              width: 28, height: 28, borderRadius: "50%", padding: 0, fontSize: 11, fontWeight: 800,
+              background: tool === "player" && playerNum === n ? playerColor : "rgba(255,255,255,0.04)",
+              border: "1.5px solid " + (tool === "player" && playerNum === n ? playerColor : "rgba(255,255,255,0.1)"),
+              color: tool === "player" && playerNum === n ? "#fff" : "#4a5568",
+            }}>
+            {n}
+          </button>
+        ))}
+
+        {sep}
+
+        <button onClick={() => setTool("cone")} style={{ ...tb(tool === "cone", "#f97316"), width: 34, fontSize: 15 }}>🔺</button>
+
+        {sep}
+
+        <button onClick={undo}  style={{ ...tb(false), width: 34, fontSize: 15 }}>↩</button>
+        <button onClick={clear} style={{ ...tb(false), width: 34, fontSize: 14, color: "#f87171" }}>🗑</button>
       </div>
 
       {/* Canvas */}
       <div style={{ flex: 1, overflow: "hidden", touchAction: "none" }}>
-        <canvas
-          ref={canvasRef}
-          style={{ width: "100%", height: "100%", display: "block", touchAction: "none", cursor: tool === "eraser" ? "cell" : "crosshair" }}
-          onPointerDown={startDraw}
-          onPointerMove={draw}
-          onPointerUp={stopDraw}
-          onPointerCancel={stopDraw}
-          onPointerLeave={stopDraw}
-        />
+        <canvas ref={canvasRef}
+          style={{ width: "100%", height: "100%", display: "block", touchAction: "none", cursor: "crosshair" }}
+          onPointerDown={onDown} onPointerMove={onMove}
+          onPointerUp={onUp} onPointerCancel={onUp} onPointerLeave={onUp} />
       </div>
 
-      {/* Tips */}
-      <div style={{ padding: "6px 8px", fontSize: 10, color: "#2d3748", textAlign: "center", flexShrink: 0 }}>
-        Rita med finger eller Apple Pencil · Tryck hårdare för tjockare linje
+      <div style={{ padding: "4px 8px", fontSize: 10, color: "#1a3d72", textAlign: "center", flexShrink: 0 }}>
+        {tool === "player" ? `Tryck för att placera spelare ${playerNum}` :
+         tool === "cone"   ? "Tryck för att placera en kon" :
+         "Hårdare tryck = tjockare linje (Apple Pencil)"}
       </div>
     </div>
   );
