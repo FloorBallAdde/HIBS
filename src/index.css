@@ -19,11 +19,12 @@
    single-line UX-förbättringarna: knappar "känns" nu.
    ─────────────────────────────────────────────────────────── */
 button {
-  transition: opacity 0.12s ease, transform 0.12s ease;
+  touch-action: manipulation; /* Tar bort 300ms-delay på Android Chrome */
+  transition: opacity 0.1s ease, transform 0.1s ease;
 }
 button:active {
-  opacity: 0.55;
-  transform: scale(0.93);
+  opacity: 0.5;
+  transform: scale(0.88);
 }
 
 /* ── Animationer ─────────────────────────────────────────────*/
