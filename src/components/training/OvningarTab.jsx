@@ -46,14 +46,22 @@ const DynamicList = ({ label, items, onChange }) => (
   </div>
 );
 
-/* ─── Create Exercise Form ─── */
-function CreateExerciseForm({ token, onSaved, onCancel }) {
+/* ─── Create / Edit Exercise Form ─── */
+function CreateExerciseForm({ token, onSaved, onCancel, initialData = null }) {
+  const isEdit = !!initialData?.id;
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState("");
   const [form,   setForm]   = useState({
-    name: "", category: CATS_FORM[0], intensity: "Medel",
-    players: "", vad: "", varfor: "", hur: "", organisation: "",
-    tips: [], coaching_fragor: [],
+    name:            initialData?.name            || "",
+    category:        initialData?.category        || CATS_FORM[0],
+    intensity:       initialData?.intensity       || "Medel",
+    players:         initialData?.players         || "",
+    vad:             initialData?.vad             || "",
+    varfor:          initialData?.varfor          || "",
+    hur:             initialData?.hur             || "",
+    organisation:    initialData?.organisation    || "",
+    tips:            initialData?.tips            || [],
+    coaching_fragor: initialData?.coaching_fragor || [],
   });
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
@@ -74,9 +82,15 @@ function CreateExerciseForm({ token, onSaved, onCancel }) {
       tips:            form.tips.filter(Boolean),
       coaching_fragor: form.coaching_fragor.filter(Boolean),
     };
-    const result = await sbPost("exercises", body, token);
+    let result;
+    if (isEdit) {
+      await sbPatch("exercises", initialData.id, body, token);
+      result = { ...initialData, ...body };
+    } else {
+      result = await sbPost("exercises", body, token);
+    }
     setSaving(false);
-    if (result?.id) onSaved(result);
+    if (isEdit || result?.id) onSaved(result);
     else setErr("Kunde inte spara. Försök igen.");
   };
 
@@ -88,7 +102,7 @@ function CreateExerciseForm({ token, onSaved, onCancel }) {
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px 0" }}>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff" }}>Ny övning</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: "#fff" }}>{isEdit ? "Redigera övning" : "Ny övning"}</div>
           <button onClick={onCancel}
             style={{ background: "none", border: "none", color: "#4a5568", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1, fontFamily: "inherit" }}>✕</button>
         </div>
@@ -154,7 +168,7 @@ function CreateExerciseForm({ token, onSaved, onCancel }) {
             background: saving ? "rgba(34,197,94,0.1)" : "rgba(34,197,94,0.15)",
             border: "1.5px solid rgba(34,197,94,0.4)", color: "#22c55e",
           }}>
-            {saving ? "Sparar..." : "💾 Spara & rita taktiktavla →"}
+            {saving ? "Sparar..." : isEdit ? "💾 Spara ändringar" : "💾 Spara & rita taktiktavla →"}
           </button>
         </div>
       </div>
@@ -172,6 +186,7 @@ export default function OvningarTab({ token }) {
   const [sel,       setSel]         = useState(null);
   const [drawing,   setDrawing]     = useState(null); // exercise id being drawn
   const [creating,  setCreating]    = useState(false);
+  const [editing,   setEditing]     = useState(null); // exercise being edited
   const [savingId,  setSavingId]    = useState(null);
   const [favorites, setFavorites]   = useState(() => new Set(ls.get(FAV_KEY, [])));
 
@@ -224,6 +239,13 @@ export default function OvningarTab({ token }) {
     setExercises(prev => [newEx, ...prev]);
     setCreating(false);
     setDrawing(newEx.id);
+  };
+
+  /* ── After edit: update in list ── */
+  const handleEdited = (updEx) => {
+    setExercises(prev => prev.map(e => e.id === updEx.id ? { ...e, ...updEx } : e));
+    if (sel?.id === updEx.id) setSel(prev => ({ ...prev, ...updEx }));
+    setEditing(null);
   };
 
   /* ── Drawing overlay ── */
@@ -324,6 +346,11 @@ export default function OvningarTab({ token }) {
             </div>
           )}
 
+          <button
+            onClick={() => { setSel(null); setEditing(sel); }}
+            style={{ width: "100%", padding: "12px 0", border: "1px solid rgba(167,139,250,0.25)", borderRadius: 12, background: "rgba(167,139,250,0.06)", color: "#a78bfa", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", marginBottom: 8 }}>
+            ✏️ Redigera övning
+          </button>
           <button onClick={() => setSel(null)}
             style={{ width: "100%", padding: "12px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
             Stäng
@@ -435,11 +462,12 @@ export default function OvningarTab({ token }) {
 
       {/* Create form */}
       {creating && (
-        <CreateExerciseForm
-          token={token}
-          onSaved={handleCreated}
-          onCancel={() => setCreating(false)}
-        />
+        <CreateExerciseForm token={token} onSaved={handleCreated} onCancel={() => setCreating(false)} />
+      )}
+
+      {/* Edit form */}
+      {editing && (
+        <CreateExerciseForm token={token} initialData={editing} onSaved={handleEdited} onCancel={() => setEditing(null)} />
       )}
     </div>
   );
