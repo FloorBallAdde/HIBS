@@ -20,10 +20,12 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
     <>
       <div
         onClick={() => setProfileOpen(false)}
+        className="hibs-overlay"
         style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 300, display: "flex", alignItems: "flex-end" }}
       >
         <div
           onClick={e => e.stopPropagation()}
+          className="hibs-sheet"
           style={{ width: "100%", background: "#111827", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", boxSizing: "border-box", maxHeight: "90vh", overflowY: "auto" }}
         >
           {/* ── Klubbrubrik med logga ─────────────────────────────── */}

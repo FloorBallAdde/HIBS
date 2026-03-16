@@ -126,6 +126,14 @@ export const nextFitness = (f) => {
   return opts[(opts.indexOf(f || "fit") + 1) % opts.length];
 };
 
+// ── Typografiskala — 4 nivåer, använd alltid dessa (aldrig 8px eller 9px) ────
+export const FONT = {
+  label: 11,  // ALL-CAPS sektionsrubriker, metadata, badges
+  body:  13,  // löptext, spelarnamn, datum, sekundärinnehåll
+  title: 16,  // primärinnehåll, matchnamn, kortrubriker
+  hero:  40,  // hero-siffror (V/O/F, säsongsstatistik)
+};
+
 // ── UI design tokens (T6 — CSS token migration, step 1) ──────────────────────
 // Use these in new components to gradually replace hardcoded colour strings.
 export const THEME = {

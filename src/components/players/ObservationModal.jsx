@@ -53,10 +53,12 @@ export default function ObservationModal({ player, onClose, onSave, profile }) {
 
   return (
     <div
+      className="hibs-overlay"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", zIndex: 200 }}
       onClick={onClose}
     >
       <div
+        className="hibs-sheet"
         style={{ width: "100%", background: "#111827", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "82vh", overflowY: "auto", boxSizing: "border-box" }}
         onClick={e => e.stopPropagation()}
       >

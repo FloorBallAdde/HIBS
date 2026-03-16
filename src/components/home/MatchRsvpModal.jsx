@@ -54,9 +54,10 @@ export default function MatchRsvpModal({ match, players, onToggle, onClose }) {
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      className="hibs-overlay"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 300, display: "flex", alignItems: "flex-end" }}
     >
-      <div style={{ width: "100%", background: "#131620", borderRadius: "20px 20px 0 0", padding: "20px 16px 36px", maxHeight: "88vh", overflowY: "auto", boxSizing: "border-box" }}>
+      <div className="hibs-sheet" style={{ width: "100%", background: "#131620", borderRadius: "20px 20px 0 0", padding: "20px 16px 36px", maxHeight: "88vh", overflowY: "auto", boxSizing: "border-box" }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>

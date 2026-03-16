@@ -36,10 +36,12 @@ export default function ClubProfileModal({ club, onClose, onSave }) {
   return (
     <div
       onClick={onClose}
+      className="hibs-overlay"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 400, display: "flex", alignItems: "flex-end", fontFamily: "system-ui,sans-serif" }}
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="hibs-sheet"
         style={{ width: "100%", background: "#111827", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", boxSizing: "border-box", maxHeight: "90vh", overflowY: "auto" }}
       >
         {/* Header */}

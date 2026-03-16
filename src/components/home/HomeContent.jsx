@@ -72,7 +72,7 @@ export default function HomeContent({
   const lastTrain = trainHistory && trainHistory.length > 0 ? trainHistory[0] : null;
 
   return (
-    <div>
+    <div className="hibs-tab-content">
       {/* RSVP MODAL */}
       {rsvpMatch && (
         <MatchRsvpModal
@@ -151,7 +151,7 @@ export default function HomeContent({
         ].map(({ val, label, color }) => (
           <div key={label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "12px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>{val}</div>
-            <div style={{ fontSize: 8, fontWeight: 700, color: "#4a5568", marginTop: 3, letterSpacing: "0.05em" }}>{label}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginTop: 4, letterSpacing: "0.06em" }}>{label}</div>
           </div>
         ))}
       </div>

@@ -70,6 +70,7 @@ export default function MatchNoteModal({ match, onClose, onSave }) {
   return (
     <div
       onClick={onClose}
+      className="hibs-overlay"
       style={{
         position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)",
         zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center",
@@ -77,6 +78,7 @@ export default function MatchNoteModal({ match, onClose, onSave }) {
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="hibs-sheet"
         style={{
           background: "#161926", border: "1px solid rgba(255,255,255,0.1)",
           borderRadius: "20px 20px 0 0", padding: "24px 20px 40px",

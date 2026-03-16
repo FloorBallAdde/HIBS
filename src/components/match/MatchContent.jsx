@@ -174,10 +174,12 @@ export default function MatchContent({
       {confirmNoLines && (
         <div
           onClick={() => setConfirmNoLines(false)}
+          className="hibs-overlay"
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
         >
           <div
             onClick={e => e.stopPropagation()}
+            className="hibs-dialog"
             style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
           >
             <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
@@ -381,10 +383,12 @@ export default function MatchContent({
       {confirmNoLines && (
         <div
           onClick={() => setConfirmNoLines(false)}
+          className="hibs-overlay"
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
         >
           <div
             onClick={e => e.stopPropagation()}
+            className="hibs-dialog"
             style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
           >
             <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
