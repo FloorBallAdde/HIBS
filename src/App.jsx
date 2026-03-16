@@ -60,6 +60,7 @@ export default function App(){
   const [profileOpen,setProfileOpen]=useState(false); // Profilpanel i header
   const [trainNoteInput,setTrainNoteInput]=useState("");
   const [pendingCoaches,setPendingCoaches]=useState([]);
+  const [coachStaff,setCoachStaff]=useState([]); // Godkända tränare i samma klubb
 
   // DATA
   const [players,setPlayers]=useState([]);
@@ -118,6 +119,7 @@ export default function App(){
   useEffect(()=>{
     if(profile?.role==="owner"&&clubId&&tok){
       sbGet("profiles","club_id=eq."+clubId+"&approved=eq.false&role=eq.coach&select=*",tok).then(r=>{if(Array.isArray(r))setPendingCoaches(r);});
+      sbGet("profiles","club_id=eq."+clubId+"&approved=eq.true&id=neq."+auth.uid+"&select=id,username,role",tok).then(r=>{if(Array.isArray(r))setCoachStaff(r);});
     }
   },[profile]);
 
@@ -207,10 +209,40 @@ export default function App(){
               </div>
             )}
 
+            {/* Ledarstab */}
+            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontSize:10,color:"#4a5568",fontWeight:700,marginBottom:10}}>LEDARSTAB</div>
+              {/* Alltid: dig själv */}
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:coachStaff.length>0?8:0}}>
+                <div style={{width:30,height:30,borderRadius:"50%",background:"rgba(167,139,250,0.15)",border:"1.5px solid rgba(167,139,250,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#a78bfa"}}>
+                  {(profile?.username||"T")[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{profile?.username}</div>
+                  <div style={{fontSize:10,color:"#a78bfa"}}>👑 Ägare</div>
+                </div>
+              </div>
+              {/* Godkända co-coaches */}
+              {coachStaff.map(c=>(
+                <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <div style={{width:30,height:30,borderRadius:"50%",background:"rgba(34,197,94,0.12)",border:"1.5px solid rgba(34,197,94,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:900,color:"#22c55e"}}>
+                    {(c.username||"T")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{c.username}</div>
+                    <div style={{fontSize:10,color:"#22c55e"}}>🏒 Tränare</div>
+                  </div>
+                </div>
+              ))}
+              {coachStaff.length===0&&(
+                <div style={{fontSize:11,color:"#4a5568"}}>Inga co-tränare ännu — bjud in via koden ovan</div>
+              )}
+            </div>
+
             {/* Väntande tränare-notis */}
             {pendingCoaches.length>0&&(
               <div style={{background:"rgba(251,191,36,0.06)",border:"1px solid rgba(251,191,36,0.2)",borderRadius:12,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#fbbf24"}}>
-                ⏳ {pendingCoaches.length} tränare väntar på godkännande — se Mer-fliken
+                ⏳ {pendingCoaches.length} tränare väntar på godkännande — godkänn i Mer-fliken
               </div>
             )}
 
