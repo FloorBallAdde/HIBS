@@ -30,11 +30,20 @@ export default function MerContent({
       )}
       {!merSub && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {[["spelare", "👥", "Spelarlista"], ["lagmal", "🎯", "Lagmål och checklist"], ["matchhistorik", "📊", "Matchhistorik"], ["sasongsplan", "🗓", "Säsongsplan"]].map(([id, icon, label]) => (
-            <button key={id} onClick={() => setMerSub(id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
-              <span style={{ fontSize: 22 }}>{icon}</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{label}</span>
-              <span style={{ marginLeft: "auto", color: "#4a5568", fontSize: 16 }}>›</span>
+          {[
+            ["spelare",       "👥", "Spelarlista",        "Se alla spelare, noter och observationer"],
+            ["grupper",       "🔀", "Grupper & kedjor",   "Placera spelare i grupp A, B, C eller MV"],
+            ["lagmal",        "🎯", "Lagmål och checklist","Säsongens mål och checklistor"],
+            ["matchhistorik", "📊", "Matchhistorik",      "Alla spelade matcher"],
+            ["sasongsplan",   "🗓", "Säsongsplan",        "Periodsplan för säsongen"],
+          ].map(([id, icon, label, desc]) => (
+            <button key={id} onClick={() => setMerSub(id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{label}</div>
+                <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>{desc}</div>
+              </div>
+              <span style={{ marginLeft: "auto", color: "#4a5568", fontSize: 16, flexShrink: 0 }}>›</span>
             </button>
           ))}
         </div>
@@ -86,6 +95,69 @@ export default function MerContent({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {merSub === "grupper" && (
+        <div>
+          <div style={{ fontSize: 12, color: "#4a5568", marginBottom: 16, lineHeight: 1.6 }}>
+            Tryck på gruppen för att byta. <span style={{ color: "#a78bfa" }}>A</span> och <span style={{ color: "#22c55e" }}>B</span> är utespelare, <span style={{ color: "#f97316" }}>C</span> är reserver, <span style={{ color: "#38bdf8" }}>MV</span> är målvakter.
+          </div>
+          {["A", "B", "C", "MV"].map(grp => {
+            const inGroup = players.filter(p => p.group === grp);
+            if (inGroup.length === 0) return null;
+            const pgc = gc(grp);
+            return (
+              <div key={grp} style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: 8, background: pgc.bg, border: "1.5px solid " + pgc.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: pgc.color }}>{grp}</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: pgc.color }}>Grupp {grp}</span>
+                  <span style={{ fontSize: 11, color: "#4a5568" }}>{inGroup.length} spelare</span>
+                </div>
+                {inGroup.map(p => (
+                  <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, marginBottom: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{p.name}</span>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {["A","B","C","MV"].map(g => {
+                        const tgc = gc(g);
+                        const isActive = p.group === g;
+                        return (
+                          <button key={g} onClick={() => updP(p.id, { group: g })}
+                            style={{ width: 32, height: 32, borderRadius: 8, border: "1.5px solid " + (isActive ? tgc.color : "rgba(255,255,255,0.08)"), background: isActive ? tgc.bg : "transparent", color: isActive ? tgc.color : "#4a5568", fontSize: 11, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}>
+                            {g}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+          {/* Spelare utan grupp */}
+          {players.filter(p => !p.group || !["A","B","C","MV"].includes(p.group)).length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: "#4a5568", marginBottom: 8 }}>Utan grupp</div>
+              {players.filter(p => !p.group || !["A","B","C","MV"].includes(p.group)).map(p => (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, marginBottom: 6 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{p.name}</span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {["A","B","C","MV"].map(g => {
+                      const tgc = gc(g);
+                      return (
+                        <button key={g} onClick={() => updP(p.id, { group: g })}
+                          style={{ width: 32, height: 32, borderRadius: 8, border: "1.5px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a5568", fontSize: 11, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}>
+                          {g}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

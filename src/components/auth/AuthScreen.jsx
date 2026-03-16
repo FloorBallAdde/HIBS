@@ -80,11 +80,28 @@ export default function AuthScreen({ onAuth }) {
   const doJoinClub = async (club) => {
     setLoading(true); setError("");
     const { tok, uid, username: uname } = authData;
+    // Om klubben saknar ägare (förregistrerad) blir första person ägare + auto-godkänd
+    const isUnclaimed = !club.owner_id;
+    const role = isUnclaimed ? "owner" : "coach";
+    const approved = isUnclaimed ? true : false;
+    // Claim klubben om den saknar ägare
+    if (isUnclaimed) await sbPatch("clubs", club.id, { owner_id: uid }, tok);
     const existing = await sbGet("profiles", "id=eq." + uid, tok);
     if (Array.isArray(existing) && existing.length > 0) {
-      await sbPatch("profiles", uid, { username: uname, club_id: club.id, role: "coach", approved: false }, tok);
+      await sbPatch("profiles", uid, { username: uname, club_id: club.id, role, approved }, tok);
     } else {
-      await sbPost("profiles", { id: uid, username: uname, club_id: club.id, role: "coach", approved: false }, tok);
+      await sbPost("profiles", { id: uid, username: uname, club_id: club.id, role, approved }, tok);
+    }
+    if (isUnclaimed) {
+      // Skapa standardspelare för den nyupptagna klubben
+      const { DEFAULT_PLAYERS } = await import("../../lib/constants.js");
+      for (const p of DEFAULT_PLAYERS) {
+        await sbPost("players", { club_id: club.id, name: p.name, group: p.group, role: p.role || "utespelare", matches: 0, note: "", goals: [] }, tok);
+      }
+      ls.set("hibs_token", tok); ls.set("hibs_uid", uid);
+      const profile = { id: uid, username: uname, club_id: club.id, role: "owner", approved: true, clubs: club };
+      setLoading(false);
+      return onAuth({ tok, uid, profile });
     }
     setLoading(false); setMode("pending");
   };

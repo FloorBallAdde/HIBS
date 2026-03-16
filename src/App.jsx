@@ -285,8 +285,13 @@ export default function App(){
       {/* ── Sticky header ───────────────────────────────────────────── */}
       <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
-          <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.3px"}}>HIBS Tränarapp</div>
-          <div style={{fontSize:11,color:"#4a5568",marginTop:2}}>{profile?.clubs?.name||"P2015"} · {profile?.username||"Tränare"}</div>
+          <div style={{fontSize:16,fontWeight:900,color:"#fff",letterSpacing:"-0.3px"}}>{profile?.clubs?.name||"HIBS Tränarapp"}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
+            <span style={{fontSize:10,color:profile?.role==="owner"?"#a78bfa":"#22c55e",fontWeight:700,background:profile?.role==="owner"?"rgba(167,139,250,0.1)":"rgba(34,197,94,0.1)",padding:"2px 7px",borderRadius:99,border:"1px solid "+(profile?.role==="owner"?"rgba(167,139,250,0.3)":"rgba(34,197,94,0.3)")}}>
+              {profile?.role==="owner"?"👑 Ägare":"🏒 Tränare"}
+            </span>
+            <span style={{fontSize:10,color:"#4a5568"}}>{profile?.username||""}</span>
+          </div>
         </div>
         {tab==="mer"&&merSub
           ?<button onClick={()=>setMerSub(null)} style={{fontSize:12,color:"#4a5568",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>‹ Tillbaka</button>
