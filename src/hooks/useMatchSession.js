@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ls from "../lib/storage.js";
 import { sbPost, sbPatch } from "../lib/supabase.js";
 import { TODAY, mkLine } from "../lib/constants.js";
@@ -25,6 +25,9 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const [matchShots, setMatchShots] = useState(() => ls.get("hibs_match_shots", 0) || 0);
   // Skott framåt (HIBS egna skott på mål) — tryck en gång per skott vi avlossar
   const [matchShotsFor, setMatchShotsFor] = useState(() => ls.get("hibs_match_shots_for", 0) || 0);
+  // Live match DB id — sparas för att uppdatera rätt rad under pågående match
+  const [liveMatchId, setLiveMatchId] = useState(() => ls.get("hibs_live_match_id", null));
+  const syncTimeout = useRef(null);
 
   // Cup-läge: sparar trupp + kedjor mellan matcher (turnering/cup-dag)
   const [cupMode, setCupMode] = useState(() => ls.get("hibs_cup_mode", false));
@@ -45,6 +48,24 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_match_shots", matchShots); }, [matchShots]);
   useEffect(() => { ls.set("hibs_match_shots_for", matchShotsFor); }, [matchShotsFor]);
   useEffect(() => { ls.set("hibs_cup_mode", cupMode); }, [cupMode]);
+  useEffect(() => { ls.set("hibs_live_match_id", liveMatchId); }, [liveMatchId]);
+
+  // Synka live state till DB (debounced 1s) när något förändras under pågående match
+  useEffect(() => {
+    if (!liveMatchId || !tok) return;
+    if (syncTimeout.current) clearTimeout(syncTimeout.current);
+    syncTimeout.current = setTimeout(() => {
+      const live_state = {
+        result: matchResult,
+        scorers: matchScorers,
+        shots: matchShots,
+        shots_for: matchShotsFor,
+        synced_at: new Date().toISOString(),
+      };
+      sbPatch("matches", liveMatchId, { live_state }, tok).catch(() => {});
+    }, 1000);
+    return () => clearTimeout(syncTimeout.current);
+  }, [matchResult, matchScorers, matchShots, matchShotsFor, liveMatchId, tok]);
 
   // COMPUTED
   const usedInLines = new Set(lines.flatMap(l => Object.values(l.slots).filter(Boolean)));
@@ -56,6 +77,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setMatchScorers([]);
     setMatchShots(0);
     setMatchShotsFor(0);
+    setLiveMatchId(null);
     setOpponent(""); // Töm alltid motståndare — ny match, ny motståndare
 
     if (!cupMode) {
@@ -107,7 +129,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     return n;
   });
 
-  const startMatch = () => {
+  const startMatch = async () => {
     if (!opponent.trim() || selected.size === 0) return;
     const goals = teamGoals.map(g => g.trim()).filter(Boolean);
     const m = {
@@ -122,6 +144,30 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     };
     setActiveMatch(m);
     setMatchStep("live");
+    // Skapa live-rad i DB om vi är anslutna
+    if (clubId && tok) {
+      try {
+        const entry = {
+          club_id: clubId,
+          date: matchDate,
+          opponent: opponent.trim(),
+          serie,
+          players: [...selected],
+          goalkeeper,
+          note: "",
+          created_by: auth.uid,
+          is_live: true,
+          live_state: { result: { us: "", them: "" }, scorers: [], shots: 0, shots_for: 0, synced_at: new Date().toISOString() },
+          result: { us: "", them: "" },
+          scorers: [],
+          shots: 0,
+          shots_for: 0,
+        };
+        const saved = await sbPost("matches", entry, tok);
+        const row = Array.isArray(saved) ? saved[0] : saved;
+        if (row?.id) setLiveMatchId(row.id);
+      } catch (_) {}
+    }
   };
 
   const endMatch = async () => {
@@ -143,7 +189,13 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     };
     let saved;
     try {
-      saved = await sbPost("matches", entry, tok);
+      if (liveMatchId) {
+        // Uppdatera den befintliga live-raden med slutresultat
+        const patched = await sbPatch("matches", liveMatchId, { ...entry, is_live: false, live_state: null }, tok);
+        saved = Array.isArray(patched) ? patched : [{ ...entry, id: liveMatchId }];
+      } else {
+        saved = await sbPost("matches", entry, tok);
+      }
     } catch (e) {
       setSaveError("Nätverksfel — kontrollera anslutningen och försök igen.");
       return;
@@ -152,6 +204,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       setSaveError("Kunde inte spara matchen (" + (saved?.message || saved?.code || "okänt") + "). Försök igen.");
       return;
     }
+    setLiveMatchId(null);
     setHistory(p => [saved[0], ...p]);
 
     setUpcomingMatches(prev => prev.filter(

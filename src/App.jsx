@@ -11,6 +11,7 @@ import ObservationModal from "./components/players/ObservationModal.jsx";
 import KedjorTab from "./components/training/KedjorTab.jsx";
 import PlaneraTab from "./components/training/PlaneraTab.jsx";
 import OvningarTab from "./components/training/OvningarTab.jsx";
+import TaktiktavlaTab from "./components/training/TaktiktavlaTab.jsx";
 import HomeContent from "./components/home/HomeContent.jsx";
 import StatsContent from "./components/stats/StatsContent.jsx";
 import MatchContent from "./components/match/MatchContent.jsx";
@@ -62,6 +63,7 @@ export default function App(){
   const [pendingCoaches,setPendingCoaches]=useState([]);
   const [coachStaff,setCoachStaff]=useState([]); // Godkända tränare i samma klubb
   const [lastSeenObs,setLastSeenObs]=useState(()=>ls.get("hibs_obs_seen")||"");
+  const [liveMatchView,setLiveMatchView]=useState(null); // Live-match från annan tränare
 
   // DATA
   const [players,setPlayers]=useState([]);
@@ -142,6 +144,24 @@ export default function App(){
     ls.set("hibs_obs_seen",now);
     setLastSeenObs(now);
   },[]);
+
+  // Poll för live-match från annan tränare (var 10s)
+  useEffect(()=>{
+    if(!clubId||!tok)return;
+    const poll=async()=>{
+      const res=await sbGet("matches","club_id=eq."+clubId+"&is_live=eq.true&select=id,opponent,live_state,created_by",tok);
+      if(Array.isArray(res)&&res.length>0){
+        // Visa bara om det är en ANNAN tränares match
+        const other=res.find(m=>m.created_by!==auth?.uid);
+        setLiveMatchView(other||null);
+      } else {
+        setLiveMatchView(null);
+      }
+    };
+    poll();
+    const id=setInterval(poll,10000);
+    return()=>clearInterval(id);
+  },[clubId,tok,auth?.uid]);
 
   // Load pending coaches if owner
   useEffect(()=>{
@@ -282,6 +302,23 @@ export default function App(){
         </div>
       )}
 
+      {/* ── Live match-banner (visas för co-tränare) ─────────────────── */}
+      {liveMatchView&&(
+        <div onClick={()=>setTab("match")} style={{background:"rgba(239,68,68,0.12)",borderBottom:"1px solid rgba(239,68,68,0.3)",padding:"10px 20px",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+          <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s infinite"}}/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>🔴 LIVE — HIBS vs {liveMatchView.opponent}</div>
+            {liveMatchView.live_state&&(
+              <div style={{fontSize:12,color:"#fca5a5",marginTop:1}}>
+                {liveMatchView.live_state.result?.us||0} – {liveMatchView.live_state.result?.them||0}
+                {" · "}Skott: {liveMatchView.live_state.shots_for||0}–{liveMatchView.live_state.shots||0}
+              </div>
+            )}
+          </div>
+          <span style={{fontSize:11,color:"#f87171"}}>Se matchen ›</span>
+        </div>
+      )}
+
       {/* ── Sticky header ───────────────────────────────────────────── */}
       <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
@@ -308,7 +345,7 @@ export default function App(){
       <div style={{padding:"16px 16px 0"}}>
         {tab==="traning"&&(
           <div style={{display:"flex",gap:6,marginBottom:16}}>
-            {[["kedjor","Kedjor"],["planera","Planera"],["ovningar","Övningar"]].map(([id,label])=>(
+            {[["kedjor","Kedjor"],["planera","Planera"],["ovningar","Övningar"],["tavla","🎨 Tavla"]].map(([id,label])=>(
               <button key={id} onClick={()=>setTrainSub(id)} style={{flex:1,padding:"9px 0",border:"1px solid "+(trainSub===id?"#22c55e":"rgba(255,255,255,0.07)"),borderRadius:10,background:trainSub===id?"rgba(34,197,94,0.1)":"transparent",color:trainSub===id?"#22c55e":"#4a5568",fontSize:12,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>{label}</button>
             ))}
           </div>
@@ -337,6 +374,7 @@ export default function App(){
           onDelete={async id=>{await sbDel("training_sessions",id,tok);setTrainHistory(p=>p.filter(x=>x.id!==id));}}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok}/>}
+        {tab==="traning"&&trainSub==="tavla"&&<TaktiktavlaTab/>}
         {tab==="match"&&<MatchContent
           {...matchSession}
           players={players} gkPlayers={gkPlayers} field={field}
