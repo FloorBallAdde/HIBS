@@ -244,6 +244,11 @@ export default function App(){
         coachStaff={coachStaff}
         pendingCoaches={pendingCoaches}
         onSignOut={handleSignOut}
+        onUpdateClub={async(patch)=>{
+          if(!profile?.club_id||!tok)return;
+          await sbPatch("clubs",profile.club_id,patch,tok);
+          setProfile(p=>p?{...p,clubs:{...p.clubs,...patch}}:p);
+        }}
       />
 
       {/* ── Live match-banner (visas för co-tränare) ─────────────────── */}
@@ -279,9 +284,12 @@ export default function App(){
           :<button
             onClick={()=>setProfileOpen(true)}
             title="Profil & inbjudan"
-            style={{width:34,height:34,borderRadius:"50%",background:"rgba(167,139,250,0.15)",border:"1.5px solid rgba(167,139,250,0.3)",color:"#a78bfa",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit",fontWeight:900,flexShrink:0}}
+            style={{width:36,height:36,borderRadius:10,background:"rgba(167,139,250,0.15)",border:"1.5px solid rgba(167,139,250,0.3)",color:"#a78bfa",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit",fontWeight:900,flexShrink:0,overflow:"hidden",padding:0}}
           >
-            {(profile?.username||"T")[0].toUpperCase()}
+            {profile?.clubs?.logo_url
+              ?<img src={profile.clubs.logo_url} alt="" onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="flex";}} style={{width:"100%",height:"100%",objectFit:"contain",padding:4,boxSizing:"border-box"}}/>
+              :null}
+            <span style={{display:profile?.clubs?.logo_url?"none":"flex"}}>{(profile?.username||"T")[0].toUpperCase()}</span>
           </button>
         }
       </div>
