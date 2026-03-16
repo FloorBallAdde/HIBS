@@ -12,7 +12,7 @@ import { TODAY, FMT } from "../../lib/constants.js";
  *
  * Observation-format: { id, text, date (YYYY-MM-DD), createdAt (ISO) }
  */
-export default function ObservationModal({ player, onClose, onSave }) {
+export default function ObservationModal({ player, onClose, onSave, profile }) {
   const [obs, setObs] = useState(() =>
     Array.isArray(player.observations) ? [...player.observations] : []
   );
@@ -32,6 +32,8 @@ export default function ObservationModal({ player, onClose, onSave }) {
       text: input.trim(),
       date: TODAY(),
       createdAt: new Date().toISOString(),
+      authorId: profile?.id || "",
+      authorName: profile?.username || "Tränare",
     };
     const updated = [entry, ...obs];
     setObs(updated);
@@ -136,27 +138,34 @@ export default function ObservationModal({ player, onClose, onSave }) {
               marginBottom: 8,
             }}
           >
-            <div style={{ fontSize: 10, color: "#4a5568", marginBottom: 4 }}>{FMT(o.date)}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 10, color: "#4a5568" }}>{FMT(o.date)}</span>
+              {o.authorName && (
+                <span style={{ fontSize: 10, color: "#6366f1", fontWeight: 700 }}>· {o.authorName}</span>
+              )}
+            </div>
             <div style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.5 }}>{o.text}</div>
-            <button
-              onClick={() => deleteObs(o.id)}
-              title="Ta bort"
-              style={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                background: "none",
-                border: "none",
-                color: "#4a5568",
-                fontSize: 13,
-                cursor: "pointer",
-                padding: "2px 4px",
-                lineHeight: 1,
-                fontFamily: "inherit",
-              }}
-            >
-              ✕
-            </button>
+            {(!o.authorId || o.authorId === profile?.id) && (
+              <button
+                onClick={() => deleteObs(o.id)}
+                title="Ta bort"
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  background: "none",
+                  border: "none",
+                  color: "#4a5568",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  padding: "2px 4px",
+                  lineHeight: 1,
+                  fontFamily: "inherit",
+                }}
+              >
+                ✕
+              </button>
+            )}
           </div>
         ))}
 

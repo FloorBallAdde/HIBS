@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import ls from "./lib/storage.js";
 import { sbAuth, sbGet, sbPost, sbPatch, sbDel, sbRefresh } from "./lib/supabase.js";
 import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
@@ -61,6 +61,7 @@ export default function App(){
   const [trainNoteInput,setTrainNoteInput]=useState("");
   const [pendingCoaches,setPendingCoaches]=useState([]);
   const [coachStaff,setCoachStaff]=useState([]); // Godkända tränare i samma klubb
+  const [lastSeenObs,setLastSeenObs]=useState(()=>ls.get("hibs_obs_seen")||"");
 
   // DATA
   const [players,setPlayers]=useState([]);
@@ -114,6 +115,33 @@ export default function App(){
   },[clubId,tok]);
 
   useEffect(()=>{if(profile)loadData();},[profile]);
+
+  // Polling: uppdatera spelardata var 60s (för delade observationer mellan tränare)
+  useEffect(()=>{
+    if(!profile)return;
+    const id=setInterval(()=>loadData(),60*1000);
+    return()=>clearInterval(id);
+  },[profile,loadData]);
+
+  // Räkna olästa observationer (gjorda av ANDRA tränare, nyare än lastSeenObs)
+  const unreadObs=useMemo(()=>{
+    if(!auth?.uid)return 0;
+    let n=0;
+    players.forEach(p=>{
+      if(Array.isArray(p.observations)){
+        p.observations.forEach(o=>{
+          if(o.authorId&&o.authorId!==auth.uid&&(!lastSeenObs||o.createdAt>lastSeenObs))n++;
+        });
+      }
+    });
+    return n;
+  },[players,auth?.uid,lastSeenObs]);
+
+  const markObsSeen=useCallback(()=>{
+    const now=new Date().toISOString();
+    ls.set("hibs_obs_seen",now);
+    setLastSeenObs(now);
+  },[]);
 
   // Load pending coaches if owner
   useEffect(()=>{
@@ -169,7 +197,7 @@ export default function App(){
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
       {noteModal&&<NoteModal player={noteModal} onClose={()=>setNoteModal(null)} onSave={async text=>{await updP(noteModal.id,{note:text});setNoteModal(null);}}/>}
       {goalModal&&<GoalModal player={goalModal} onClose={()=>setGoalModal(null)} onSave={async goals=>{await updP(goalModal.id,{goals});}}/>}
-      {obsModal&&<ObservationModal player={obsModal} onClose={()=>setObsModal(null)} onSave={async observations=>{await updP(obsModal.id,{observations});setObsModal(p=>p?{...p,observations}:null);}}/>}
+      {obsModal&&<ObservationModal player={obsModal} profile={profile} onClose={()=>setObsModal(null)} onSave={async observations=>{await updP(obsModal.id,{observations});setObsModal(p=>p?{...p,observations}:null);}}/>}
       <MatchNoteModal key={matchNoteModal?.id} match={matchNoteModal} onClose={()=>setMatchNoteModal(null)} onSave={async txt=>{await sbPatch("matches",matchNoteModal.id,{note:txt},tok);setHistory(p=>p.map(m=>m.id===matchNoteModal.id?{...m,note:txt}:m));setMatchNoteModal(null);}}/>
 
       {/* ── Profilpanel ─────────────────────────────────────────────── */}
@@ -327,7 +355,7 @@ export default function App(){
         />}
       </div>
 
-      <BottomNav tab={tab} setTab={setTab} setMerSub={setMerSub}/>
+      <BottomNav tab={tab} setTab={(t)=>{setTab(t);if(t==="mer")markObsSeen();if(t!=="mer")setMerSub(null);}} setMerSub={setMerSub} merBadge={unreadObs+pendingCoaches.length}/>
     </div>
   );
 }

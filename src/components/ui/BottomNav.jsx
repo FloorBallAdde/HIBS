@@ -76,7 +76,7 @@ const TABS = [
   { id: "mer",     label: "Mer",      Icon: MerIcon      },
 ];
 
-export default function BottomNav({ tab, setTab, setMerSub }) {
+export default function BottomNav({ tab, setTab, setMerSub, merBadge = 0 }) {
   return (
     <nav style={{
       position: "fixed", bottom: 0, left: 0, right: 0,
@@ -91,6 +91,7 @@ export default function BottomNav({ tab, setTab, setMerSub }) {
     }}>
       {TABS.map(({ id, label, Icon }) => {
         const active = tab === id;
+        const showBadge = id === "mer" && merBadge > 0 && !active;
         return (
           <button
             key={id}
@@ -125,12 +126,23 @@ export default function BottomNav({ tab, setTab, setMerSub }) {
               transition: "width 0.3s cubic-bezier(0.34,1.56,0.64,1)",
               opacity: active ? 1 : 0,
             }}/>
-            <Icon active={active} />
+            <div style={{ position: "relative" }}>
+              <Icon active={active} />
+              {showBadge && (
+                <div style={{
+                  position: "absolute", top: -3, right: -4,
+                  width: 8, height: 8,
+                  borderRadius: "50%",
+                  background: "#f87171",
+                  border: "1.5px solid #0b0d14",
+                }}/>
+              )}
+            </div>
             <span style={{
               fontSize: 8,
               fontWeight: active ? 800 : 600,
               letterSpacing: "0.05em",
-              color: active ? "#22c55e" : "#3a4257",
+              color: active ? "#22c55e" : showBadge ? "#f87171" : "#3a4257",
               transition: "color 0.2s ease",
             }}>
               {label.toUpperCase()}
