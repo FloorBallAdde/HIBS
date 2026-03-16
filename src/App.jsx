@@ -94,7 +94,7 @@ export default function App(){
 
   // MATCH SESSION HOOK (encapsulates all match state, persistence & actions)
   const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory});
-  const{upcomingMatches,addUpcoming,removeUpcoming,loadFromSchedule,matchStep,setMatchStep,activeMatch}=matchSession;
+  const{upcomingMatches,addUpcoming,removeUpcoming,loadFromSchedule,updateUpcomingRsvp,matchStep,setMatchStep,activeMatch}=matchSession;
 
   // LOAD DATA — silent=true används vid bakgrundspolling (ingen spinner, ingen scroll-reset)
   const loadData=useCallback(async(silent=false)=>{
@@ -313,7 +313,7 @@ export default function App(){
 
       <div style={{padding:"0 16px"}}>
         {tab==="home"&&<HomeContent
-          injured={injured} upcomingMatches={upcomingMatches} addUpcoming={addUpcoming} removeUpcoming={removeUpcoming}
+          injured={injured} upcomingMatches={upcomingMatches} addUpcoming={addUpcoming} removeUpcoming={removeUpcoming} updateUpcomingRsvp={updateUpcomingRsvp}
           latestMatch={latestMatch} stats={stats} totalGoals={totalGoals} totalAssists={totalAssists}
           history={history} players={players} trainHistory={trainHistory}
           trainNoteInput={trainNoteInput} setTrainNoteInput={setTrainNoteInput}

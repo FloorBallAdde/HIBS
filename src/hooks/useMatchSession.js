@@ -270,7 +270,18 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setOpponent(scheduled.opponent);
     setMatchDate(scheduled.date);
     setSerie(scheduled.serie || "14A");
+    // Förfyll trupp med RSVP-anmälda spelare (om sådana finns)
+    if (Array.isArray(scheduled.rsvp) && scheduled.rsvp.length > 0) {
+      setSelected(new Set(scheduled.rsvp));
+    }
     setMatchStep("select");
+  };
+
+  const updateUpcomingRsvp = (matchId, playerIds) => {
+    // Uppdatera lokal state direkt (optimistisk)
+    setUpcomingMatches(prev => prev.map(m => m.id === matchId ? { ...m, rsvp: playerIds } : m));
+    // Spara i Supabase (fire-and-forget)
+    if (tok) sbPatch("matches", matchId, { rsvp: playerIds }, tok).catch(() => {});
   };
 
   return {
@@ -292,7 +303,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
     toggleSelected,
     startMatch, endMatch, abortMatch,
-    addUpcoming, removeUpcoming, loadFromSchedule,
+    addUpcoming, removeUpcoming, loadFromSchedule, updateUpcomingRsvp,
     saveError, setSaveError,
     matchShots, setMatchShots,
     matchShotsFor, setMatchShotsFor,

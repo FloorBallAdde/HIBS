@@ -1,4 +1,5 @@
 import StableInput from "../ui/StableInput.jsx";
+import MatchRsvpModal from "./MatchRsvpModal.jsx";
 import { SERIES, FMT, GC, gc, TODAY } from "../../lib/constants.js";
 import { sbPost, sbDel } from "../../lib/supabase.js";
 import { useState } from "react";
@@ -8,7 +9,7 @@ import { useState } from "react";
  * Hero season record, quick stats strip, form track, next match, top scorers.
  */
 export default function HomeContent({
-  injured, upcomingMatches, addUpcoming, removeUpcoming, latestMatch,
+  injured, upcomingMatches, addUpcoming, removeUpcoming, updateUpcomingRsvp, latestMatch,
   stats, totalGoals, totalAssists, history, players,
   trainHistory,
   trainNoteInput, setTrainNoteInput, trainNotes, setTrainNotes,
@@ -18,6 +19,8 @@ export default function HomeContent({
   const [newOpp, setNewOpp] = useState("");
   const [newDate, setNewDate] = useState(TODAY());
   const [newSerie, setNewSerie] = useState("14A");
+  const [rsvpMatchId, setRsvpMatchId] = useState(null);
+  const rsvpMatch = rsvpMatchId ? upcomingMatches.find(m => m.id === rsvpMatchId) : null;
 
   const handleAddMatch = () => {
     if (!newOpp.trim() || !newDate) return;
@@ -70,6 +73,15 @@ export default function HomeContent({
 
   return (
     <div>
+      {/* RSVP MODAL */}
+      {rsvpMatch && (
+        <MatchRsvpModal
+          match={rsvpMatch}
+          players={players}
+          onToggle={updateUpcomingRsvp}
+          onClose={() => setRsvpMatchId(null)}
+        />
+      )}
 
       {/* INJURED ALERT */}
       {injured.length > 0 && (
@@ -203,7 +215,14 @@ export default function HomeContent({
               {daysUntil === 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#22c55e", background: "rgba(34,197,94,0.1)", borderRadius: 99, padding: "2px 10px" }}>Idag! 🏑</span>}
               {daysUntil === 1 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fbbf24", background: "rgba(251,191,36,0.1)", borderRadius: 99, padding: "2px 10px" }}>Imorgon</span>}
               {daysUntil > 1 && <span style={{ fontSize: 12, color: "#4a5568" }}>om {daysUntil} dagar</span>}
-              <button onClick={() => removeUpcoming(nextMatch.id)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 17, padding: 0, lineHeight: 1 }}>×</button>
+              {/* RSVP-knapp */}
+              <button
+                onClick={() => setRsvpMatchId(nextMatch.id)}
+                style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, padding: "3px 10px", background: (nextMatch.rsvp?.length > 0) ? "rgba(34,197,94,0.1)" : "rgba(255,255,255,0.04)", border: "1px solid " + (nextMatch.rsvp?.length > 0 ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.08)"), borderRadius: 99, color: nextMatch.rsvp?.length > 0 ? "#22c55e" : "#4a5568", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                👥 {nextMatch.rsvp?.length || 0}
+              </button>
+              <button onClick={() => removeUpcoming(nextMatch.id)} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 17, padding: 0, lineHeight: 1 }}>×</button>
             </div>
             {upcomingMatches.filter(m => m.id !== nextMatch.id).slice(0, 2).map(m => {
               const d = Math.ceil((new Date(m.date) - today) / (1000 * 60 * 60 * 24));
@@ -213,6 +232,12 @@ export default function HomeContent({
                   <span style={{ fontSize: 10, color: sc2, background: sc2 + "18", borderRadius: 99, padding: "1px 7px", fontWeight: 700 }}>{m.serie}</span>
                   <span style={{ fontSize: 12, color: "#64748b", flex: 1 }}>vs {m.opponent}</span>
                   <span style={{ fontSize: 11, color: "#334155" }}>{d > 0 ? `om ${d}d` : FMT(m.date)}</span>
+                  <button
+                    onClick={() => setRsvpMatchId(m.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px 8px", background: (m.rsvp?.length > 0) ? "rgba(34,197,94,0.08)" : "transparent", border: "1px solid " + (m.rsvp?.length > 0 ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.06)"), borderRadius: 99, color: m.rsvp?.length > 0 ? "#22c55e" : "#334155", fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    👥 {m.rsvp?.length || 0}
+                  </button>
                   <button onClick={() => removeUpcoming(m.id)} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
                 </div>
               );
