@@ -10,25 +10,87 @@ import { useRef, useState, useEffect, useCallback } from "react";
 /* ─────────── Rink ─────────── */
 function drawRink(ctx, W, H) {
   const m = 14, rw = W - m * 2, rh = H - m * 2;
-  ctx.fillStyle = "#1a4a8a"; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#1e55a0"; ctx.fillRect(m, m, rw, rh);
-  const line = (w, a = 1) => { ctx.lineWidth = w; ctx.strokeStyle = `rgba(255,255,255,${a})`; };
-  line(2.5); ctx.strokeRect(m, m, rw, rh);
-  ctx.strokeStyle = "rgba(220,40,40,0.85)"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(W/2, m); ctx.lineTo(W/2, m+rh); ctx.stroke();
-  line(1.8, 0.75);
-  ctx.beginPath(); ctx.arc(W/2, H/2, rw*0.09, 0, Math.PI*2); ctx.stroke();
+
+  // Rounded-corner rink path (IFF standard: rounded corners, ~7.5% of shorter side)
+  const cr = Math.min(rw, rh) * 0.075;
+  function rrPath(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y,     x + w, y + r,     r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h,     x, y + h - r,     r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y,         x + r, y,          r);
+    ctx.closePath();
+  }
+
+  // Background (boards color)
+  ctx.fillStyle = "#1a4a8a";
+  ctx.fillRect(0, 0, W, H);
+
+  // Rink surface — rounded
+  ctx.fillStyle = "#1e55a0";
+  rrPath(m, m, rw, rh, cr);
+  ctx.fill();
+
+  // Board outline — rounded, white
+  ctx.strokeStyle = "rgba(255,255,255,0.92)";
+  ctx.lineWidth = 2.5;
+  rrPath(m, m, rw, rh, cr);
+  ctx.stroke();
+
+  // Center red line
+  ctx.strokeStyle = "rgba(220,40,40,0.88)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W/2, m); ctx.lineTo(W/2, m + rh); ctx.stroke();
+
+  // Center circle + dot
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
+  ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.arc(W/2, H/2, rw * 0.09, 0, Math.PI*2); ctx.stroke();
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.beginPath(); ctx.arc(W/2, H/2, 3, 0, Math.PI*2); ctx.fill();
-  const gaW = rw*0.125, gaH = rh*0.375, gaY = m+(rh-gaH)/2;
-  line(1.5, 0.8); ctx.strokeRect(m, gaY, gaW, gaH); ctx.strokeRect(m+rw-gaW, gaY, gaW, gaH);
-  const kkW = gaW*0.42, kkH = gaH*0.46, kkY = m+(rh-kkH)/2;
-  line(1, 0.45); ctx.strokeRect(m, kkY, kkW, kkH); ctx.strokeRect(m+rw-kkW, kkY, kkW, kkH);
-  const netH = rh*0.13, netW = 5, netY = H/2 - netH/2;
-  ctx.fillStyle = "rgba(255,255,255,0.09)";
-  ctx.fillRect(m-netW, netY, netW, netH); ctx.fillRect(m+rw, netY, netW, netH);
-  line(1.5, 0.7); ctx.strokeRect(m-netW, netY, netW, netH); ctx.strokeRect(m+rw, netY, netW, netH);
-  const fpX = rw*0.22, fpY = rh*0.075;
+
+  // ── Goal lines (set in from end boards — space behind goal) ──
+  // In a 40m rink the goal line is ~2.7m from the end board = 6.75%
+  const glInset = rw * 0.068;
+  const glL = m + glInset;   // left goal line x
+  const glR = m + rw - glInset; // right goal line x
+
+  ctx.strokeStyle = "rgba(220,40,40,0.82)";
+  ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(glL, m); ctx.lineTo(glL, m + rh); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(glR, m); ctx.lineTo(glR, m + rh); ctx.stroke();
+
+  // ── Goals (on goal lines, extending TOWARD the boards = "behind") ──
+  // IFF: goal is 160cm wide, ~65cm deep. Proportionally: ~24% of rink height, ~2.2% of rink width
+  const goalH = rh * 0.24;
+  const goalD = rw * 0.022;
+  const goalY = H/2 - goalH/2;
+
+  // Left goal: door faces right (toward center), net extends left (toward board)
+  ctx.fillStyle = "rgba(255,255,255,0.07)";
+  ctx.fillRect(glL - goalD, goalY, goalD, goalH);
+  ctx.strokeStyle = "rgba(255,255,255,0.88)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(glL - goalD, goalY, goalD, goalH);
+
+  // Right goal: door faces left (toward center), net extends right (toward board)
+  ctx.fillRect(glR, goalY, goalD, goalH);
+  ctx.strokeRect(glR, goalY, goalD, goalH);
+
+  // ── Goal crease / D-zone (semicircle in front of goal, toward center) ──
+  const creaseR = rh * 0.125;
+  ctx.strokeStyle = "rgba(220,40,40,0.50)";
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.arc(glL, H/2, creaseR, -Math.PI/2, Math.PI/2);  ctx.stroke(); // left D
+  ctx.beginPath(); ctx.arc(glR, H/2, creaseR,  Math.PI/2, Math.PI*1.5); ctx.stroke(); // right D
+
+  // ── Face-off dots ──
+  const fpX = rw * 0.22, fpY = rh * 0.15;
   [[m+fpX,m+fpY],[m+fpX,m+rh-fpY],[m+rw-fpX,m+fpY],[m+rw-fpX,m+rh-fpY]].forEach(([x,y]) => {
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
@@ -56,43 +118,59 @@ function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
   ctx.restore();
 }
 
-/* Curved arrow for running paths — quadratic bezier, control point offset perpendicular */
-function drawCurvedArrow(ctx, x1, y1, x2, y2, color, lw) {
+/* Curved arrow with explicit control point — used for bidirectional run arrows */
+function drawCurvedArrowCtrl(ctx, x1, y1, x2, y2, cx, cy, color, lw) {
   const dx = x2-x1, dy = y2-y1;
   const len = Math.sqrt(dx*dx+dy*dy);
   if (len < 4) return;
-  // Control point: midpoint + 35% of length perpendicular to the left of travel direction
-  const mx = (x1+x2)/2, my = (y1+y2)/2;
-  const px = -dy/len, py = dx/len; // perpendicular unit vector (left)
-  const offset = len * 0.35;
-  const cx = mx + px * offset, cy = my + py * offset;
-
-  // Tangent at end point for arrowhead direction
   const tx = x2 - cx, ty = y2 - cy;
   const tLen = Math.sqrt(tx*tx+ty*ty);
-  const angle = Math.atan2(ty/tLen, tx/tLen);
+  const angle = tLen > 0 ? Math.atan2(ty/tLen, tx/tLen) : Math.atan2(dy, dx);
   const head = Math.max(12, lw * 5);
-
   ctx.save();
   ctx.strokeStyle = color; ctx.fillStyle = color;
   ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
-
-  // Draw bezier shaft (stop slightly before tip for clean arrowhead)
-  const t = 1 - (head * 0.6) / len;
+  const t = Math.max(0, 1 - (head * 0.6) / len);
   const shaftEndX = (1-t)*(1-t)*x1 + 2*(1-t)*t*cx + t*t*x2;
   const shaftEndY = (1-t)*(1-t)*y1 + 2*(1-t)*t*cy + t*t*y2;
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.quadraticCurveTo(cx, cy, shaftEndX, shaftEndY);
-  ctx.stroke();
-
-  // Arrowhead at end
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cx, cy, shaftEndX, shaftEndY); ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(x2, y2);
   ctx.lineTo(x2 - head*Math.cos(angle-Math.PI/6), y2 - head*Math.sin(angle-Math.PI/6));
   ctx.lineTo(x2 - head*Math.cos(angle+Math.PI/6), y2 - head*Math.sin(angle+Math.PI/6));
   ctx.closePath(); ctx.fill();
   ctx.restore();
+}
+
+/* Curved arrow — uses actual pointer path to determine curve direction & shape.
+   canvasW/canvasH used for smart fallback: curves toward rink center, never toward boards. */
+function drawCurvedArrow(ctx, x1, y1, x2, y2, color, lw, pathPts, canvasW, canvasH) {
+  const dx = x2-x1, dy = y2-y1;
+  const len = Math.sqrt(dx*dx+dy*dy);
+  if (len < 4) return;
+
+  let cx, cy;
+  if (pathPts && pathPts.length >= 4) {
+    // Follow user's actual arc — 40% into the path is the natural control point
+    const mid = pathPts[Math.floor(pathPts.length * 0.4)];
+    cx = mid.x; cy = mid.y;
+  } else {
+    // Smart default: curve toward the rink center (never toward the boards)
+    const mx = (x1+x2)/2, my = (y1+y2)/2;
+    const perpX = -dy/len, perpY = dx/len; // left perpendicular unit vector
+    const offset = len * 0.35;
+    if (canvasW && canvasH) {
+      // Pick whichever perpendicular direction points toward canvas center
+      const toCenterX = canvasW/2 - mx, toCenterY = canvasH/2 - my;
+      const sign = (perpX * toCenterX + perpY * toCenterY) >= 0 ? 1 : -1;
+      cx = mx + perpX * sign * offset;
+      cy = my + perpY * sign * offset;
+    } else {
+      cx = mx + perpX * offset;
+      cy = my + perpY * offset;
+    }
+  }
+  drawCurvedArrowCtrl(ctx, x1, y1, x2, y2, cx, cy, color, lw);
 }
 
 /* Dashed line for passes — no arrowhead, just dashed stroke */
@@ -204,6 +282,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   const tokenIdRef   = useRef(0);
   const dragState    = useRef(null);
   const resizeTimer  = useRef(null);
+  const runPathRef   = useRef([]); // tracks pointer path for bidirectional curved arrows
 
   const [tool,        setTool]        = useState("pen");
   const [penColor,    setPenColor]    = useState("#ffffff");
@@ -325,6 +404,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     if (tool === "arrow" || tool === "run" || tool === "pass") {
       const pt = getCanvasPos(e);
       arrowStart.current = pt;
+      if (tool === "run") runPathRef.current = [];
       arrowPreSnap.current = canvasRef.current.getContext("2d").getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
       isDrawing.current = true;
       canvasRef.current?.setPointerCapture?.(e.pointerId);
@@ -345,9 +425,18 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     if ((tool === "arrow" || tool === "run" || tool === "pass") && arrowStart.current && arrowPreSnap.current) {
       ctx.putImageData(arrowPreSnap.current, 0, 0);
       const pt = getCanvasPos(e);
-      if (tool === "arrow") drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
-      else if (tool === "run")  drawCurvedArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
-      else if (tool === "pass") drawDashedLine(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      if (tool === "run") {
+        // Collect pointer path every ~5px to track arc direction
+        const path = runPathRef.current;
+        const last = path[path.length - 1];
+        const dx = last ? pt.x - last.x : 999, dy = last ? pt.y - last.y : 999;
+        if (!last || dx*dx + dy*dy > 25) path.push({x: pt.x, y: pt.y});
+        drawCurvedArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize, path, c.width, c.height);
+      } else if (tool === "arrow") {
+        drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      } else if (tool === "pass") {
+        drawDashedLine(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      }
       return;
     }
 
@@ -378,7 +467,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
       const pt = getCanvasPos(e);
       ctx.putImageData(arrowPreSnap.current, 0, 0);
       if (tool === "arrow") drawArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
-      else if (tool === "run")  drawCurvedArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
+      else if (tool === "run")  drawCurvedArrow(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize, runPathRef.current, c.width, c.height);
       else if (tool === "pass") drawDashedLine(ctx, arrowStart.current.x, arrowStart.current.y, pt.x, pt.y, penColor, penSize);
     }
     isDrawing.current = false; lastPt.current = null; arrowStart.current = null; arrowPreSnap.current = null;
