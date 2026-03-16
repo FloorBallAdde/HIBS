@@ -83,7 +83,8 @@ export default function AuthScreen({ onAuth }) {
 
   const searchClubs = async () => {
     if (!clubSearch.trim()) return;
-    const res = await sbGet("clubs", "name=ilike.*" + encodeURIComponent(clubSearch.trim()) + "*");
+    const tok = authData?.tok;
+    const res = await sbGet("clubs", "name=ilike.*" + encodeURIComponent(clubSearch.trim()) + "*", tok);
     setClubs(Array.isArray(res) ? res : []);
   };
 
