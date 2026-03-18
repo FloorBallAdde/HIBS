@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { FMT, SERIES, GROUPS, GC, gc, mkLine } from "../../lib/constants.js";
+import { FMT, SERIES, GROUPS, GC, gc, mkLine, FONT } from "../../lib/constants.js";
 import StableInput from "../ui/StableInput.jsx";
 import FormationCard from "./FormationCard.jsx";
 import LiveMatchView from "./LiveMatchView.jsx";
@@ -75,7 +75,7 @@ export default function MatchContent({
           padding: "12px 14px",
           marginBottom: 14,
         }}>
-          <div style={{ fontSize: 9, color: "#fbbf24", fontWeight: 700, marginBottom: 6 }}>
+          <div style={{ fontSize: FONT.label, color: "#fbbf24", fontWeight: 700, marginBottom: 6 }}>
             🏆 CUP-LÄGE — TRUPP SPARAD
           </div>
           <StableInput
@@ -99,10 +99,10 @@ export default function MatchContent({
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Kedjor</div>
+        <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff" }}>Kedjor</div>
         <button
           onClick={() => setMatchStep("select")}
-          style={{ fontSize: 12, color: "#4a5568", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+          style={{ fontSize: 12, color: "#64748b", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
         >
           Tillbaka
         </button>
@@ -131,7 +131,7 @@ export default function MatchContent({
           border: "1px dashed rgba(255,255,255,0.1)",
           borderRadius: 14,
           background: "transparent",
-          color: "#4a5568",
+          color: "#64748b",
           fontSize: 13,
           fontWeight: 700,
           fontFamily: "inherit",
@@ -159,7 +159,7 @@ export default function MatchContent({
               ? "rgba(255,255,255,0.05)"
               : "linear-gradient(135deg,#22c55e,#16a34a)",
             color: (cupMode && !opponent.trim()) ? "#334155" : "#fff",
-            fontSize: 15,
+            fontSize: FONT.title,
             fontWeight: 900,
             fontFamily: "inherit",
             cursor: (cupMode && !opponent.trim()) ? "not-allowed" : "pointer",
@@ -182,7 +182,7 @@ export default function MatchContent({
             className="hibs-dialog"
             style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
           >
-            <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
+            <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
             <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
               Du har inte satt upp kedjor för den här matchen. Vill du sätta kedjor eller starta ändå?
             </div>
@@ -209,7 +209,7 @@ export default function MatchContent({
   // ── TRUPP (SELECT SQUAD) ──
   return (
     <div>
-      <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 14 }}>Trupp</div>
+      <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff", marginBottom: 14 }}>Trupp</div>
 
       {/* Cup Mode toggle */}
       <button
@@ -220,7 +220,7 @@ export default function MatchContent({
           border: "1px solid " + (cupMode ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.07)"),
           borderRadius: 12,
           background: cupMode ? "rgba(251,191,36,0.07)" : "transparent",
-          color: cupMode ? "#fbbf24" : "#4a5568",
+          color: cupMode ? "#fbbf24" : "#64748b",
           fontSize: 12,
           fontWeight: 700,
           fontFamily: "inherit",
@@ -240,7 +240,7 @@ export default function MatchContent({
       {/* Från schema */}
       {upcomingMatches && upcomingMatches.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginBottom: 6 }}>FRÅN SCHEMA</div>
+          <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, marginBottom: 6 }}>FRÅN SCHEMA</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {upcomingMatches.map(m => {
               const sc = m.serie === "14A" ? "#f472b6" : m.serie === "15A" ? "#38bdf8" : "#fbbf24";
@@ -273,14 +273,14 @@ export default function MatchContent({
       {/* Serie */}
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
         {SERIES.map(s => (
-          <button key={s} onClick={() => setSerie(s)} style={{ flex: 1, padding: "8px 0", border: "1px solid " + (serie === s ? "#f472b6" : "rgba(255,255,255,0.07)"), borderRadius: 8, background: serie === s ? "rgba(244,114,182,0.1)" : "transparent", color: serie === s ? "#f472b6" : "#4a5568", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
+          <button key={s} onClick={() => setSerie(s)} style={{ flex: 1, padding: "8px 0", border: "1px solid " + (serie === s ? "#f472b6" : "rgba(255,255,255,0.07)"), borderRadius: 8, background: serie === s ? "rgba(244,114,182,0.1)" : "transparent", color: serie === s ? "#f472b6" : "#64748b", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
             {s}
           </button>
         ))}
       </div>
 
       {/* Välj målvakt */}
-      <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginBottom: 8 }}>VÄLJ MÅLVAKT</div>
+      <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, marginBottom: 8 }}>VÄLJ MÅLVAKT</div>
       <div style={{ display: "flex", gap: 7, marginBottom: 14 }}>
         {gkPlayers.map(p => {
           const on = (goalkeeper || []).includes(p.id);
@@ -288,7 +288,7 @@ export default function MatchContent({
             <button
               key={p.id}
               onClick={() => setGoalkeeper(g => g.includes(p.id) ? g.filter(x => x !== p.id) : [...g, p.id])}
-              style={{ padding: "8px 16px", border: "1.5px solid " + (on ? GC.MV.color : "rgba(255,255,255,0.08)"), borderRadius: 99, background: on ? GC.MV.bg : "transparent", color: on ? GC.MV.color : "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
+              style={{ padding: "8px 16px", border: "1.5px solid " + (on ? GC.MV.color : "rgba(255,255,255,0.08)"), borderRadius: 99, background: on ? GC.MV.bg : "transparent", color: on ? GC.MV.color : "#64748b", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
             >
               {p.name}
             </button>
@@ -298,7 +298,7 @@ export default function MatchContent({
 
       {/* Välj utespelare */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700 }}>VÄLJ UTESPELARE ({selected.size} valda)</div>
+        <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700 }}>VÄLJ UTESPELARE ({selected.size} valda)</div>
         <button
           onClick={() => setSelected(s => s.size >= field.length ? new Set() : new Set(field.map(x => x.id)))}
           style={{ fontSize: 10, color: "#22c55e", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
@@ -312,7 +312,7 @@ export default function MatchContent({
         if (!gp.length) return null;
         return (
           <div key={g} style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 9, color: GC[g].color, fontWeight: 700, marginBottom: 5 }}>GRUPP {g}</div>
+            <div style={{ fontSize: FONT.label, color: GC[g].color, fontWeight: 700, marginBottom: 5 }}>GRUPP {g}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {gp.map(p => {
                 const on = selected.has(p.id);
@@ -327,7 +327,7 @@ export default function MatchContent({
                       border: "1.5px solid " + (on ? GC[g].color : inj ? "rgba(255,80,80,0.3)" : ltd ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.08)"),
                       borderRadius: 99,
                       background: on ? GC[g].bg : inj ? "rgba(255,80,80,0.05)" : ltd ? "rgba(251,191,36,0.05)" : "transparent",
-                      color: on ? GC[g].color : inj ? "rgba(255,80,80,0.4)" : ltd ? "#fbbf24" : "#4a5568",
+                      color: on ? GC[g].color : inj ? "rgba(255,80,80,0.4)" : ltd ? "#fbbf24" : "#64748b",
                       fontSize: 12,
                       fontWeight: 700,
                       fontFamily: "inherit",
@@ -346,7 +346,7 @@ export default function MatchContent({
 
       {/* Lagmål */}
       <div style={{ marginTop: 16, marginBottom: 2 }}>
-        <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginBottom: 8 }}>LAGMÅL (valfritt)</div>
+        <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, marginBottom: 8 }}>LAGMÅL (valfritt)</div>
         {(teamGoals || ["", "", ""]).map((goal, i) => (
           <StableInput
             key={i}
@@ -374,7 +374,7 @@ export default function MatchContent({
             startMatch();
           }}
           disabled={selected.size === 0 || !opponent.trim()}
-          style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 14, background: selected.size > 0 && opponent.trim() ? "linear-gradient(135deg,#22c55e,#16a34a)" : "rgba(255,255,255,0.05)", color: selected.size > 0 && opponent.trim() ? "#fff" : "#334155", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
+          style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 14, background: selected.size > 0 && opponent.trim() ? "linear-gradient(135deg,#22c55e,#16a34a)" : "rgba(255,255,255,0.05)", color: selected.size > 0 && opponent.trim() ? "#fff" : "#334155", fontSize: FONT.title, fontWeight: 900, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
         >
           Starta match
         </button>
@@ -391,7 +391,7 @@ export default function MatchContent({
             className="hibs-dialog"
             style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
           >
-            <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
+            <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
             <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
               Du har inte satt upp kedjor. Vill du sätta kedjor eller starta ändå?
             </div>

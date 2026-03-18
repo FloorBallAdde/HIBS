@@ -133,3 +133,9 @@ hibs-app/
 | 7 | 2026-03-13 | BottomNav extraherad + F6: 3 lagmål per match | 238 → 232 | ✅ Klar |
 | 8 | 2026-03-14 | useSeasonStats hook extraherad + F4: Favoritsystem i Övningsbibliotek | 232 → 217 | ✅ Klar |
 | 9 | 2026-03-14 | Matchschema (upcomingMatches) + AI-genererade matchtexter (Netlify fn + Claude API) | 217 → 210 | ✅ Klar |
+| 10 | 2026-03-15 | GoalModal (individuella mål, F7) + useSeasonStats-fix | 210 → 210 | ✅ Klar |
+| 11 | 2026-03-16 | MatchRsvpModal extraherad + RSVP-flöde i HomeContent | 210 → 210 | ✅ Klar |
+| 12 | 2026-03-16 | ProfilePanel extraherad + TaktiktavlaTab (canvas-ritverktyg) | 210 → 210 | ✅ Klar |
+| 13 | 2026-03-16 | Kallelser (updateUpcomingRsvp hook) + HomeContent RSVP-integration | 210 → 210 | ✅ Klar |
+| 14 | 2026-03-16 | UI/UX polish: global CSS animationer + FONT-skala + button press-states | 210 → 210 | ✅ Klar |
+| 15 | 2026-03-18 | UpcomingMatchCard extraherad + kontrast #64748b + FONT-tokens i MatchContent | 210 → 210 | ✅ Klar |
