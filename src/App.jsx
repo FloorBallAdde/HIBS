@@ -19,6 +19,7 @@ import MatchNoteModal from "./components/match/MatchNoteModal.jsx";
 import MerContent from "./components/mer/MerContent.jsx";
 import BottomNav from "./components/ui/BottomNav.jsx";
 import ProfilePanel from "./components/ui/ProfilePanel.jsx";
+import LiveMatchBanner from "./components/ui/LiveMatchBanner.jsx";
 
 // MAIN APP
 export default function App(){
@@ -252,21 +253,7 @@ export default function App(){
       />
 
       {/* ── Live match-banner (visas för co-tränare) ─────────────────── */}
-      {liveMatchView&&(
-        <div onClick={()=>setTab("match")} style={{background:"rgba(239,68,68,0.12)",borderBottom:"1px solid rgba(239,68,68,0.3)",padding:"10px 20px",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
-          <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"pulse 1s infinite"}}/>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>🔴 LIVE — HIBS vs {liveMatchView.opponent}</div>
-            {liveMatchView.live_state&&(
-              <div style={{fontSize:12,color:"#fca5a5",marginTop:1}}>
-                {liveMatchView.live_state.result?.us||0} – {liveMatchView.live_state.result?.them||0}
-                {" · "}Skott: {liveMatchView.live_state.shots_for||0}–{liveMatchView.live_state.shots||0}
-              </div>
-            )}
-          </div>
-          <span style={{fontSize:11,color:"#f87171"}}>Se matchen ›</span>
-        </div>
-      )}
+      <LiveMatchBanner liveMatchView={liveMatchView} onNavigate={()=>setTab("match")}/>
 
       {/* ── Sticky header ───────────────────────────────────────────── */}
       <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>

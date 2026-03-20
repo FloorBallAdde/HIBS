@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { sbGet, sbPost, sbPatch } from "../../lib/supabase.js";
-import { CATEGORIES, INTENSITIES, CAT_COLOR } from "../../lib/constants.js";
+import { CATEGORIES, INTENSITIES, CAT_COLOR, CAT_DESC } from "../../lib/constants.js";
 import ls from "../../lib/storage.js";
 import TaktiktavlaTab from "./TaktiktavlaTab.jsx";
 
@@ -285,6 +285,9 @@ export default function OvningarTab({ token }) {
             <div>
               <span style={{ fontSize: 10, fontWeight: 800, color: cc, background: cc + "18", border: "1px solid " + cc + "30", borderRadius: 99, padding: "3px 10px" }}>{sel.category}</span>
               <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", marginTop: 8 }}>{sel.name}</div>
+              {CAT_DESC[sel.category] && (
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 4, lineHeight: 1.4, fontStyle: "italic" }}>{CAT_DESC[sel.category]}</div>
+              )}
             </div>
             <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
               {sel.players && <div style={{ fontSize: 11, color: "#4a5568" }}>{sel.players} sp</div>}
@@ -387,6 +390,23 @@ export default function OvningarTab({ token }) {
           })}
         </div>
       </div>
+
+      {/* Category description — visas när en specifik kategori är vald */}
+      {cat !== "Alla" && cat !== "★ Favoriter" && CAT_DESC[cat] && (
+        <div style={{
+          background: (CAT_COLOR[cat] || "#64748b") + "08",
+          border: "1px solid " + (CAT_COLOR[cat] || "#64748b") + "20",
+          borderRadius: 10,
+          padding: "8px 12px",
+          marginBottom: 10,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 8,
+        }}>
+          <span style={{ fontSize: 14, lineHeight: "20px", flexShrink: 0 }}>💡</span>
+          <span style={{ fontSize: 12, color: "#94a3b8", lineHeight: 1.5 }}>{CAT_DESC[cat]}</span>
+        </div>
+      )}
 
       {/* Intensity filter */}
       <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>

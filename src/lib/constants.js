@@ -55,6 +55,14 @@ export const CATEGORIES = [
   "Alla", "Spelövning", "Anfallsövning", "Försvarsövning",
   "Teknikövning", "Färdighetsövning", "Rolig övning",
 ];
+export const CAT_DESC = {
+  Spelövning:       "Matchlika situationer — spel med mål och regler som tränar beslut under press",
+  Anfallsövning:    "Offensivt spel — passningar, skott, löpningar bakom och avslut i numerärt överläge",
+  Försvarsövning:   "Defensivt spel — positionering, tacklingar, blockera skottlinjer och bryta spel",
+  Teknikövning:     "Individuell teknik — bollkontroll, dribblingar, passningsprecision och skotteknik",
+  Färdighetsövning: "Koordination & rörelse — snabbhet, sidledsförflyttning, agility och fotteknik",
+  "Rolig övning":   "Lek & gemenskap — uppvärmning, avslappning och roliga stafetter som bygger lagkänsla",
+};
 export const INTENSITIES = ["Alla", "Låg", "Medel", "Hög"];
 
 // Chain positions
