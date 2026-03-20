@@ -204,7 +204,7 @@ export default function App(){
      "hibs_reserves2","hibs_sel2","hibs_mdate2","hibs_opp2",
      "hibs_serie2","hibs_gk2","hibs_team_goals","hibs_match_shots",
      "hibs_match_shots_for","hibs_live_match_id","hibs_cup_mode",
-     "hibs_upcoming"].forEach(k=>ls.remove(k));
+     "hibs_subs","hibs_upcoming"].forEach(k=>ls.remove(k));
     setAuth(null);setProfile(null);setPlayers([]);setHistory([]);setTrainHistory([]);setTrainNotes([]);setExercises([]);
   };
 

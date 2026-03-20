@@ -1,9 +1,11 @@
-import { FMT } from "../../lib/constants.js";
+import { useState } from "react";
+import { FMT, FONT } from "../../lib/constants.js";
 
 /**
  * LiveMatchView — live-match-vy under pågående match.
  * Extraherad från MatchContent i Sprint 9.
- * Hanterar: resultat, målgörare, assist, lagmål-visning, avsluta/avbryt.
+ * Sprint 16: Spelarbyten (substitutions) — snabb swap av spelare under match.
+ * Hanterar: resultat, målgörare, assist, lagmål, skott, byten, avsluta/avbryt.
  */
 export default function LiveMatchView({
   activeMatch,
@@ -17,11 +19,36 @@ export default function LiveMatchView({
   matchShots, setMatchShots,
   matchShotsFor, setMatchShotsFor,
   cupMode,
+  reserves,
+  substitutions,
+  makeSubstitution,
 }) {
+  // Substitution UI state
+  const [subOpen, setSubOpen] = useState(false);
+  const [subOut, setSubOut] = useState(null); // player id to take off
+
   const allMatchPlayers = players.filter(p =>
     (activeMatch.players || []).includes(p.id) ||
     (activeMatch.goalkeeper || []).includes(p.id)
   );
+
+  // Players on pitch (utespelare, exkl. målvakt) — dynamisk baserat på activeMatch.players
+  const onPitch = players.filter(p => (activeMatch.players || []).includes(p.id));
+  // Alla spelare som INTE är på plan och INTE är målvakt — potentiella avbytare
+  const offPitch = players.filter(p =>
+    !(activeMatch.players || []).includes(p.id) &&
+    !(activeMatch.goalkeeper || []).includes(p.id) &&
+    p.role !== "malvakt" &&
+    !(p.note && p.note.startsWith("⚠")) &&
+    p.fitness !== "injured"
+  );
+
+  const handleSubConfirm = (inId) => {
+    if (!subOut) return;
+    makeSubstitution(subOut, inId);
+    setSubOut(null);
+    setSubOpen(false);
+  };
 
   return (
     <div>
@@ -33,7 +60,7 @@ export default function LiveMatchView({
           borderRadius: 10,
           padding: "7px 14px",
           marginBottom: 12,
-          fontSize: 11,
+          fontSize: FONT.label,
           color: "#fbbf24",
           fontWeight: 700,
           display: "flex",
@@ -59,7 +86,7 @@ export default function LiveMatchView({
           <div style={{ fontSize: 14, fontWeight: 800, color: "#22c55e" }}>
             LIVE - vs {activeMatch.opponent}
           </div>
-          <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>
+          <div style={{ fontSize: FONT.label, color: "#64748b", marginTop: 2 }}>
             {FMT(activeMatch.date)} · {activeMatch.serie}
           </div>
         </div>
@@ -100,7 +127,7 @@ export default function LiveMatchView({
         ))}
       </div>
 
-      {/* SKOTTSTATISTIK — HIBS framåt + Keeper bakåt */}
+      {/* SKOTTSTATISTIK */}
       {(() => {
         const keeperNames = players
           .filter(p => (activeMatch.goalkeeper || []).includes(p.id))
@@ -109,8 +136,8 @@ export default function LiveMatchView({
         const goalsFor    = parseInt(matchResult.us)   || 0;
         const goalsAgainst = parseInt(matchResult.them) || 0;
 
-        const sf  = matchShotsFor || 0;   // HIBS skott framåt
-        const sa  = matchShots    || 0;   // skott mot vår keeper
+        const sf  = matchShotsFor || 0;
+        const sa  = matchShots    || 0;
 
         const shotConv = sf > 0 ? Math.round(goalsFor    / sf  * 100) : null;
         const savePct  = sa > 0 ? Math.round(Math.max(0, sa - goalsAgainst) / sa * 100) : null;
@@ -123,25 +150,24 @@ export default function LiveMatchView({
         });
         const UndoStyle = {
           width: 44, height: 44, border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "#4a5568",
+          borderRadius: 10, background: "rgba(255,255,255,0.03)", color: "#64748b",
           fontSize: 18, fontFamily: "inherit", cursor: "pointer", flexShrink: 0,
         };
 
         return (
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px", marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#4a5568", marginBottom: 12, letterSpacing: "0.08em" }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b", marginBottom: 12, letterSpacing: "0.08em" }}>
               SKOTTSTATISTIK
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-
               {/* HIBS — skott framåt */}
               <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.14)", borderRadius: 12, padding: "12px 10px" }}>
                 <div style={{ fontSize: 9, fontWeight: 800, color: "#22c55e", marginBottom: 6 }}>🏒 HIBS SKOTT</div>
                 <div style={{ fontSize: 32, fontWeight: 900, color: "#22c55e", lineHeight: 1, marginBottom: 2 }}>{sf}</div>
                 {shotConv !== null
-                  ? <div style={{ fontSize: 10, color: "#4a5568", marginBottom: 10 }}>{goalsFor} mål · {shotConv}%</div>
-                  : <div style={{ fontSize: 10, color: "#334155", marginBottom: 10 }}>{goalsFor} mål</div>
+                  ? <div style={{ fontSize: 10, color: "#64748b", marginBottom: 10 }}>{goalsFor} mål · {shotConv}%</div>
+                  : <div style={{ fontSize: 10, color: "#475569", marginBottom: 10 }}>{goalsFor} mål</div>
                 }
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setMatchShotsFor(s => Math.max(0, s - 1))} style={UndoStyle}>−</button>
@@ -153,23 +179,151 @@ export default function LiveMatchView({
               <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.14)", borderRadius: 12, padding: "12px 10px" }}>
                 <div style={{ fontSize: 9, fontWeight: 800, color: "#a78bfa", marginBottom: 2 }}>🧤 RÄDDNINGAR</div>
                 {keeperNames.length > 0 && (
-                  <div style={{ fontSize: 9, color: "#4a5568", marginBottom: 4 }}>{keeperNames.join(" / ")}</div>
+                  <div style={{ fontSize: 9, color: "#64748b", marginBottom: 4 }}>{keeperNames.join(" / ")}</div>
                 )}
                 <div style={{ fontSize: 32, fontWeight: 900, color: "#a78bfa", lineHeight: 1, marginBottom: 2 }}>{saves}</div>
                 {savePct !== null
-                  ? <div style={{ fontSize: 10, color: "#4a5568", marginBottom: 10 }}>{sa} skott · {savePct}%</div>
-                  : <div style={{ fontSize: 10, color: "#334155", marginBottom: 10 }}>{goalsAgainst} insläppta</div>
+                  ? <div style={{ fontSize: 10, color: "#64748b", marginBottom: 10 }}>{sa} skott · {savePct}%</div>
+                  : <div style={{ fontSize: 10, color: "#475569", marginBottom: 10 }}>{goalsAgainst} insläppta</div>
                 }
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setMatchShots(s => Math.max(0, s - 1))} style={UndoStyle}>−</button>
                   <button onClick={() => setMatchShots(s => s + 1)} style={BtnStyle("#a78bfa")}>+ Skott</button>
                 </div>
               </div>
-
             </div>
           </div>
         );
       })()}
+
+      {/* ── SPELARBYTEN (Sprint 16) ──────────────────────────────────── */}
+      <div style={{ marginBottom: 14 }}>
+        <button
+          onClick={() => { setSubOpen(o => !o); setSubOut(null); }}
+          style={{
+            width: "100%",
+            padding: "13px 0",
+            border: "1px solid rgba(251,191,36,0.25)",
+            borderRadius: 14,
+            background: subOpen ? "rgba(251,191,36,0.10)" : "rgba(251,191,36,0.04)",
+            color: "#fbbf24",
+            fontSize: 14,
+            fontWeight: 800,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          🔄 Byte {substitutions?.length > 0 ? `(${substitutions.length})` : ""}
+        </button>
+
+        {/* Byte-panel */}
+        {subOpen && (
+          <div style={{
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(251,191,36,0.15)",
+            borderRadius: 14,
+            padding: 14,
+            marginTop: 8,
+          }}>
+            {/* Steg 1: Välj spelare UT */}
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#f87171", marginBottom: 8, letterSpacing: "0.06em" }}>
+              {subOut ? "✓ UT: " + (players.find(p => p.id === subOut)?.name || "?") : "1. VÄLJ SPELARE UT"}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+              {onPitch.map(p => {
+                const isOut = subOut === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setSubOut(isOut ? null : p.id)}
+                    style={{
+                      padding: "7px 14px",
+                      border: "1.5px solid " + (isOut ? "#f87171" : "rgba(255,255,255,0.10)"),
+                      borderRadius: 99,
+                      background: isOut ? "rgba(248,113,113,0.12)" : "transparent",
+                      color: isOut ? "#f87171" : "#94a3b8",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                      minHeight: 44,
+                    }}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Steg 2: Välj spelare IN (visas bara om UT vald) */}
+            {subOut && (
+              <>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#22c55e", marginBottom: 8, letterSpacing: "0.06em" }}>
+                  2. VÄLJ SPELARE IN
+                </div>
+                {offPitch.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "#64748b", padding: "8px 0" }}>
+                    Inga tillgängliga avbytare
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {offPitch.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleSubConfirm(p.id)}
+                        style={{
+                          padding: "7px 14px",
+                          border: "1.5px solid rgba(34,197,94,0.25)",
+                          borderRadius: 99,
+                          background: "rgba(34,197,94,0.06)",
+                          color: "#22c55e",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                          minHeight: 44,
+                        }}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Byte-logg */}
+        {substitutions?.length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 4 }}>
+              BYTEN
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {substitutions.map((s, i) => (
+                <span key={i} style={{
+                  padding: "4px 10px",
+                  borderRadius: 99,
+                  background: "rgba(251,191,36,0.06)",
+                  border: "1px solid rgba(251,191,36,0.15)",
+                  color: "#fbbf24",
+                  fontSize: FONT.label,
+                  fontWeight: 600,
+                }}>
+                  <span style={{ color: "#f87171" }}>↓{s.outName}</span>
+                  {" "}
+                  <span style={{ color: "#22c55e" }}>↑{s.inName}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Lagmål — visas som interaktiva chips */}
       {activeMatch.teamGoals?.length > 0 && (
@@ -180,7 +334,7 @@ export default function LiveMatchView({
           padding: "10px 14px",
           marginBottom: 14,
         }}>
-          <div style={{ fontSize: 9, color: "#4a5568", fontWeight: 700, marginBottom: 6 }}>
+          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, marginBottom: 6 }}>
             LAGMÅL — kom ihåg:
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -220,7 +374,7 @@ export default function LiveMatchView({
                     border: "1px solid " + (cnt > 0 ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.07)"),
                     borderRadius: 99,
                     background: cnt > 0 ? "rgba(251,191,36,0.1)" : "transparent",
-                    color: cnt > 0 ? "#fbbf24" : "#4a5568",
+                    color: cnt > 0 ? "#fbbf24" : "#64748b",
                     fontSize: 12,
                     fontWeight: 700,
                     fontFamily: "inherit",
@@ -248,7 +402,7 @@ export default function LiveMatchView({
                     border: "1px solid " + (cnt > 0 ? "rgba(56,189,248,0.4)" : "rgba(255,255,255,0.07)"),
                     borderRadius: 99,
                     background: cnt > 0 ? "rgba(56,189,248,0.1)" : "transparent",
-                    color: cnt > 0 ? "#38bdf8" : "#4a5568",
+                    color: cnt > 0 ? "#38bdf8" : "#64748b",
                     fontSize: 12,
                     fontWeight: 700,
                     fontFamily: "inherit",
@@ -266,7 +420,7 @@ export default function LiveMatchView({
       {/* Händelselogg — tryck ✕ för att ta bort valfri händelse */}
       {matchScorers.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 9, color: "#4a5568", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>
+          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>
             HÄNDELSELOGG — tryck ✕ för att ångra
           </div>
           {[...matchScorers].reverse().map((s, ri) => {
@@ -388,7 +542,7 @@ export default function LiveMatchView({
             <div style={{ display: "flex", gap: 8 }}>
               <button
                 onClick={() => setConfirmAbort(false)}
-                style={{ flex: 1, padding: "12px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#4a5568", fontSize: 13, fontFamily: "inherit", cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#64748b", fontSize: 13, fontFamily: "inherit", cursor: "pointer" }}
               >
                 Fortsätt
               </button>
