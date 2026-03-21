@@ -22,36 +22,42 @@ export default function AuthScreen({ onAuth }) {
     if (!email || !password || !username) return err("Fyll i alla fält");
     if (password.length < 6) return err("Minst 6 tecken i lösenordet");
     setLoading(true); setError("");
-    const res = await sbAuth("signup", { email, password, data: { username } });
-    if (res.error) return err(res.error.message || "Registrering misslyckades");
-    // Om mailbekräftelse är AV returnerar Supabase session direkt
-    if (res.access_token) {
-      const tok = res.access_token; const uid = res.user.id;
-      if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
-      setAuthData({ tok, uid, username });
-      setLoading(false);
-      setMode("choose_club");
-    } else {
-      // Mailbekräftelse är PÅ — visa "kolla mailen"
-      setMode("check_email");
-      setLoading(false);
-    }
+    try {
+      const res = await sbAuth("signup", { email, password, data: { username } });
+      if (res.error) return err(res.error.message || "Registrering misslyckades");
+      // Om mailbekräftelse är AV returnerar Supabase session direkt
+      if (res.access_token) {
+        const tok = res.access_token; const uid = res.user?.id;
+        if (!tok || !uid) return err("Registrering misslyckades — försök igen");
+        if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
+        setAuthData({ tok, uid, username });
+        setLoading(false);
+        setMode("choose_club");
+      } else {
+        // Mailbekräftelse är PÅ — visa "kolla mailen"
+        setMode("check_email");
+        setLoading(false);
+      }
+    } catch (e) { err("Nätverksfel — kontrollera anslutningen och försök igen."); }
   };
 
   const doLogin = async () => {
     if (!email || !password) return err("Fyll i email och lösenord");
     setLoading(true); setError("");
-    const res = await sbAuth("token?grant_type=password", { email, password });
-    if (res.error) return err(res.error.message || "Fel email eller lösenord");
-    const tok = res.access_token; const uid = res.user.id;
-    if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
-    const prof = await sbGet("profiles", "id=eq." + uid + "&select=*", tok);
-    const profile = Array.isArray(prof) && prof[0] ? prof[0] : null;
-    if (!profile) return err("Profil: " + JSON.stringify(prof).slice(0, 150));
-    if (!profile.club_id) { setAuthData({ tok, uid, username: profile.username || username }); setMode("choose_club"); setLoading(false); return; }
-    if (!profile.approved && profile.role !== "owner" && profile.role !== "admin") { setLoading(false); setMode("pending"); return; }
-    ls.set("hibs_token", tok); ls.set("hibs_uid", uid);
-    onAuth({ tok, uid, profile });
+    try {
+      const res = await sbAuth("token?grant_type=password", { email, password });
+      if (res.error) return err(res.error.message || "Fel email eller lösenord");
+      const tok = res.access_token; const uid = res.user?.id;
+      if (!tok || !uid) return err("Inloggningen misslyckades — försök igen");
+      if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
+      const prof = await sbGet("profiles", "id=eq." + uid + "&select=*", tok);
+      const profile = Array.isArray(prof) && prof[0] ? prof[0] : null;
+      if (!profile) return err("Profil: " + JSON.stringify(prof).slice(0, 150));
+      if (!profile.club_id) { setAuthData({ tok, uid, username: profile.username || username }); setMode("choose_club"); setLoading(false); return; }
+      if (!profile.approved && profile.role !== "owner" && profile.role !== "admin") { setLoading(false); setMode("pending"); return; }
+      ls.set("hibs_token", tok); ls.set("hibs_uid", uid);
+      onAuth({ tok, uid, profile });
+    } catch (e) { err("Nätverksfel — kontrollera anslutningen och försök igen."); }
   };
 
   const doCreateClub = async () => {

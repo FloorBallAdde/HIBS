@@ -51,7 +51,7 @@ export function useSeasonStats(history, players = []) {
     history.forEach(m => {
       const keeperIds   = Array.isArray(m.goalkeeper) ? m.goalkeeper : [];
       const goalsAgainst = parseInt(m.result?.them) || 0;
-      const shotsTotal   = parseInt(m.shots) || 0; // totala skott mot mål (sparas i matchen)
+      const shotsTotal   = parseInt(m.result?.shots ?? m.shots) || 0; // skott mot mål (result.shots eller legacy m.shots)
 
       const usInt   = parseInt(m.result?.us);
       const themInt = parseInt(m.result?.them);
@@ -103,8 +103,8 @@ export function useSeasonStats(history, players = []) {
 
   // Lagövergripande skottstatistik (aggregat över hela säsongen)
   const shotStats = useMemo(() => {
-    const shotsFor     = history.reduce((s, m) => s + (parseInt(m.shots_for) || 0), 0);
-    const shotsAgainst = history.reduce((s, m) => s + (parseInt(m.shots)     || 0), 0);
+    const shotsFor     = history.reduce((s, m) => s + (parseInt(m.result?.shots_for ?? m.shots_for) || 0), 0);
+    const shotsAgainst = history.reduce((s, m) => s + (parseInt(m.result?.shots ?? m.shots)         || 0), 0);
     const goalsFor     = history.reduce((s, m) => s + (parseInt(m.result?.us)   || 0), 0);
     const goalsAgainst = history.reduce((s, m) => s + (parseInt(m.result?.them) || 0), 0);
     return {

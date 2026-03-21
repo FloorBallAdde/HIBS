@@ -180,14 +180,20 @@ export default function App(){
         if(Array.isArray(res)&&res[0]){
           const p=res[0];
           if(p.club_id){
-            const club=await sbGet("clubs","id=eq."+p.club_id,auth.tok);
-            if(Array.isArray(club)&&club[0])p.clubs=club[0];
+            try{
+              const club=await sbGet("clubs","id=eq."+p.club_id,auth.tok);
+              if(Array.isArray(club)&&club[0])p.clubs=club[0];
+            }catch(_){}
           }
           setProfile(p);
         } else{
           ["hibs_token","hibs_uid","hibs_refresh"].forEach(k=>ls.remove(k));
           setAuth(null);
         }
+      }).catch(()=>{
+        // Nätverksfel vid profilhämtning — rensa auth så användaren kan logga in på nytt
+        ["hibs_token","hibs_uid","hibs_refresh"].forEach(k=>ls.remove(k));
+        setAuth(null);
       });
     }
   },[auth]);

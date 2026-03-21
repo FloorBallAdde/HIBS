@@ -187,10 +187,8 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
           created_by: auth.uid,
           is_live: true,
           live_state: { result: { us: "", them: "" }, scorers: [], shots: 0, shots_for: 0, synced_at: new Date().toISOString() },
-          result: { us: "", them: "" },
+          result: { us: "", them: "", shots: 0, shots_for: 0 },
           scorers: [],
-          shots: 0,
-          shots_for: 0,
         };
         const saved = await sbPost("matches", entry, tok);
         const row = Array.isArray(saved) ? saved[0] : saved;
@@ -207,10 +205,8 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       date: activeMatch.date,
       opponent: activeMatch.opponent,
       serie: activeMatch.serie,
-      result: matchResult,
+      result: { ...matchResult, shots: matchShots, shots_for: matchShotsFor },
       scorers: matchScorers,
-      shots: matchShots,
-      shots_for: matchShotsFor,
       players: activeMatch.players,
       goalkeeper: activeMatch.goalkeeper,
       note: activeMatch.note || "",
