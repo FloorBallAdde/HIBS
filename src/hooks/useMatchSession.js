@@ -35,6 +35,9 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   // Spelarbyten under pågående match (Sprint 16)
   const [substitutions, setSubstitutions] = useState(() => ls.get("hibs_subs", []) || []);
 
+  // Interaktiva lagmål — bocka av under pågående match (Sprint 19)
+  const [checkedGoals, setCheckedGoals] = useState(() => new Set(ls.get("hibs_checked_goals", [])));
+
   // Ladda kommande matcher från Supabase när clubId och tok finns tillgängliga
   useEffect(() => {
     if (!clubId || !tok) return;
@@ -60,6 +63,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   useEffect(() => { ls.set("hibs_match_shots_for", matchShotsFor); }, [matchShotsFor]);
   useEffect(() => { ls.set("hibs_cup_mode", cupMode); }, [cupMode]);
   useEffect(() => { ls.set("hibs_subs", substitutions); }, [substitutions]);
+  useEffect(() => { ls.set("hibs_checked_goals", [...checkedGoals]); }, [checkedGoals]);
   useEffect(() => { ls.set("hibs_live_match_id", liveMatchId); }, [liveMatchId]);
 
   // Synka live state till DB (debounced 1s) när något förändras under pågående match
@@ -73,12 +77,13 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
         shots: matchShots,
         shots_for: matchShotsFor,
         substitutions,
+        checked_goals: [...checkedGoals],
         synced_at: new Date().toISOString(),
       };
       sbPatch("matches", liveMatchId, { live_state }, tok).catch(() => {});
     }, 1000);
     return () => clearTimeout(syncTimeout.current);
-  }, [matchResult, matchScorers, matchShots, matchShotsFor, substitutions, liveMatchId, tok]);
+  }, [matchResult, matchScorers, matchShots, matchShotsFor, substitutions, checkedGoals, liveMatchId, tok]);
 
   // Spelarbyten — byt ut en spelare på plan mot en reserve
   const makeSubstitution = (outId, inId) => {
@@ -95,6 +100,13 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setSubstitutions(s => [...s, { outId, inId, outName, inName, time: new Date().toISOString() }]);
   };
 
+  // Interaktiva lagmål — toggle on/off
+  const toggleGoal = (idx) => setCheckedGoals(prev => {
+    const next = new Set(prev);
+    next.has(idx) ? next.delete(idx) : next.add(idx);
+    return next;
+  });
+
   // COMPUTED
   const usedInLines = new Set(lines.flatMap(l => Object.values(l.slots).filter(Boolean)));
 
@@ -107,6 +119,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     setMatchShotsFor(0);
     setLiveMatchId(null);
     setSubstitutions([]);
+    setCheckedGoals(new Set());
     setOpponent(""); // Töm alltid motståndare — ny match, ny motståndare
 
     if (!cupMode) {
@@ -326,5 +339,6 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
     matchShotsFor, setMatchShotsFor,
     cupMode, setCupMode,
     substitutions, setSubstitutions, makeSubstitution,
+    checkedGoals, toggleGoal,
   };
 }

@@ -22,6 +22,8 @@ export default function LiveMatchView({
   reserves,
   substitutions,
   makeSubstitution,
+  checkedGoals,
+  toggleGoal,
 }) {
   // Substitution UI state
   const [subOpen, setSubOpen] = useState(false);
@@ -325,7 +327,7 @@ export default function LiveMatchView({
         )}
       </div>
 
-      {/* Lagmål — visas som interaktiva chips */}
+      {/* Lagmål — interaktiva chips, tryck för att bocka av (Sprint 19) */}
       {activeMatch.teamGoals?.length > 0 && (
         <div style={{
           background: "rgba(255,255,255,0.02)",
@@ -335,23 +337,50 @@ export default function LiveMatchView({
           marginBottom: 14,
         }}>
           <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, marginBottom: 6 }}>
-            LAGMÅL — kom ihåg:
+            LAGMÅL — tryck för att bocka av
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {activeMatch.teamGoals.map((g, i) => (
-              <span key={i} style={{
-                padding: "5px 12px",
-                borderRadius: 99,
-                background: "rgba(34,197,94,0.08)",
-                border: "1px solid rgba(34,197,94,0.2)",
-                color: "#22c55e",
-                fontSize: 12,
-                fontWeight: 600,
-              }}>
-                {g}
-              </span>
-            ))}
+            {activeMatch.teamGoals.map((g, i) => {
+              const done = checkedGoals?.has(i);
+              return (
+                <button
+                  key={i}
+                  onClick={() => toggleGoal?.(i)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 99,
+                    background: done ? "rgba(34,197,94,0.18)" : "rgba(34,197,94,0.06)",
+                    border: "1.5px solid " + (done ? "rgba(34,197,94,0.5)" : "rgba(34,197,94,0.18)"),
+                    color: done ? "#22c55e" : "#64748b",
+                    fontSize: 12,
+                    fontWeight: done ? 800 : 600,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    textDecoration: done ? "line-through" : "none",
+                    minHeight: 44,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {done && <span style={{ fontSize: 14 }}>✓</span>}
+                  {g}
+                </button>
+              );
+            })}
           </div>
+          {/* Progress indicator */}
+          {activeMatch.teamGoals.length > 0 && (
+            <div style={{
+              fontSize: 10,
+              color: "#64748b",
+              marginTop: 8,
+              fontWeight: 600,
+            }}>
+              {checkedGoals?.size || 0}/{activeMatch.teamGoals.length} avklarade
+            </div>
+          )}
         </div>
       )}
 

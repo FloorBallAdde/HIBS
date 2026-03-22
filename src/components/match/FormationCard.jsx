@@ -55,7 +55,7 @@ export default function FormationCard({
             {line.name}
           </span>
         )}
-        <button onClick={() => onDelete(lineIndex)} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 16, padding: 0 }}>×</button>
+        <button onClick={() => onDelete(lineIndex)} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: 0 }}>×</button>
       </div>
 
       {/* Slots */}
@@ -119,7 +119,7 @@ export default function FormationCard({
 
                   <button
                     onClick={e => { e.stopPropagation(); onRemove(lineIndex, pos); }}
-                    style={{ marginLeft: "auto", background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 14, padding: "4px 8px", flexShrink: 0 }}
+                    style={{ marginLeft: "auto", background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 14, padding: "4px 8px", flexShrink: 0 }}
                   >
                     ×
                   </button>

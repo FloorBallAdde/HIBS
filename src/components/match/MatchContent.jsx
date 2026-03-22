@@ -34,6 +34,7 @@ export default function MatchContent({
   cupMode, setCupMode,
   reserves, setReserves,
   substitutions, makeSubstitution,
+  checkedGoals, toggleGoal,
 }) {
   const [confirmNoLines, setConfirmNoLines] = useState(false);
 
@@ -67,6 +68,8 @@ export default function MatchContent({
       reserves={reserves}
       substitutions={substitutions}
       makeSubstitution={makeSubstitution}
+      checkedGoals={checkedGoals}
+      toggleGoal={toggleGoal}
     />
   );
 
@@ -165,7 +168,7 @@ export default function MatchContent({
             background: (cupMode && !opponent.trim())
               ? "rgba(255,255,255,0.05)"
               : "linear-gradient(135deg,#22c55e,#16a34a)",
-            color: (cupMode && !opponent.trim()) ? "#334155" : "#fff",
+            color: (cupMode && !opponent.trim()) ? "#475569" : "#fff",
             fontSize: FONT.title,
             fontWeight: 900,
             fontFamily: "inherit",

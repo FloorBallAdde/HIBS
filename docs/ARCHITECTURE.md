@@ -69,6 +69,7 @@ hibs-app/
     │   ├── ui/
     │   │   ├── StableInput.jsx
     │   │   ├── BottomNav.jsx       ← Sprint 7
+    │   │   ├── ProfilePanel.jsx    ← Sprint 12: profilpanel
     │   │   ├── Modal.jsx
     │   │   └── Button.jsx
     │   ├── auth/
@@ -80,6 +81,8 @@ hibs-app/
     │   ├── match/
     │   │   ├── MatchContent.jsx      ← Sprint 2
     │   │   ├── MatchNoteModal.jsx    ← Sprint 6: extraherad från App.jsx
+    │   │   ├── LiveMatchView.jsx     ← Sprint 9: live-match-vy
+    │   │   ├── MatchSquadSection.jsx ← Sprint 16: trupp-val
     │   │   ├── FormationCard.jsx
     │   │   └── MatchCard.jsx
     │   ├── training/
@@ -139,3 +142,7 @@ hibs-app/
 | 13 | 2026-03-16 | Kallelser (updateUpcomingRsvp hook) + HomeContent RSVP-integration | 210 → 210 | ✅ Klar |
 | 14 | 2026-03-16 | UI/UX polish: global CSS animationer + FONT-skala + button press-states | 210 → 210 | ✅ Klar |
 | 15 | 2026-03-18 | UpcomingMatchCard extraherad + kontrast #64748b + FONT-tokens i MatchContent | 210 → 210 | ✅ Klar |
+| 16 | 2026-03-20 | MatchSquadSection extraherad + Spelarbyten (substitutions) i LiveMatchView | 210 → 210 | ✅ Klar |
+| 17 | 2026-03-20 | Visa byten i matchhistorik + duplikatlista-städning | 210 → 210 | ✅ Klar |
+| 18 | 2026-03-21 | Match-sparande bugg + Grupper→Kedjor DnD + Blanda tre lägen | 210 → 210 | ✅ Klar |
+| 19 | 2026-03-22 | Disabled-färg #475569 + ARCHITECTURE.md uppdaterad + Interaktiva lagmål live | 210 → 210 | ✅ Klar |

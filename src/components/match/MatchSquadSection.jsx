@@ -177,7 +177,7 @@ export default function MatchSquadSection({
         <button
           onClick={() => { if (selected.size > 0 && opponent.trim()) setMatchStep("lines"); }}
           disabled={selected.size === 0 || !opponent.trim()}
-          style={{ flex: 1, padding: "14px 0", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 14, background: "rgba(167,139,250,0.08)", color: selected.size > 0 && opponent.trim() ? "#a78bfa" : "#334155", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
+          style={{ flex: 1, padding: "14px 0", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 14, background: "rgba(167,139,250,0.08)", color: selected.size > 0 && opponent.trim() ? "#a78bfa" : "#475569", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
         >
           Kedjor
         </button>
@@ -188,7 +188,7 @@ export default function MatchSquadSection({
             startMatch();
           }}
           disabled={selected.size === 0 || !opponent.trim()}
-          style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 14, background: selected.size > 0 && opponent.trim() ? "linear-gradient(135deg,#22c55e,#16a34a)" : "rgba(255,255,255,0.05)", color: selected.size > 0 && opponent.trim() ? "#fff" : "#334155", fontSize: FONT.title, fontWeight: 900, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
+          style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 14, background: selected.size > 0 && opponent.trim() ? "linear-gradient(135deg,#22c55e,#16a34a)" : "rgba(255,255,255,0.05)", color: selected.size > 0 && opponent.trim() ? "#fff" : "#475569", fontSize: FONT.title, fontWeight: 900, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
         >
           Starta match
         </button>
