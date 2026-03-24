@@ -224,6 +224,8 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       goalkeeper: activeMatch.goalkeeper,
       note: activeMatch.note || "",
       created_by: auth.uid,
+      teamGoals: activeMatch.teamGoals || [],
+      checked_goals: [...checkedGoals],
     };
     let saved;
     try {

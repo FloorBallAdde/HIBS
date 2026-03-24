@@ -207,6 +207,18 @@ export default function StatsContent({
                       {scorers.length > 4 && <span style={{ fontSize: 10, color: "#475569" }}>+{scorers.length - 4}</span>}
                     </div>
                   )}
+                  {(m.teamGoals || []).length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: scorers.length > 0 ? 3 : 4 }}>
+                      {m.teamGoals.map((g, gi) => {
+                        const done = (m.checked_goals || []).includes(gi);
+                        return (
+                          <span key={gi} style={{ fontSize: 10, color: done ? "#22c55e" : "#475569", background: done ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)", borderRadius: 99, padding: "1px 7px" }}>
+                            {done ? "✓ " : "○ "}{g}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 {m.result && (
                   <div style={{ fontSize: 16, fontWeight: 900, color: col, flexShrink: 0, minWidth: 44, textAlign: "right" }}>

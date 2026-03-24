@@ -30,11 +30,17 @@ export async function sbRefresh(refreshToken) {
 }
 
 export async function sbGet(table, query, tok) {
-  const r = await fetch(
-    SB_URL + "/rest/v1/" + table + "?" + (query || "order=created_at.desc"),
-    { headers: hdrs(tok) }
-  );
-  return r.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10_000);
+  try {
+    const r = await fetch(
+      SB_URL + "/rest/v1/" + table + "?" + (query || "order=created_at.desc"),
+      { headers: hdrs(tok), signal: ctrl.signal }
+    );
+    return r.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function sbPost(table, body, tok) {
@@ -52,6 +58,10 @@ export async function sbPatch(table, id, body, tok) {
     headers: hdrs(tok),
     body: JSON.stringify(body),
   });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err?.message || "sbPatch failed: " + r.status);
+  }
   return r.json();
 }
 

@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-14 (Sprint 9 klar)*
+*Senast uppdaterad: 2026-03-24 (Sprint 21 klar)*
 
 ---
 
@@ -147,3 +147,4 @@ hibs-app/
 | 18 | 2026-03-21 | Match-sparande bugg + Grupper→Kedjor DnD + Blanda tre lägen | 210 → 210 | ✅ Klar |
 | 19 | 2026-03-22 | Disabled-färg #475569 + ARCHITECTURE.md uppdaterad + Interaktiva lagmål live | 210 → 210 | ✅ Klar |
 | 20 | 2026-03-24 | #334155→#475569 i HomeContent/StatsContent/GoalModal/PlaneraTab/MerContent + 📤 Spara/Dela (Share API) i TaktiktavlaTab | 210 → 210 | ✅ Klar |
+| 21 | 2026-03-24 | AbortController 10s-timeout i sbGet + lagmål sparas vid matchslut + ✓/○ chips i matchhistorik | 210 → 210 | ✅ Klar |

@@ -190,6 +190,18 @@ export default function HomeContent({
               ))}
             </div>
           )}
+          {(latestMatch.teamGoals || []).length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+              {latestMatch.teamGoals.map((g, gi) => {
+                const done = (latestMatch.checked_goals || []).includes(gi);
+                return (
+                  <span key={gi} style={{ fontSize: 10, color: done ? "#22c55e" : "#475569", background: done ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)", border: "1px solid " + (done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.05)"), borderRadius: 99, padding: "2px 8px" }}>
+                    {done ? "✓ " : "○ "}{g}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
