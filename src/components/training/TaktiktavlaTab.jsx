@@ -366,6 +366,34 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     return tmp.toDataURL("image/png");
   }, [tokens]);
 
+  /* ── Spara / Dela: Share API med download-fallback ── */
+  const handleSparaDela = useCallback(async () => {
+    const dataUrl = exportDrawing();
+    if (!dataUrl) return;
+    const ts = new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-");
+    const filename = `HIBS_taktiktavla_${ts}.png`;
+    // Försök Share API (iOS/Android)
+    if (typeof navigator !== "undefined" && navigator.share && navigator.canShare) {
+      try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], filename, { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: "HIBS Taktiktavla", files: [file] });
+          return;
+        }
+      } catch (err) {
+        if (err.name === "AbortError") return; // Användaren avbröt — gör inget
+        // Annan error → fallback till download
+      }
+    }
+    // Fallback: ladda ned som PNG
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename;
+    a.click();
+  }, [exportDrawing]);
+
   const getCanvasPos = (e) => {
     const c = canvasRef.current, r = c.getBoundingClientRect();
     return { x: (e.clientX-r.left)*(c.width/r.width), y: (e.clientY-r.top)*(c.height/r.height) };
@@ -619,7 +647,15 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
         {fullscreen?"✕":"⛶"}
       </button>
 
-      {/* Save (only when onSave prop provided) */}
+      {/* Spara / Dela — alltid synlig, Share API med download-fallback */}
+      {sep}
+      <button onClick={handleSparaDela}
+        style={{ ...tb(false,"#22c55e"), padding:"0 12px", background:"rgba(34,197,94,0.15)", border:"1.5px solid rgba(34,197,94,0.5)", color:"#22c55e", fontWeight:800, fontSize:13 }}
+        title="Dela via WhatsApp/iMessage eller ladda ned som PNG">
+        📤 Spara / Dela
+      </button>
+
+      {/* Save callback (används när tavlan är inbäddad i annan kontext) */}
       {onSave && (<>
         {sep}
         <button onClick={() => { const d = exportDrawing(); if (d) onSave(d); }}

@@ -33,7 +33,7 @@ export default function HomeContent({
     if (us < them) return "F";
     return "O";
   };
-  const formColor = (res) => res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#334155";
+  const formColor = (res) => res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#475569";
 
   // Season record
   const withRes = history.filter(m => formResult(m) !== null);
@@ -140,7 +140,7 @@ export default function HomeContent({
                   <div style={{ width: "100%", height: 36, borderRadius: 10, background: res ? col + "18" : "rgba(255,255,255,0.02)", border: "1.5px " + (res ? "solid" : "dashed") + " " + col, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: col }}>
                     {res || "–"}
                   </div>
-                  <div style={{ fontSize: 8, color: "#334155", textAlign: "center" }}>
+                  <div style={{ fontSize: 8, color: "#475569", textAlign: "center" }}>
                     {m.result?.us !== "" && m.result?.them !== "" ? `${m.result.us}-${m.result.them}` : m.opponent?.slice(0, 5) || ""}
                   </div>
                 </div>
@@ -250,10 +250,10 @@ export default function HomeContent({
           <div key={n.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 12px", background: "rgba(255,255,255,0.02)", borderRadius: 10, marginBottom: 6 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", marginTop: 5, flexShrink: 0 }} />
             <span style={{ fontSize: 13, color: "#cbd5e1", flex: 1, lineHeight: 1.5 }}>{n.text}</span>
-            <button onClick={() => { sbDel("training_notes", n.id, tok); setTrainNotes(p => p.filter(x => x.id !== n.id)); }} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 16, padding: 0, flexShrink: 0, lineHeight: 1 }}>×</button>
+            <button onClick={() => { sbDel("training_notes", n.id, tok); setTrainNotes(p => p.filter(x => x.id !== n.id)); }} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: 0, flexShrink: 0, lineHeight: 1 }}>×</button>
           </div>
         ))}
-        {trainNotes.length === 0 && <div style={{ fontSize: 12, color: "#334155", textAlign: "center", padding: "4px 0" }}>Inga notiser</div>}
+        {trainNotes.length === 0 && <div style={{ fontSize: 12, color: "#475569", textAlign: "center", padding: "4px 0" }}>Inga notiser</div>}
       </div>
 
     </div>

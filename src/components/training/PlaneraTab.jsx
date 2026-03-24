@@ -41,7 +41,7 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }
         <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Träningslogg</div>
         <button onClick={() => setPhase("build")} style={{ padding: "8px 16px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 99, color: "#22c55e", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>+ Ny träning</button>
       </div>
-      {trainHistory.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", color: "#334155", fontSize: 14 }}>Inga träningar sparade ännu.</div>}
+      {trainHistory.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", color: "#475569", fontSize: 14 }}>Inga träningar sparade ännu.</div>}
       {trainHistory.map(entry => (
         <div key={entry.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -71,7 +71,7 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }
         <button onClick={() => setPhase("history")} style={{ fontSize: 11, color: "#4a5568", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Logg</button>
       </div>
       {plan.length > 0 && <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>{plan.length} övningar</span><span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>{totalMin} min</span></div>}
-      {plan.length === 0 && !picking && <div style={{ textAlign: "center", padding: "28px 0 12px", color: "#334155", fontSize: 13 }}>Tryck + för att lägga till övningar.</div>}
+      {plan.length === 0 && !picking && <div style={{ textAlign: "center", padding: "28px 0 12px", color: "#475569", fontSize: 13 }}>Tryck + för att lägga till övningar.</div>}
       {plan.map((item, idx) => { const cc = CAT_COLOR[item.exercise.category] || "#64748b"; const isExp = expandedId === item.id; return (
         <div key={item.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, marginBottom: 8, overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px" }}>
@@ -86,7 +86,7 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }
             </div>
             <input type="number" value={item.minutes} onChange={e => setMin(item.id, e.target.value)} style={{ width: 52, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#fff", fontSize: 13, fontWeight: 700, padding: "4px 8px", fontFamily: "inherit", outline: "none", textAlign: "center" }} />
             <span style={{ fontSize: 10, color: "#4a5568" }}>min</span>
-            <button onClick={() => removeEx(item.id)} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", fontSize: 16, padding: "0 2px", flexShrink: 0 }}>×</button>
+            <button onClick={() => removeEx(item.id)} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: "0 2px", flexShrink: 0 }}>×</button>
           </div>
           {isExp && item.exercise.vad && <div style={{ padding: "0 14px 10px", borderTop: "1px solid rgba(255,255,255,0.05)", fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>{item.exercise.vad}</div>}
         </div>
@@ -109,7 +109,7 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }
               <div key={ex.id} onClick={() => !alreadyIn && addEx(ex)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: alreadyIn ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.04)", border: "1px solid " + (alreadyIn ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"), borderRadius: 10, cursor: alreadyIn ? "default" : "pointer", opacity: alreadyIn ? 0.4 : 1 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: cc, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{ex.name}</div><div style={{ fontSize: 10, color: "#4a5568" }}>{ex.category}</div></div>
-                {alreadyIn ? <span style={{ fontSize: 10, color: "#334155", fontWeight: 700 }}>Vald</span> : <span style={{ fontSize: 18, color: "#22c55e", fontWeight: 300 }}>+</span>}
+                {alreadyIn ? <span style={{ fontSize: 10, color: "#475569", fontWeight: 700 }}>Vald</span> : <span style={{ fontSize: 18, color: "#22c55e", fontWeight: 300 }}>+</span>}
               </div>
             ); })}
           </div>

@@ -248,7 +248,7 @@ export default function MerContent({
 
       {merSub === "matchhistorik" && (
         <div>
-          {history.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", color: "#334155", fontSize: 14 }}>Inga matcher sparade ännu.</div>}
+          {history.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", color: "#475569", fontSize: 14 }}>Inga matcher sparade ännu.</div>}
           {history.map(m => (
             <MatchCard key={m.id} match={m}
               players={players}

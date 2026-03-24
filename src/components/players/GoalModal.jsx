@@ -194,7 +194,7 @@ export default function GoalModal({ player, onSave, onClose }) {
 
         {/* Goals list */}
         {goals.length === 0 && (
-          <div style={{ textAlign: "center", padding: "32px 0", color: "#334155" }}>
+          <div style={{ textAlign: "center", padding: "32px 0", color: "#475569" }}>
             <div style={{ fontSize: 28, marginBottom: 8 }}>🎯</div>
             <div style={{ fontSize: 13 }}>Inga mål ännu — lägg till ett nedan</div>
           </div>
@@ -220,7 +220,7 @@ export default function GoalModal({ player, onSave, onClose }) {
                     <span style={{ fontSize: 10, color: "#4a5568" }}>{g.season}</span>
                     <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: st.bg, borderRadius: 6, padding: "2px 8px" }}>{g.status}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: g.desc ? "#cbd5e1" : "#334155", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ fontSize: 12, color: g.desc ? "#cbd5e1" : "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {g.desc || "Beskriv spelarens mål..."}
                   </div>
                 </div>
@@ -265,7 +265,7 @@ export default function GoalModal({ player, onSave, onClose }) {
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
                       🎯 SPELARENS MÅL
-                      <span style={{ fontSize: 9, fontWeight: 400, color: "#334155" }}>— vad vill spelaren uppnå?</span>
+                      <span style={{ fontSize: 9, fontWeight: 400, color: "#475569" }}>— vad vill spelaren uppnå?</span>
                     </div>
                     <TA
                       value={g.desc}
@@ -279,7 +279,7 @@ export default function GoalModal({ player, onSave, onClose }) {
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#38bdf8", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
                       💬 TRÄNARFEEDBACK
-                      <span style={{ fontSize: 9, fontWeight: 400, color: "#334155" }}>— tränarens observation & bedömning</span>
+                      <span style={{ fontSize: 9, fontWeight: 400, color: "#475569" }}>— tränarens observation & bedömning</span>
                     </div>
                     <TA
                       value={g.coachFeedback}
@@ -293,7 +293,7 @@ export default function GoalModal({ player, onSave, onClose }) {
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#fbbf24", marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
                       ⚡ TRÄNARENS UTMANING
-                      <span style={{ fontSize: 9, fontWeight: 400, color: "#334155" }}>— konkret uppgift till nästa uppföljning</span>
+                      <span style={{ fontSize: 9, fontWeight: 400, color: "#475569" }}>— konkret uppgift till nästa uppföljning</span>
                     </div>
                     <TA
                       value={g.coachChallenge}
@@ -323,7 +323,7 @@ export default function GoalModal({ player, onSave, onClose }) {
 
                   {/* Senast uppdaterad + radera */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ fontSize: 10, color: "#334155" }}>
+                    <div style={{ fontSize: 10, color: "#475569" }}>
                       Uppdaterad {fmt(g.updatedAt)}
                     </div>
                     <button

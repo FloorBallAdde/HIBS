@@ -17,7 +17,7 @@ export default function StatsContent({
     if (us < them) return "F";
     return "O";
   };
-  const formColor = (res) => res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#334155";
+  const formColor = (res) => res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#475569";
 
   const withRes = history.filter(m => formResult(m) !== null);
   const wins   = withRes.filter(m => formResult(m) === "V").length;
@@ -147,8 +147,8 @@ export default function StatsContent({
 
           {/* Column header */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>
-            <span style={{ width: 24, fontSize: 9, color: "#334155" }}>#</span>
-            <span style={{ flex: 1, fontSize: 9, color: "#334155" }}>SPELARE</span>
+            <span style={{ width: 24, fontSize: 9, color: "#475569" }}>#</span>
+            <span style={{ flex: 1, fontSize: 9, color: "#475569" }}>SPELARE</span>
             <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#a78bfa" }}>MAT</span>
             <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#fbbf24" }}>MÅL</span>
             <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#38bdf8" }}>ASS</span>
@@ -204,7 +204,7 @@ export default function StatsContent({
                           {typeof s === "object" ? s.name : s}
                         </span>
                       ))}
-                      {scorers.length > 4 && <span style={{ fontSize: 10, color: "#334155" }}>+{scorers.length - 4}</span>}
+                      {scorers.length > 4 && <span style={{ fontSize: 10, color: "#475569" }}>+{scorers.length - 4}</span>}
                     </div>
                   )}
                 </div>
@@ -220,7 +220,7 @@ export default function StatsContent({
       )}
 
       {history.length === 0 && (
-        <div style={{ textAlign: "center", padding: "48px 0", color: "#334155" }}>
+        <div style={{ textAlign: "center", padding: "48px 0", color: "#475569" }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>📊</div>
           <div style={{ fontSize: 13 }}>Inga matcher spelade än</div>
         </div>
@@ -233,7 +233,7 @@ export default function StatsContent({
 
           {/* Kolumnhuvud */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(167,139,250,0.1)", marginBottom: 4 }}>
-            <span style={{ flex: 1, fontSize: 9, color: "#334155" }}>KEEPER</span>
+            <span style={{ flex: 1, fontSize: 9, color: "#475569" }}>KEEPER</span>
             <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#a78bfa" }}>MAT</span>
             <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#f87171" }}>INS</span>
             <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#22c55e" }}>RÄD</span>
@@ -262,13 +262,13 @@ export default function StatsContent({
                   <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>GAA {k.gaa}</span>
                 )}
                 {k.shots === 0 && (
-                  <span style={{ fontSize: 10, color: "#334155", marginLeft: "auto", fontStyle: "italic" }}>Skott ej trackade ännu</span>
+                  <span style={{ fontSize: 10, color: "#475569", marginLeft: "auto", fontStyle: "italic" }}>Skott ej trackade ännu</span>
                 )}
               </div>
             </div>
           ))}
 
-          <div style={{ fontSize: 10, color: "#334155", marginTop: 6 }}>
+          <div style={{ fontSize: 10, color: "#475569", marginTop: 6 }}>
             INS = insläppta · RÄD = räddningar · NOLL = nollor (clean sheets) · GAA = mål/match
           </div>
         </div>

@@ -146,3 +146,4 @@ hibs-app/
 | 17 | 2026-03-20 | Visa byten i matchhistorik + duplikatlista-städning | 210 → 210 | ✅ Klar |
 | 18 | 2026-03-21 | Match-sparande bugg + Grupper→Kedjor DnD + Blanda tre lägen | 210 → 210 | ✅ Klar |
 | 19 | 2026-03-22 | Disabled-färg #475569 + ARCHITECTURE.md uppdaterad + Interaktiva lagmål live | 210 → 210 | ✅ Klar |
+| 20 | 2026-03-24 | #334155→#475569 i HomeContent/StatsContent/GoalModal/PlaneraTab/MerContent + 📤 Spara/Dela (Share API) i TaktiktavlaTab | 210 → 210 | ✅ Klar |
