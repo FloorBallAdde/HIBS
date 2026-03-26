@@ -8,11 +8,11 @@ import { useTouchSwap } from "../../hooks/useTouchSwap.js";
  * Sprint 2 / F1: Målvakter exkluderas automatiskt från scramblen.
  * Sprint 3 / F2: Hårda positionsregler — konfigurerbart "aldrig 1:a" per spelare.
  */
-export default function ScrambleMode({ players, field }) {
-  const [present, setPresent] = useState(() => ls.get("hibs_present", []) || []);
-  const [chains, setChains] = useState([]);
+export default function ScrambleMode({ players, field, present, setPresent }) {
+  // chains + done sparas i localStorage — överlever flikbyte
+  const [chains, setChains] = useState(() => ls.get("hibs_chains", []) || []);
   const [size, setSize] = useState(4);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(() => !!ls.get("hibs_chains_done", false));
   const [showRules, setShowRules] = useState(false);
   // F2: Positionsregler — sparas i localStorage som Set av spelare-id som aldrig får bli 1:a
   const [neverFirst, setNeverFirst] = useState(() => new Set(ls.get("hibs_never_first", []) || []));
@@ -20,7 +20,8 @@ export default function ScrambleMode({ players, field }) {
   const gk = players.filter(p => p.role === "malvakt");
   const gkIds = new Set(gk.map(p => p.id));
 
-  useEffect(() => { ls.set("hibs_present", present); }, [present]);
+  useEffect(() => { ls.set("hibs_chains", chains); }, [chains]);
+  useEffect(() => { ls.set("hibs_chains_done", done); }, [done]);
   useEffect(() => { ls.set("hibs_never_first", [...neverFirst]); }, [neverFirst]);
 
   const toggle = id => setPresent(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
