@@ -213,6 +213,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
   const endMatch = async () => {
     if (!activeMatch || !clubId) return;
     setSaveError(null);
+    // Fullständig lokal post (inkl. fält som inte finns i DB-schemat)
     const entry = {
       club_id: clubId,
       date: activeMatch.date,
@@ -228,19 +229,36 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       checked_goals: [...checkedGoals],
       substitutions: [...substitutions],
     };
+    // DB-payload: bara kolumner som faktiskt finns i Supabase matches-tabellen.
+    // OBS: checked_goals och substitutions saknas i schemat → PostgREST 400 annars.
+    const dbEntry = {
+      club_id: entry.club_id,
+      date: entry.date,
+      opponent: entry.opponent,
+      serie: entry.serie,
+      result: entry.result,
+      scorers: entry.scorers,
+      players: entry.players,
+      goalkeeper: entry.goalkeeper,
+      note: entry.note,
+      created_by: entry.created_by,
+      teamGoals: entry.teamGoals,
+    };
     let saved;
     try {
       if (liveMatchId) {
         // Uppdatera den befintliga live-raden med slutresultat
-        const patched = await sbPatch("matches", liveMatchId, { ...entry, is_live: false, live_state: null }, tok);
+        const patched = await sbPatch("matches", liveMatchId, { ...dbEntry, is_live: false, live_state: null }, tok);
         saved = Array.isArray(patched) ? patched : [{ ...entry, id: liveMatchId }];
       } else {
-        saved = await sbPost("matches", entry, tok);
+        const posted = await sbPost("matches", dbEntry, tok);
+        // Slå ihop DB-svaret med lokal entry (som kan ha extra fält)
+        saved = Array.isArray(posted) ? [{ ...entry, ...posted[0] }] : posted;
       }
     } catch (e) {
       if (liveMatchId) {
-        // sbPatch misslyckades — vi har ändå live-raden lokalt, fortsätt med lokal data.
-        // Försök städa up is_live-flaggan i bakgrunden (fire-and-forget).
+        // sbPatch misslyckades trots rätt payload — nätverksfel eller RLS.
+        // Spara lokalt och städa is_live-flaggan i bakgrunden (fire-and-forget).
         sbPatch("matches", liveMatchId, { is_live: false, live_state: null }, tok).catch(() => {});
         saved = [{ ...entry, id: liveMatchId }];
       } else {
