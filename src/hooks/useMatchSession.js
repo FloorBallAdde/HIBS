@@ -238,8 +238,16 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
         saved = await sbPost("matches", entry, tok);
       }
     } catch (e) {
-      setSaveError("Nätverksfel — kontrollera anslutningen och försök igen.");
-      return;
+      if (liveMatchId) {
+        // sbPatch misslyckades — vi har ändå live-raden lokalt, fortsätt med lokal data.
+        // Försök städa up is_live-flaggan i bakgrunden (fire-and-forget).
+        sbPatch("matches", liveMatchId, { is_live: false, live_state: null }, tok).catch(() => {});
+        saved = [{ ...entry, id: liveMatchId }];
+      } else {
+        // Inget liveMatchId — inga alternativ, visa fel
+        setSaveError("Kunde inte spara matchen. Kontrollera anslutningen och försök igen.");
+        return;
+      }
     }
     if (!Array.isArray(saved) || !saved[0]) {
       setSaveError("Kunde inte spara matchen (" + (saved?.message || saved?.code || "okänt") + "). Försök igen.");
