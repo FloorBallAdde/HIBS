@@ -4,6 +4,7 @@ import { sbAuth, sbGet, sbPost, sbPatch, sbDel, sbRefresh } from "./lib/supabase
 import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
 import { useSeasonStats } from "./hooks/useSeasonStats.js";
+import { useAttendance } from "./hooks/useAttendance.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
@@ -20,6 +21,7 @@ import MerContent from "./components/mer/MerContent.jsx";
 import BottomNav from "./components/ui/BottomNav.jsx";
 import ProfilePanel from "./components/ui/ProfilePanel.jsx";
 import LiveMatchBanner from "./components/ui/LiveMatchBanner.jsx";
+import AppHeader from "./components/ui/AppHeader.jsx";
 
 // MAIN APP
 export default function App(){
@@ -218,6 +220,9 @@ export default function App(){
   // SEASON STATS — must be before early returns (Rules of Hooks)
   const{stats,keeperStats,shotStats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history,players);
 
+  // P12 ATTENDANCE — must be before early returns (Rules of Hooks)
+  const { attendance, togglePlayer } = useAttendance();
+
   if(!auth||!profile)return<AuthScreen onAuth={handleAuth}/>;
   if(loadingApp)return(
     <div style={{minHeight:"100vh",background:"#0b0d14",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,fontFamily:"system-ui,sans-serif"}}>
@@ -261,31 +266,14 @@ export default function App(){
       {/* ── Live match-banner (visas för co-tränare) ─────────────────── */}
       <LiveMatchBanner liveMatchView={liveMatchView} onNavigate={()=>setTab("match")}/>
 
-      {/* ── Sticky header ───────────────────────────────────────────── */}
-      <div style={{position:"sticky",top:0,background:"rgba(11,13,20,0.95)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,0.05)",padding:"14px 20px",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div>
-          <div style={{fontSize:16,fontWeight:900,color:"#fff",letterSpacing:"-0.3px"}}>{profile?.clubs?.name||"HIBS Tränarapp"}</div>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginTop:3}}>
-            <span style={{fontSize:10,color:profile?.role==="owner"?"#a78bfa":profile?.role==="admin"?"#60a5fa":"#22c55e",fontWeight:700,background:profile?.role==="owner"?"rgba(167,139,250,0.1)":profile?.role==="admin"?"rgba(96,165,250,0.1)":"rgba(34,197,94,0.1)",padding:"2px 7px",borderRadius:99,border:"1px solid "+(profile?.role==="owner"?"rgba(167,139,250,0.3)":profile?.role==="admin"?"rgba(96,165,250,0.3)":"rgba(34,197,94,0.3)")}}>
-              {profile?.role==="owner"?"👑 Ägare":profile?.role==="admin"?"⚡ Admin":"🏒 Tränare"}
-            </span>
-            <span style={{fontSize:10,color:"#4a5568"}}>{profile?.username||""}</span>
-          </div>
-        </div>
-        {tab==="mer"&&merSub
-          ?<button onClick={()=>setMerSub(null)} style={{fontSize:12,color:"#4a5568",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}}>‹ Tillbaka</button>
-          :<button
-            onClick={()=>setProfileOpen(true)}
-            title="Profil & inbjudan"
-            style={{width:36,height:36,borderRadius:10,background:"rgba(167,139,250,0.15)",border:"1.5px solid rgba(167,139,250,0.3)",color:"#a78bfa",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit",fontWeight:900,flexShrink:0,overflow:"hidden",padding:0}}
-          >
-            {profile?.clubs?.logo_url
-              ?<img src={profile.clubs.logo_url} alt="" onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="flex";}} style={{width:"100%",height:"100%",objectFit:"contain",padding:4,boxSizing:"border-box"}}/>
-              :null}
-            <span style={{display:profile?.clubs?.logo_url?"none":"flex"}}>{(profile?.username||"T")[0].toUpperCase()}</span>
-          </button>
-        }
-      </div>
+      {/* ── Sticky header (AppHeader — Sprint 23 refactoring) ──────────── */}
+      <AppHeader
+        profile={profile}
+        tab={tab}
+        merSub={merSub}
+        onBack={()=>setMerSub(null)}
+        onProfileOpen={()=>setProfileOpen(true)}
+      />
 
       <div style={{padding:"16px 16px 0"}}>
         {tab==="traning"&&(
@@ -317,6 +305,9 @@ export default function App(){
         {tab==="traning"&&trainSub==="planera"&&<PlaneraTab exercises={exercises} trainHistory={trainHistory}
           onSave={async entry=>{const row={club_id:clubId,date:entry.date,exercises:entry.exercises,total_minutes:entry.totalMinutes,note:entry.note||"",created_by:auth.uid};const saved=await sbPost("training_sessions",row,tok);const s=Array.isArray(saved)&&saved[0]?saved[0]:{...row,id:Date.now()};setTrainHistory(p=>[s,...p]);}}
           onDelete={async id=>{await sbDel("training_sessions",id,tok);setTrainHistory(p=>p.filter(x=>x.id!==id));}}
+          players={players}
+          attendance={attendance}
+          onToggleAttendance={togglePlayer}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok}/>}
         {tab==="traning"&&trainSub==="tavla"&&<TaktiktavlaTab/>}
@@ -328,6 +319,7 @@ export default function App(){
           history={history} stats={stats} keeperStats={keeperStats} shotStats={shotStats}
           totalGoals={totalGoals} totalAssists={totalAssists}
           players={players} trainHistory={trainHistory}
+          attendance={attendance}
         />}
         {tab==="mer"&&<MerContent
           pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches}

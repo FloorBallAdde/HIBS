@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import ls from "../../lib/storage.js";
-import { CATEGORIES, CAT_COLOR } from "../../lib/constants.js";
+import { CATEGORIES, CAT_COLOR, gc } from "../../lib/constants.js";
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const FMT = d => d ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", month: "short" }) : "-";
 
-export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }) {
+/**
+ * PlaneraTab — Sprint 23: added P12 attendance marking in history view.
+ * New props: players, attendance, onToggleAttendance
+ */
+export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance }) {
   const [phase, setPhase] = useState("build");
   const [plan, setPlan] = useState(() => ls.get("hibs_plan_draft", []));
   const [note, setNote] = useState(() => ls.get("hibs_plan_note", ""));
@@ -14,8 +18,11 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [attOpenId, setAttOpenId] = useState(null); // which session has attendance panel open
+
   useEffect(() => { ls.set("hibs_plan_draft", plan); }, [plan]);
   useEffect(() => { ls.set("hibs_plan_note", note); }, [note]);
+
   const filtered = exercises.filter(e => {
     if (cat !== "Alla" && e.category !== cat) return false;
     if (search && !e.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -42,25 +49,92 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete }
         <button onClick={() => setPhase("build")} style={{ padding: "8px 16px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 99, color: "#22c55e", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>+ Ny träning</button>
       </div>
       {trainHistory.length === 0 && <div style={{ textAlign: "center", padding: "48px 0", color: "#475569", fontSize: 14 }}>Inga träningar sparade ännu.</div>}
-      {trainHistory.map(entry => (
-        <div key={entry.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{FMT(entry.date)}</div>
-              <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>{(entry.exercises || []).length} övningar - {entry.total_minutes || entry.totalMinutes} min</div>
+      {trainHistory.map(entry => {
+        const sessionAtt = attendance[entry.id] || [];
+        const attOpen = attOpenId === entry.id;
+        const hasAtt = sessionAtt.length > 0;
+        return (
+          <div key={entry.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{FMT(entry.date)}</div>
+                <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>{(entry.exercises || []).length} övningar - {entry.total_minutes || entry.totalMinutes} min</div>
+              </div>
+              {/* Attendance counter chip */}
+              {hasAtt && (
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#34d399", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: 99, padding: "3px 9px" }}>
+                  👥 {sessionAtt.length}/{players.length}
+                </div>
+              )}
             </div>
+
+            {(entry.exercises || []).map((ex, i) => { const cc = CAT_COLOR[ex.category] || "#64748b"; return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", background: "rgba(255,255,255,0.02)", borderRadius: 8, marginBottom: 4 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: cc, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: "#cbd5e1", flex: 1 }}>{ex.name}</span>
+                <span style={{ fontSize: 11, color: "#4a5568" }}>{ex.minutes} min</span>
+              </div>
+            ); })}
+
+            {entry.note && <div style={{ marginTop: 8, background: "rgba(56,189,248,0.06)", border: "1px solid rgba(56,189,248,0.15)", borderRadius: 8, padding: "7px 10px", fontSize: 12, color: "#94a3b8" }}>{entry.note}</div>}
+
+            {/* ── Attendance toggle button ─────────────────────────────── */}
+            {players.length > 0 && onToggleAttendance && (
+              <button
+                onClick={() => setAttOpenId(attOpen ? null : entry.id)}
+                style={{
+                  marginTop: 10, width: "100%", padding: "9px 0",
+                  border: "1px solid " + (attOpen ? "rgba(52,211,153,0.4)" : "rgba(52,211,153,0.18)"),
+                  borderRadius: 8,
+                  background: attOpen ? "rgba(52,211,153,0.08)" : "transparent",
+                  color: attOpen ? "#34d399" : "#4a5568",
+                  fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                }}
+              >
+                👥 {attOpen ? "Stäng närvaro" : hasAtt ? `Närvaro (${sessionAtt.length}/${players.length})` : "Markera närvaro"}
+              </button>
+            )}
+
+            {/* ── Attendance picker ────────────────────────────────────── */}
+            {attOpen && players.length > 0 && (
+              <div style={{ marginTop: 10, padding: "10px 12px", background: "rgba(52,211,153,0.04)", border: "1px solid rgba(52,211,153,0.12)", borderRadius: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#34d399", marginBottom: 10, letterSpacing: "0.08em" }}>
+                  NÄRVARO — {sessionAtt.length} av {players.length} spelare
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {players.map(p => {
+                    const pgc = gc(p.group);
+                    const present = sessionAtt.includes(p.name);
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => onToggleAttendance(entry.id, p.name)}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 6,
+                          minHeight: 44, padding: "8px 14px",
+                          border: "1.5px solid " + (present ? pgc.border : "rgba(255,255,255,0.1)"),
+                          borderRadius: 99,
+                          background: present ? pgc.bg : "rgba(255,255,255,0.02)",
+                          color: present ? pgc.color : "#64748b",
+                          fontSize: 13, fontWeight: present ? 800 : 500,
+                          fontFamily: "inherit", cursor: "pointer",
+                          transition: "all 0.1s",
+                        }}
+                      >
+                        {present ? <span style={{ fontSize: 11 }}>✓</span> : <div style={{ width: 7, height: 7, borderRadius: "50%", background: pgc.color, opacity: 0.5 }} />}
+                        {p.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <button onClick={() => onDelete(entry.id)} style={{ marginTop: 10, width: "100%", padding: "7px 0", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, background: "transparent", color: "#f87171", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Ta bort</button>
           </div>
-          {(entry.exercises || []).map((ex, i) => { const cc = CAT_COLOR[ex.category] || "#64748b"; return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", background: "rgba(255,255,255,0.02)", borderRadius: 8, marginBottom: 4 }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: cc, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: "#cbd5e1", flex: 1 }}>{ex.name}</span>
-              <span style={{ fontSize: 11, color: "#4a5568" }}>{ex.minutes} min</span>
-            </div>
-          ); })}
-          {entry.note && <div style={{ marginTop: 8, background: "rgba(56,189,248,0.06)", border: "1px solid rgba(56,189,248,0.15)", borderRadius: 8, padding: "7px 10px", fontSize: 12, color: "#94a3b8" }}>{entry.note}</div>}
-          <button onClick={() => onDelete(entry.id)} style={{ marginTop: 10, width: "100%", padding: "7px 0", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 8, background: "transparent", color: "#f87171", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Ta bort</button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
