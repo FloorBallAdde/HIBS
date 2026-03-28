@@ -226,6 +226,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       created_by: auth.uid,
       teamGoals: activeMatch.teamGoals || [],
       checked_goals: [...checkedGoals],
+      substitutions: [...substitutions],
     };
     let saved;
     try {

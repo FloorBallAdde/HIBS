@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FMT, gc, GC } from "../../lib/constants.js";
 
 /**
- * StatsContent — Sprint 10. Säsongsstatistik, spelarleaderboard, matchhistorik.
+ * StatsContent — Sprint 23: added P12 TRÄNINGSNÄRVARO section.
+ * New props: attendance (object { [sessionId]: [playerName, ...] })
  */
 export default function StatsContent({
   history, stats, keeperStats, shotStats, totalGoals, totalAssists, players, trainHistory,
+  attendance = {},
 }) {
   const [sortBy, setSortBy] = useState("points");
 
@@ -46,6 +48,24 @@ export default function StatsContent({
     { id: "assists", label: "Assist" },
     { id: "matches", label: "Matcher"},
   ];
+
+  // ── P12 Närvaro stats ──────────────────────────────────────────────────────
+  const trackedSessions = useMemo(
+    () => trainHistory.filter(s => attendance[s.id] && attendance[s.id].length > 0),
+    [trainHistory, attendance]
+  );
+
+  const attendanceStats = useMemo(() => {
+    if (trackedSessions.length === 0) return [];
+    return players
+      .map(p => {
+        const count = trackedSessions.filter(s => (attendance[s.id] || []).includes(p.name)).length;
+        const pct = Math.round(count / trackedSessions.length * 100);
+        return { name: p.name, group: p.group, count, pct };
+      })
+      .filter(p => p.count > 0)
+      .sort((a, b) => b.pct - a.pct || b.count - a.count);
+  }, [players, trackedSessions, attendance]);
 
   return (
     <div>
@@ -183,7 +203,7 @@ export default function StatsContent({
 
       {/* MATCH HISTORY */}
       {history.length > 0 && (
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: "#4a5568", marginBottom: 12 }}>MATCHHISTORIK</div>
           {history.map((m, i) => {
             const res = formResult(m);
@@ -219,6 +239,15 @@ export default function StatsContent({
                       })}
                     </div>
                   )}
+                  {(m.substitutions || []).length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 3 }}>
+                      {(m.substitutions || []).map((sub, si) => (
+                        <span key={si} style={{ fontSize: 10, color: "#94a3b8", background: "rgba(148,163,184,0.07)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 99, padding: "1px 7px" }}>
+                          🔄 {sub.outName} → {sub.inName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {m.result && (
                   <div style={{ fontSize: 16, fontWeight: 900, color: col, flexShrink: 0, minWidth: 44, textAlign: "right" }}>
@@ -240,7 +269,7 @@ export default function StatsContent({
 
       {/* MÅLVAKTSSTATISTIK */}
       {keeperStats && keeperStats.length > 0 && (
-        <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
+        <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
           <div style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", marginBottom: 12 }}>🧤 MÅLVAKTSSTATISTIK</div>
 
           {/* Kolumnhuvud */}
@@ -282,6 +311,50 @@ export default function StatsContent({
 
           <div style={{ fontSize: 10, color: "#475569", marginTop: 6 }}>
             INS = insläppta · RÄD = räddningar · NOLL = nollor (clean sheets) · GAA = mål/match
+          </div>
+        </div>
+      )}
+
+      {/* ── P12 TRÄNINGSNÄRVARO ─────────────────────────────────────────────── */}
+      {attendanceStats.length > 0 && (
+        <div style={{ background: "rgba(52,211,153,0.04)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "#34d399" }}>👥 TRÄNINGSNÄRVARO</div>
+            <div style={{ fontSize: 10, color: "#4a5568" }}>{trackedSessions.length} träningar trackade</div>
+          </div>
+
+          {/* Column header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(52,211,153,0.1)", marginBottom: 4 }}>
+            <span style={{ flex: 1, fontSize: 9, color: "#475569" }}>SPELARE</span>
+            <span style={{ width: 36, textAlign: "center", fontSize: 9, color: "#34d399" }}>TRÄN</span>
+            <span style={{ width: 40, textAlign: "right", fontSize: 9, color: "#34d399", fontWeight: 700 }}>NÄRVARO</span>
+          </div>
+
+          {attendanceStats.map((p, i) => {
+            const pgc = gc(p.group);
+            const barW = p.pct;
+            const barColor = p.pct >= 80 ? "#22c55e" : p.pct >= 60 ? "#fbbf24" : "#f87171";
+            return (
+              <div key={p.name} style={{
+                padding: "8px 0",
+                borderBottom: i < attendanceStats.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: pgc.color, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, color: "#cbd5e1", fontWeight: 500 }}>{p.name}</span>
+                  <span style={{ width: 36, textAlign: "center", fontSize: 12, color: "#64748b" }}>{p.count}</span>
+                  <span style={{ width: 40, textAlign: "right", fontSize: 13, fontWeight: 800, color: barColor }}>{p.pct}%</span>
+                </div>
+                {/* Progress bar */}
+                <div style={{ height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden", marginLeft: 13 }}>
+                  <div style={{ height: "100%", width: barW + "%", background: barColor, borderRadius: 99, transition: "width 0.3s" }} />
+                </div>
+              </div>
+            );
+          })}
+
+          <div style={{ fontSize: 10, color: "#475569", marginTop: 8 }}>
+            Markera närvaro i Träning → Logg → Markera närvaro
           </div>
         </div>
       )}

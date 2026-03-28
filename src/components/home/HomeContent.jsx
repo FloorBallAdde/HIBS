@@ -202,6 +202,15 @@ export default function HomeContent({
               })}
             </div>
           )}
+          {(latestMatch.substitutions || []).length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+              {(latestMatch.substitutions || []).map((sub, si) => (
+                <span key={si} style={{ fontSize: 10, color: "#94a3b8", background: "rgba(148,163,184,0.07)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 99, padding: "2px 8px" }}>
+                  🔄 {sub.outName} → {sub.inName}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
