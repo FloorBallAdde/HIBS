@@ -230,7 +230,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       substitutions: [...substitutions],
     };
     // DB-payload: bara kolumner som faktiskt finns i Supabase matches-tabellen.
-    // OBS: checked_goals och substitutions saknas i schemat → PostgREST 400 annars.
+    // OBS: checked_goals saknas i schemat → utelämnas. substitutions lagras permanent (Sprint 24/25).
     const dbEntry = {
       club_id: entry.club_id,
       date: entry.date,
@@ -243,26 +243,46 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       note: entry.note,
       created_by: entry.created_by,
       teamGoals: entry.teamGoals,
+      substitutions: entry.substitutions,
     };
+
+    // Hjälpfunktion: spara till DB, vid schema-fel (400) försök igen utan substitutions
+    const saveToDb = async (payload) => {
+      if (liveMatchId) {
+        return await sbPatch("matches", liveMatchId, { ...payload, is_live: false, live_state: null }, tok);
+      }
+      return await sbPost("matches", payload, tok);
+    };
+
     let saved;
     try {
+      const res = await saveToDb(dbEntry);
       if (liveMatchId) {
-        // Uppdatera den befintliga live-raden med slutresultat
-        const patched = await sbPatch("matches", liveMatchId, { ...dbEntry, is_live: false, live_state: null }, tok);
-        saved = Array.isArray(patched) ? patched : [{ ...entry, id: liveMatchId }];
+        saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : [{ ...entry, id: liveMatchId }];
       } else {
-        const posted = await sbPost("matches", dbEntry, tok);
-        // Slå ihop DB-svaret med lokal entry (som kan ha extra fält)
-        saved = Array.isArray(posted) ? [{ ...entry, ...posted[0] }] : posted;
+        saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : res;
       }
     } catch (e) {
-      if (liveMatchId) {
-        // sbPatch misslyckades trots rätt payload — nätverksfel eller RLS.
-        // Spara lokalt och städa is_live-flaggan i bakgrunden (fire-and-forget).
+      // Defensivt: om felet beror på okänd kolumn (PostgREST 400), försök utan substitutions
+      const isSchemaError = e?.message?.includes("400") || e?.status === 400;
+      if (isSchemaError) {
+        try {
+          const { substitutions: _drop, ...fallbackPayload } = dbEntry;
+          const res = await saveToDb(fallbackPayload);
+          if (liveMatchId) {
+            saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : [{ ...entry, id: liveMatchId }];
+          } else {
+            saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : res;
+          }
+        } catch (_) {
+          // Fallback misslyckades också
+        }
+      }
+      if (!saved && liveMatchId) {
+        // Nätverksfel eller RLS — spara lokalt, städa is_live i bakgrunden
         sbPatch("matches", liveMatchId, { is_live: false, live_state: null }, tok).catch(() => {});
         saved = [{ ...entry, id: liveMatchId }];
-      } else {
-        // Inget liveMatchId — inga alternativ, visa fel
+      } else if (!saved) {
         setSaveError("Kunde inte spara matchen. Kontrollera anslutningen och försök igen.");
         return;
       }

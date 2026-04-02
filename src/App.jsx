@@ -5,6 +5,7 @@ import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
 import { useSeasonStats } from "./hooks/useSeasonStats.js";
 import { useAttendance } from "./hooks/useAttendance.js";
+import { useLiveMatchPoll } from "./hooks/useLiveMatchPoll.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
@@ -67,7 +68,6 @@ export default function App(){
   const [pendingCoaches,setPendingCoaches]=useState([]);
   const [coachStaff,setCoachStaff]=useState([]); // Godkända tränare i samma klubb
   const [lastSeenObs,setLastSeenObs]=useState(()=>ls.get("hibs_obs_seen")||"");
-  const [liveMatchView,setLiveMatchView]=useState(null); // Live-match från annan tränare
 
   // DATA
   const [players,setPlayers]=useState([]);
@@ -149,23 +149,8 @@ export default function App(){
     setLastSeenObs(now);
   },[]);
 
-  // Poll för live-match från annan tränare (var 10s)
-  useEffect(()=>{
-    if(!clubId||!tok)return;
-    const poll=async()=>{
-      const res=await sbGet("matches","club_id=eq."+clubId+"&is_live=eq.true&select=id,opponent,live_state,created_by",tok);
-      if(Array.isArray(res)&&res.length>0){
-        // Visa bara om det är en ANNAN tränares match
-        const other=res.find(m=>m.created_by!==auth?.uid);
-        setLiveMatchView(other||null);
-      } else {
-        setLiveMatchView(null);
-      }
-    };
-    poll();
-    const id=setInterval(poll,10000);
-    return()=>clearInterval(id);
-  },[clubId,tok,auth?.uid]);
+  // Live-match från annan tränare (pollar var 10s via hook)
+  const liveMatchView = useLiveMatchPoll({ clubId, tok, uid: auth?.uid });
 
   // Load pending coaches if owner
   useEffect(()=>{
