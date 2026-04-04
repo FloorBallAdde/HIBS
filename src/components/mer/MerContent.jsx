@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { GROUPS, GC, gc, FITNESS_META, nextFitness } from "../../lib/constants.js";
 import MatchCard from "../match/MatchCard.jsx";
+import TeamMessages from "./TeamMessages.jsx";
 
 const ALL_GROUPS = [...GROUPS, "MV"]; // A B C D E MV
 
@@ -138,6 +139,7 @@ export default function MerContent({
   history, setHistory, setMatchNoteModal,
   roadmap, setRoadmap, openPeriod, setOpenPeriod,
   tok, sbPatch, sbDel, updP,
+  clubId, uid, profile,
 }) {
   return (
     <div>
@@ -159,6 +161,7 @@ export default function MerContent({
       {!merSub && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
+            ["meddelanden",   "💬", "Meddelanden",        "Lagmeddelanden mellan tränare"],
             ["spelare",       "👥", "Spelarlista",        "Se alla spelare, noter och observationer"],
             ["grupper",       "🔀", "Grupper & kedjor",   "Placera spelare i grupp A, B, C eller MV"],
             ["lagmal",        "🎯", "Lagmål och checklist","Säsongens mål och checklistor"],
@@ -175,6 +178,10 @@ export default function MerContent({
             </button>
           ))}
         </div>
+      )}
+
+      {merSub === "meddelanden" && (
+        <TeamMessages clubId={clubId} uid={uid} tok={tok} profile={profile} />
       )}
 
       {merSub === "spelare" && (

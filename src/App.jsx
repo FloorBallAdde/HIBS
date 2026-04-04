@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import ls from "./lib/storage.js";
-import { sbAuth, sbGet, sbPost, sbPatch, sbDel, sbRefresh } from "./lib/supabase.js";
+import { sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
 import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
+import { useAuth } from "./hooks/useAuth.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
 import { useSeasonStats } from "./hooks/useSeasonStats.js";
 import { useAttendance } from "./hooks/useAttendance.js";
@@ -26,32 +27,9 @@ import AppHeader from "./components/ui/AppHeader.jsx";
 
 // MAIN APP
 export default function App(){
-  // AUTH
-  const [auth,setAuth]=useState(()=>{
-    const tok=ls.get("hibs_token",null);
-    const uid=ls.get("hibs_uid",null);
-    if(!tok||!uid)return null;
-    return{tok,uid};
-  });
-  const [profile,setProfile]=useState(null);
+  // AUTH (Sprint 26: extraherad till useAuth-hook)
+  const{auth,profile,pendingCoaches,setPendingCoaches,coachStaff,setCoachStaff,handleAuth,handleSignOut,updateClub}=useAuth();
   const [loadingApp,setLoadingApp]=useState(false);
-
-  // AUTO-REFRESH: förnya JWT var 50:e minut så den aldrig hinner gå ut under en matchdag
-  useEffect(()=>{
-    const refresh = async () => {
-      const rt = ls.get("hibs_refresh", null);
-      if (!rt) return;
-      const res = await sbRefresh(rt);
-      if (res?.access_token) {
-        ls.set("hibs_token", res.access_token);
-        if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
-        setAuth(a => a ? { ...a, tok: res.access_token } : a);
-      }
-    };
-    refresh(); // kör direkt vid start för att fräscha upp en ev. gammal token
-    const id = setInterval(refresh, 50 * 60 * 1000); // var 50 min
-    return () => clearInterval(id);
-  }, []);
 
   // UI
   const [tab,setTab]=useState("home");
@@ -65,8 +43,6 @@ export default function App(){
   const [obsModal,setObsModal]=useState(null); // P9: Spelarobservationer
   const [profileOpen,setProfileOpen]=useState(false); // Profilpanel i header
   const [trainNoteInput,setTrainNoteInput]=useState("");
-  const [pendingCoaches,setPendingCoaches]=useState([]);
-  const [coachStaff,setCoachStaff]=useState([]); // Godkända tränare i samma klubb
   const [lastSeenObs,setLastSeenObs]=useState(()=>ls.get("hibs_obs_seen")||"");
 
   // DATA
@@ -152,55 +128,11 @@ export default function App(){
   // Live-match från annan tränare (pollar var 10s via hook)
   const liveMatchView = useLiveMatchPoll({ clubId, tok, uid: auth?.uid });
 
-  // Load pending coaches if owner
-  useEffect(()=>{
-    if((profile?.role==="owner"||profile?.role==="admin")&&clubId&&tok){
-      sbGet("profiles","club_id=eq."+clubId+"&approved=eq.false&role=eq.coach&select=*",tok).then(r=>{if(Array.isArray(r))setPendingCoaches(r);});
-      sbGet("profiles","club_id=eq."+clubId+"&approved=eq.true&id=neq."+auth.uid+"&select=id,username,role",tok).then(r=>{if(Array.isArray(r))setCoachStaff(r);});
-    }
-  },[profile]);
-
-  // Load profile on startup — hämtar klubb separat (ingen FK-join nödvändig)
-  useEffect(()=>{
-    if(auth?.tok&&!profile){
-      sbGet("profiles","id=eq."+auth.uid+"&select=*",auth.tok).then(async res=>{
-        if(Array.isArray(res)&&res[0]){
-          const p=res[0];
-          if(p.club_id){
-            try{
-              const club=await sbGet("clubs","id=eq."+p.club_id,auth.tok);
-              if(Array.isArray(club)&&club[0])p.clubs=club[0];
-            }catch(_){}
-          }
-          setProfile(p);
-        } else{
-          ["hibs_token","hibs_uid","hibs_refresh"].forEach(k=>ls.remove(k));
-          setAuth(null);
-        }
-      }).catch(()=>{
-        // Nätverksfel vid profilhämtning — rensa auth så användaren kan logga in på nytt
-        ["hibs_token","hibs_uid","hibs_refresh"].forEach(k=>ls.remove(k));
-        setAuth(null);
-      });
-    }
-  },[auth]);
-
-  const handleAuth=({tok,uid,profile:p})=>{
-    ls.set("hibs_token",tok);ls.set("hibs_uid",uid);
-    setAuth({tok,uid});setProfile(p);
-  };
-
-  const handleSignOut=async()=>{
-    if(tok)await sbAuth("logout",{}).catch(()=>{});
-    // Clear only auth & session keys — preserve checklist/roadmap local state
-    ["hibs_token","hibs_uid","hibs_refresh",
-     "hibs_active","hibs_result","hibs_scorers","hibs_lines2",
-     "hibs_reserves2","hibs_sel2","hibs_mdate2","hibs_opp2",
-     "hibs_serie2","hibs_gk2","hibs_team_goals","hibs_match_shots",
-     "hibs_match_shots_for","hibs_live_match_id","hibs_cup_mode",
-     "hibs_subs","hibs_upcoming"].forEach(k=>ls.remove(k));
-    setAuth(null);setProfile(null);setPlayers([]);setHistory([]);setTrainHistory([]);setTrainNotes([]);setExercises([]);
-  };
+  // Sign out: rensa app-data utöver auth (som hanteras av hooken)
+  const onSignOut=useCallback(async()=>{
+    await handleSignOut();
+    setPlayers([]);setHistory([]);setTrainHistory([]);setTrainNotes([]);setExercises([]);
+  },[handleSignOut]);
 
   // SEASON STATS — must be before early returns (Rules of Hooks)
   const{stats,keeperStats,shotStats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history,players);
@@ -240,12 +172,8 @@ export default function App(){
         setProfileOpen={setProfileOpen}
         coachStaff={coachStaff}
         pendingCoaches={pendingCoaches}
-        onSignOut={handleSignOut}
-        onUpdateClub={async(patch)=>{
-          if(!profile?.club_id||!tok)return;
-          await sbPatch("clubs",profile.club_id,patch,tok);
-          setProfile(p=>p?{...p,clubs:{...p.clubs,...patch}}:p);
-        }}
+        onSignOut={onSignOut}
+        onUpdateClub={updateClub}
       />
 
       {/* ── Live match-banner (visas för co-tränare) ─────────────────── */}
@@ -318,6 +246,7 @@ export default function App(){
           roadmap={roadmap} setRoadmap={setRoadmap}
           openPeriod={openPeriod} setOpenPeriod={setOpenPeriod}
           tok={tok} sbPatch={sbPatch} sbDel={sbDel} updP={updP}
+          clubId={clubId} uid={auth.uid} profile={profile}
         />}
       </div>
 
