@@ -8,6 +8,7 @@ import { useSeasonStats } from "./hooks/useSeasonStats.js";
 import { useAttendance } from "./hooks/useAttendance.js";
 import { useLiveMatchPoll } from "./hooks/useLiveMatchPoll.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
+import PostMatchFeedback from "./components/ui/PostMatchFeedback.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
 import GoalModal from "./components/players/GoalModal.jsx";
 import ObservationModal from "./components/players/ObservationModal.jsx";
@@ -69,10 +70,11 @@ export default function App(){
   useEffect(()=>{ls.set("hibs_road2",roadmap);},[roadmap]);
 
   const tok=auth?.tok;
+  const [showFeedback, setShowFeedback] = useState(false);
   const clubId=profile?.club_id;
 
   // MATCH SESSION HOOK (encapsulates all match state, persistence & actions)
-  const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory});
+  const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory,onMatchEnded:()=>setShowFeedback(true)});
   const{upcomingMatches,addUpcoming,removeUpcoming,loadFromSchedule,updateUpcomingRsvp,matchStep,setMatchStep,activeMatch}=matchSession;
 
   // LOAD DATA — silent=true används vid bakgrundspolling (ingen spinner, ingen scroll-reset)
@@ -250,6 +252,7 @@ export default function App(){
         />}
       </div>
 
+      {showFeedback && <PostMatchFeedback onClose={()=>setShowFeedback(false)} clubId={clubId} uid={auth?.uid} />}
       <BottomNav tab={tab} setTab={(t)=>{setTab(t);if(t==="mer")markObsSeen();if(t!=="mer")setMerSub(null);}} setMerSub={setMerSub} merBadge={unreadObs+pendingCoaches.length}/>
     </div>
   );

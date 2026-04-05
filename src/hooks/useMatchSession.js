@@ -4,7 +4,7 @@ import { sbGet, sbPost, sbPatch, sbDel } from "../lib/supabase.js";
 import { TODAY, mkLine } from "../lib/constants.js";
 
 // Kapslar in all match-session state, persistence och actions.
-export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHistory }) {
+export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setPlayers, setHistory }) {
   // STATE
   const [lines, setLines] = useState(() => ls.get("hibs_lines2", [mkLine(1), mkLine(2), mkLine(3)]));
   const [reserves, setReserves] = useState(() => ls.get("hibs_reserves2", []));
@@ -315,6 +315,7 @@ export function useMatchSession({ clubId, tok, auth, players, setPlayers, setHis
       }
     }
 
+    if (onMatchEnded) onMatchEnded();
     _resetMatch();
     // Cup-läge: hoppa direkt till kedjor (trupp sparad) — annars tillbaka till trupp
     setMatchStep(cupMode ? "lines" : "select");

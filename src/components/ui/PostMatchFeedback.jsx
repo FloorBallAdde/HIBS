@@ -11,7 +11,7 @@ async function saveFeedback({ clubId, uid, rating, note }) {
       method: 'POST',
       headers: {
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${localStorage.getItem('hibs_jwt') || SUPABASE_ANON_KEY}`,
+        Authorization: `Bearer ${localStorage.getItem('hibs_token') || SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
