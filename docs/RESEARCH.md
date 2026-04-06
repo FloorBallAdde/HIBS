@@ -20,3 +20,22 @@
 - 0-3 mål (tomma fält filtreras bort vid startMatch).
 
 **Slutsats:** HIBS implementerar något konkurrenterna saknar. Enkelt men distinkt.
+
+## Sprint 28 — F: UX-dashboard feedback-trend (2026-04-06)
+
+**Fråga:** Hur visar sportappar in-app hälsostatistik / feedback-trend för admins?
+
+**Källor undersökta:** TeamSnap, Heja, Spond (admin-vy), SUS/UMUX-mätmetoder (Sprint 27 referens)
+
+**Fynd:**
+- Ingen av de undersökta sportapparna exponerar UX-hälsodata direkt i tränarens vy.
+- TeamSnap och Heja saknar helt in-app feedback-rapportering mot tränaren.
+- Sprint 27 valde thumbs-format (snabbare än SUS/UMUX) — Sprint 28 bygger vidare på det.
+
+**UX-beslut:**
+- Trend visas som ett kompakt kort ovanför Mer-menyn (inte som ett eget menyalternativ — en tryckning för mycket).
+- Procentsats + färgkodad bar (grön ≥70%, gul ≥40%, röd <40%) + emoji-indikator.
+- Returnerar null om inga svar finns ännu — stör inte nya användare.
+- Scoped till inloggad tränares egna svar (RLS-begränsning från Sprint 27).
+
+**Slutsats:** Enkel, differentierad funktion. Ger Andreas direkt synlighet i appkvalitet utan extra navigering.
