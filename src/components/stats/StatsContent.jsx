@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FMT, gc, GC } from "../../lib/constants.js";
+import { FMT, gc, GC, formResult, formColor } from "../../lib/constants.js";
 
 /**
  * StatsContent — Sprint 23: added P12 TRÄNINGSNÄRVARO section.
@@ -10,16 +10,6 @@ export default function StatsContent({
   attendance = {},
 }) {
   const [sortBy, setSortBy] = useState("points");
-
-  const formResult = (m) => {
-    const us = parseInt(m.result?.us);
-    const them = parseInt(m.result?.them);
-    if (isNaN(us) || isNaN(them) || m.result?.us === "" || m.result?.them === "") return null;
-    if (us > them) return "V";
-    if (us < them) return "F";
-    return "O";
-  };
-  const formColor = (res) => res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#475569";
 
   const withRes = history.filter(m => formResult(m) !== null);
   const wins   = withRes.filter(m => formResult(m) === "V").length;

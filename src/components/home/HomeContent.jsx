@@ -1,6 +1,6 @@
 import StableInput from "../ui/StableInput.jsx";
 import UpcomingMatchCard from "./UpcomingMatchCard.jsx";
-import { FMT, GC, gc, FONT } from "../../lib/constants.js";
+import { FMT, GC, gc, FONT, formResult, formColor } from "../../lib/constants.js";
 import { sbPost, sbDel } from "../../lib/supabase.js";
 import { useState } from "react";
 
@@ -25,16 +25,6 @@ export default function HomeContent({
     setTrainNoteInput("");
   };
 
-  const formResult = (m) => {
-    const us = parseInt(m.result?.us);
-    const them = parseInt(m.result?.them);
-    if (isNaN(us) || isNaN(them) || m.result?.us === "" || m.result?.them === "") return null;
-    if (us > them) return "V";
-    if (us < them) return "F";
-    return "O";
-  };
-  const formColor = (res) => res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#475569";
-
   // Season record
   const withRes = history.filter(m => formResult(m) !== null);
   const wins   = withRes.filter(m => formResult(m) === "V").length;
@@ -49,8 +39,6 @@ export default function HomeContent({
   if (streakType) {
     for (const r of recentForms) { if (r === streakType) streak++; else break; }
   }
-
-  const lastTrain = trainHistory && trainHistory.length > 0 ? trainHistory[0] : null;
 
   return (
     <div className="hibs-tab-content">
@@ -236,27 +224,44 @@ export default function HomeContent({
         </div>
       )}
 
-      {/* SENASTE TRÄNING */}
-      {lastTrain && (
+      {/* SENASTE TRÄNINGAR — visar senaste 3 pass (Sprint 29) */}
+      {trainHistory && trainHistory.length > 0 && (
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 8 }}>SENASTE TRÄNING</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{FMT(lastTrain.date)}</div>
-              {lastTrain.exercises?.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 5 }}>
-                  {lastTrain.exercises.slice(0, 3).map((ex, i) => {
-                    const name = typeof ex === "object" ? ex.name : ex;
-                    return <span key={i} style={{ fontSize: 10, color: "#38bdf8", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.15)", borderRadius: 99, padding: "2px 8px" }}>{name}</span>;
-                  })}
-                  {lastTrain.exercises.length > 3 && <span style={{ fontSize: 10, color: "#64748b", padding: "2px 4px" }}>+{lastTrain.exercises.length - 3}</span>}
-                </div>
-              )}
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 10 }}>SENASTE TRÄNINGAR</div>
+          {trainHistory.slice(0, 3).map((t, i) => (
+            <div key={t.id || i} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              paddingTop: i > 0 ? 9 : 0,
+              marginTop: i > 0 ? 9 : 0,
+              borderTop: i > 0 ? "1px solid rgba(255,255,255,0.05)" : "none",
+            }}>
+              <div style={{ minWidth: 54, flexShrink: 0 }}>
+                <div style={{ fontSize: FONT.body, fontWeight: 700, color: "#fff" }}>{FMT(t.date)}</div>
+                {t.total_minutes > 0 && (
+                  <div style={{ fontSize: FONT.label, color: "#a78bfa", fontWeight: 700, marginTop: 2 }}>{t.total_minutes} min</div>
+                )}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {t.exercises?.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {t.exercises.slice(0, 3).map((ex, ei) => {
+                      const name = typeof ex === "object" ? ex.name : ex;
+                      return (
+                        <span key={ei} style={{ fontSize: 10, color: "#38bdf8", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.15)", borderRadius: 99, padding: "2px 8px" }}>
+                          {name}
+                        </span>
+                      );
+                    })}
+                    {t.exercises.length > 3 && (
+                      <span style={{ fontSize: 10, color: "#64748b", padding: "2px 4px" }}>+{t.exercises.length - 3}</span>
+                    )}
+                  </div>
+                ) : (
+                  <span style={{ fontSize: FONT.label, color: "#475569" }}>Inga övningar loggade</span>
+                )}
+              </div>
             </div>
-            {lastTrain.total_minutes > 0 && (
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#a78bfa", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 99, padding: "4px 12px" }}>{lastTrain.total_minutes} min</div>
-            )}
-          </div>
+          ))}
         </div>
       )}
 

@@ -122,6 +122,20 @@ export const CHECKLIST_INIT = [
   },
 ];
 
+// ── Match result helpers ─────────────────────────────────────────────────────
+// Klassificerar ett matchresultat: "V" | "F" | "O" | null
+export const formResult = (m) => {
+  const us   = parseInt(m.result?.us);
+  const them = parseInt(m.result?.them);
+  if (isNaN(us) || isNaN(them) || m.result?.us === "" || m.result?.them === "") return null;
+  if (us > them) return "V";
+  if (us < them) return "F";
+  return "O";
+};
+// Accentfärg för ett formresultat
+export const formColor = (res) =>
+  res === "V" ? "#22c55e" : res === "F" ? "#f87171" : res === "O" ? "#fbbf24" : "#475569";
+
 // ── Fitness status (P10 — Skadelogg & tillgänglighet) ────────────────────────
 export const FITNESS_OPTIONS = ["fit", "limited", "injured"];
 export const FITNESS_META = {
