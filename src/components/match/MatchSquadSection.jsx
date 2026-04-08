@@ -174,12 +174,43 @@ export default function MatchSquadSection({
 
       {/* Kedjor / Starta match */}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+        {/* F9: kedjor-status badge — visar om kedjor är satta (Sprint 30) */}
         <button
           onClick={() => { if (selected.size > 0 && opponent.trim()) setMatchStep("lines"); }}
           disabled={selected.size === 0 || !opponent.trim()}
-          style={{ flex: 1, padding: "14px 0", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 14, background: "rgba(167,139,250,0.08)", color: selected.size > 0 && opponent.trim() ? "#a78bfa" : "#475569", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed" }}
+          style={{
+            flex: 1,
+            padding: "10px 0",
+            border: "1px solid " + (
+              !selected.size || !opponent.trim() ? "rgba(255,255,255,0.06)"
+              : usedInLines.size > 0 ? "rgba(167,139,250,0.3)"
+              : "rgba(251,191,36,0.35)"
+            ),
+            borderRadius: 14,
+            background: (
+              !selected.size || !opponent.trim() ? "transparent"
+              : usedInLines.size > 0 ? "rgba(167,139,250,0.08)"
+              : "rgba(251,191,36,0.06)"
+            ),
+            color: !selected.size || !opponent.trim() ? "#475569"
+              : usedInLines.size > 0 ? "#a78bfa"
+              : "#fbbf24",
+            fontSize: 14, fontWeight: 700, fontFamily: "inherit",
+            cursor: selected.size > 0 && opponent.trim() ? "pointer" : "not-allowed",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+          }}
         >
-          Kedjor
+          <span>Kedjor</span>
+          {selected.size > 0 && opponent.trim() && (
+            <span style={{
+              fontSize: FONT.label,
+              fontWeight: 600,
+              color: usedInLines.size > 0 ? "#22c55e" : "#fbbf24",
+              lineHeight: 1,
+            }}>
+              {usedInLines.size > 0 ? `✓ ${usedInLines.size} placerade` : "⚠ Inga kedjor"}
+            </span>
+          )}
         </button>
         <button
           onClick={() => {

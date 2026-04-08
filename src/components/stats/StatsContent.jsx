@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FMT, gc, GC, formResult, formColor } from "../../lib/constants.js";
+import { FMT, gc, GC, FONT, formResult, formColor } from "../../lib/constants.js";
 
 /**
  * StatsContent — Sprint 23: added P12 TRÄNINGSNÄRVARO section.
@@ -66,7 +66,7 @@ export default function StatsContent({
         border: "1px solid rgba(34,197,94,0.16)",
         borderRadius: 20, padding: "18px", marginBottom: 12,
       }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: "#22c55e", letterSpacing: "0.1em", marginBottom: 12 }}>SÄSONGSÖVERSIKT</div>
+        <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#22c55e", letterSpacing: "0.1em", marginBottom: 12 }}>SÄSONGSÖVERSIKT</div>
 
         <div style={{ display: "flex", marginBottom: 14 }}>
           {[
@@ -76,7 +76,7 @@ export default function StatsContent({
           ].map(({ val, label, color }, i) => (
             <div key={label} style={{ flex: 1, textAlign: "center", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
               <div style={{ fontSize: 40, fontWeight: 900, color, lineHeight: 1 }}>{val}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color, opacity: 0.65, marginTop: 3 }}>{label}</div>
+              <div style={{ fontSize: FONT.label, fontWeight: 700, color, opacity: 0.65, marginTop: 3 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -85,7 +85,7 @@ export default function StatsContent({
           <div style={{ height: "100%", width: winRate + "%", background: "linear-gradient(90deg,#16a34a,#22c55e)", borderRadius: 99 }} />
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 11, color: "#4a5568" }}>{withRes.length} matcher med resultat</div>
+          <div style={{ fontSize: 11, color: "#475569" }}>{withRes.length} matcher med resultat</div>
           <div style={{ fontSize: 12, fontWeight: 800, color: "#22c55e" }}>{winRate}% vinstprocent</div>
         </div>
       </div>
@@ -100,7 +100,7 @@ export default function StatsContent({
         ].map(({ val, label, color }) => (
           <div key={label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "12px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 24, fontWeight: 900, color, lineHeight: 1 }}>{val}</div>
-            <div style={{ fontSize: 7, fontWeight: 700, color: "#4a5568", marginTop: 3, letterSpacing: "0.04em" }}>{label}</div>
+            <div style={{ fontSize: 7, fontWeight: 700, color: "#475569", marginTop: 3, letterSpacing: "0.04em" }}>{label}</div>
           </div>
         ))}
       </div>
@@ -111,24 +111,24 @@ export default function StatsContent({
 
           {/* HIBS skott */}
           <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 14, padding: "14px 12px" }}>
-            <div style={{ fontSize: 9, fontWeight: 800, color: "#22c55e", marginBottom: 8 }}>🏒 HIBS SKOTT</div>
+            <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#22c55e", marginBottom: 8 }}>🏒 HIBS SKOTT</div>
             <div style={{ fontSize: 28, fontWeight: 900, color: "#22c55e", lineHeight: 1 }}>{shotStats.shotsFor}</div>
-            <div style={{ fontSize: 10, color: "#4a5568", marginTop: 3 }}>skott på mål</div>
+            <div style={{ fontSize: FONT.label, color: "#475569", marginTop: 3 }}>skott på mål</div>
             {shotStats.shotConversion !== null && (
               <div style={{ marginTop: 8, fontSize: 13, fontWeight: 800, color: "#22c55e" }}>
-                {shotStats.shotConversion}% <span style={{ fontSize: 10, fontWeight: 400, color: "#4a5568" }}>konvertering</span>
+                {shotStats.shotConversion}% <span style={{ fontSize: FONT.label, fontWeight: 400, color: "#475569" }}>konvertering</span>
               </div>
             )}
           </div>
 
           {/* Keeperns räddningsprocent */}
           <div style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 14, padding: "14px 12px" }}>
-            <div style={{ fontSize: 9, fontWeight: 800, color: "#a78bfa", marginBottom: 8 }}>🧤 KEEPER</div>
+            <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#a78bfa", marginBottom: 8 }}>🧤 KEEPER</div>
             <div style={{ fontSize: 28, fontWeight: 900, color: "#a78bfa", lineHeight: 1 }}>{shotStats.shotsAgainst}</div>
-            <div style={{ fontSize: 10, color: "#4a5568", marginTop: 3 }}>skott mot</div>
+            <div style={{ fontSize: FONT.label, color: "#475569", marginTop: 3 }}>skott mot</div>
             {shotStats.savePct !== null && (
               <div style={{ marginTop: 8, fontSize: 13, fontWeight: 800, color: "#a78bfa" }}>
-                {shotStats.savePct}% <span style={{ fontSize: 10, fontWeight: 400, color: "#4a5568" }}>räddade</span>
+                {shotStats.savePct}% <span style={{ fontSize: FONT.label, fontWeight: 400, color: "#475569" }}>räddade</span>
               </div>
             )}
           </div>
@@ -140,7 +140,7 @@ export default function StatsContent({
       {stats.length > 0 && (
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#4a5568" }}>SPELARSTATISTIK</div>
+            <div style={{ fontSize: FONT.label, fontWeight: 700, color: "#475569" }}>SPELARSTATISTIK</div>
             <div style={{ display: "flex", gap: 4 }}>
               {SORT_TABS.map(({ id, label }) => (
                 <button key={id} onClick={() => setSortBy(id)} style={{
@@ -148,7 +148,7 @@ export default function StatsContent({
                   border: "1px solid " + (sortBy === id ? "#22c55e" : "rgba(255,255,255,0.08)"),
                   borderRadius: 99,
                   background: sortBy === id ? "rgba(34,197,94,0.12)" : "transparent",
-                  color: sortBy === id ? "#22c55e" : "#4a5568",
+                  color: sortBy === id ? "#22c55e" : "#475569",
                   fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
                 }}>{label}</button>
               ))}
@@ -157,12 +157,12 @@ export default function StatsContent({
 
           {/* Column header */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: 4 }}>
-            <span style={{ width: 24, fontSize: 9, color: "#475569" }}>#</span>
-            <span style={{ flex: 1, fontSize: 9, color: "#475569" }}>SPELARE</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#a78bfa" }}>MAT</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#fbbf24" }}>MÅL</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#38bdf8" }}>ASS</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#22c55e", fontWeight: 700 }}>PNT</span>
+            <span style={{ width: 24, fontSize: FONT.label, color: "#475569" }}>#</span>
+            <span style={{ flex: 1, fontSize: FONT.label, color: "#475569" }}>SPELARE</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#a78bfa" }}>MAT</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#fbbf24" }}>MÅL</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#38bdf8" }}>ASS</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#22c55e", fontWeight: 700 }}>PNT</span>
           </div>
 
           {sortedStats.map((p, i) => {
@@ -176,7 +176,7 @@ export default function StatsContent({
                 padding: "9px 0",
                 borderBottom: i < sortedStats.length - 1 ? "1px solid rgba(255,255,255,0.035)" : "none",
               }}>
-                <span style={{ width: 24, fontSize: isTop ? 15 : 11, textAlign: "center", color: "#4a5568", fontWeight: 700 }}>
+                <span style={{ width: 24, fontSize: isTop ? 15 : 11, textAlign: "center", color: "#475569", fontWeight: 700 }}>
                   {isTop ? medals[i] : i + 1}
                 </span>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: pgc.color, flexShrink: 0 }} />
@@ -184,7 +184,7 @@ export default function StatsContent({
                 <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#a78bfa", fontWeight: sortBy === "matches" ? 900 : 400 }}>{p.matches || 0}</span>
                 <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: sortBy === "goals"   ? 900 : 400 }}>{p.goals}</span>
                 <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: sortBy === "assists" ? 900 : 400 }}>{p.assists}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 900, color: sortBy === "points" ? "#22c55e" : "#4a5568" }}>{p.points}</span>
+                <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 900, color: sortBy === "points" ? "#22c55e" : "#475569" }}>{p.points}</span>
               </div>
             );
           })}
@@ -194,7 +194,7 @@ export default function StatsContent({
       {/* MATCH HISTORY */}
       {history.length > 0 && (
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#4a5568", marginBottom: 12 }}>MATCHHISTORIK</div>
+          <div style={{ fontSize: FONT.label, fontWeight: 700, color: "#475569", marginBottom: 12 }}>MATCHHISTORIK</div>
           {history.map((m, i) => {
             const res = formResult(m);
             const col = formColor(res);
@@ -206,15 +206,15 @@ export default function StatsContent({
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 1 }}>vs {m.opponent}</div>
-                  <div style={{ fontSize: 11, color: "#4a5568", marginBottom: scorers.length > 0 ? 4 : 0 }}>{FMT(m.date)}</div>
+                  <div style={{ fontSize: 11, color: "#475569", marginBottom: scorers.length > 0 ? 4 : 0 }}>{FMT(m.date)}</div>
                   {scorers.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
                       {scorers.slice(0, 4).map((s, si) => (
-                        <span key={si} style={{ fontSize: 10, color: "#fbbf24", background: "rgba(251,191,36,0.07)", borderRadius: 99, padding: "1px 7px" }}>
+                        <span key={si} style={{ fontSize: FONT.label, color: "#fbbf24", background: "rgba(251,191,36,0.07)", borderRadius: 99, padding: "1px 7px" }}>
                           {typeof s === "object" ? s.name : s}
                         </span>
                       ))}
-                      {scorers.length > 4 && <span style={{ fontSize: 10, color: "#475569" }}>+{scorers.length - 4}</span>}
+                      {scorers.length > 4 && <span style={{ fontSize: FONT.label, color: "#475569" }}>+{scorers.length - 4}</span>}
                     </div>
                   )}
                   {(m.teamGoals || []).length > 0 && (
@@ -222,7 +222,7 @@ export default function StatsContent({
                       {m.teamGoals.map((g, gi) => {
                         const done = (m.checked_goals || []).includes(gi);
                         return (
-                          <span key={gi} style={{ fontSize: 10, color: done ? "#22c55e" : "#475569", background: done ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)", borderRadius: 99, padding: "1px 7px" }}>
+                          <span key={gi} style={{ fontSize: FONT.label, color: done ? "#22c55e" : "#475569", background: done ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.03)", borderRadius: 99, padding: "1px 7px" }}>
                             {done ? "✓ " : "○ "}{g}
                           </span>
                         );
@@ -232,7 +232,7 @@ export default function StatsContent({
                   {(m.substitutions || []).length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 3 }}>
                       {(m.substitutions || []).map((sub, si) => (
-                        <span key={si} style={{ fontSize: 10, color: "#94a3b8", background: "rgba(148,163,184,0.07)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 99, padding: "1px 7px" }}>
+                        <span key={si} style={{ fontSize: FONT.label, color: "#94a3b8", background: "rgba(148,163,184,0.07)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 99, padding: "1px 7px" }}>
                           🔄 {sub.outName} → {sub.inName}
                         </span>
                       ))}
@@ -260,16 +260,16 @@ export default function StatsContent({
       {/* MÅLVAKTSSTATISTIK */}
       {keeperStats && keeperStats.length > 0 && (
         <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: "#a78bfa", marginBottom: 12 }}>🧤 MÅLVAKTSSTATISTIK</div>
+          <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#a78bfa", marginBottom: 12 }}>🧤 MÅLVAKTSSTATISTIK</div>
 
           {/* Kolumnhuvud */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(167,139,250,0.1)", marginBottom: 4 }}>
-            <span style={{ flex: 1, fontSize: 9, color: "#475569" }}>KEEPER</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#a78bfa" }}>MAT</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#f87171" }}>INS</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#22c55e" }}>RÄD</span>
-            <span style={{ width: 32, textAlign: "center", fontSize: 9, color: "#38bdf8" }}>%</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: 9, color: "#fbbf24" }}>NOLL</span>
+            <span style={{ flex: 1, fontSize: FONT.label, color: "#475569" }}>KEEPER</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#a78bfa" }}>MAT</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#f87171" }}>INS</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#22c55e" }}>RÄD</span>
+            <span style={{ width: 32, textAlign: "center", fontSize: FONT.label, color: "#38bdf8" }}>%</span>
+            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#fbbf24" }}>NOLL</span>
           </div>
 
           {keeperStats.map((k, i) => (
@@ -293,13 +293,13 @@ export default function StatsContent({
                   <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>GAA {k.gaa}</span>
                 )}
                 {k.shots === 0 && (
-                  <span style={{ fontSize: 10, color: "#475569", marginLeft: "auto", fontStyle: "italic" }}>Skott ej trackade ännu</span>
+                  <span style={{ fontSize: FONT.label, color: "#475569", marginLeft: "auto", fontStyle: "italic" }}>Skott ej trackade ännu</span>
                 )}
               </div>
             </div>
           ))}
 
-          <div style={{ fontSize: 10, color: "#475569", marginTop: 6 }}>
+          <div style={{ fontSize: FONT.label, color: "#475569", marginTop: 6 }}>
             INS = insläppta · RÄD = räddningar · NOLL = nollor (clean sheets) · GAA = mål/match
           </div>
         </div>
@@ -309,15 +309,15 @@ export default function StatsContent({
       {attendanceStats.length > 0 && (
         <div style={{ background: "rgba(52,211,153,0.04)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#34d399" }}>👥 TRÄNINGSNÄRVARO</div>
-            <div style={{ fontSize: 10, color: "#4a5568" }}>{trackedSessions.length} träningar trackade</div>
+            <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#34d399" }}>👥 TRÄNINGSNÄRVARO</div>
+            <div style={{ fontSize: FONT.label, color: "#475569" }}>{trackedSessions.length} träningar trackade</div>
           </div>
 
           {/* Column header */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(52,211,153,0.1)", marginBottom: 4 }}>
-            <span style={{ flex: 1, fontSize: 9, color: "#475569" }}>SPELARE</span>
-            <span style={{ width: 36, textAlign: "center", fontSize: 9, color: "#34d399" }}>TRÄN</span>
-            <span style={{ width: 40, textAlign: "right", fontSize: 9, color: "#34d399", fontWeight: 700 }}>NÄRVARO</span>
+            <span style={{ flex: 1, fontSize: FONT.label, color: "#475569" }}>SPELARE</span>
+            <span style={{ width: 36, textAlign: "center", fontSize: FONT.label, color: "#34d399" }}>TRÄN</span>
+            <span style={{ width: 40, textAlign: "right", fontSize: FONT.label, color: "#34d399", fontWeight: 700 }}>NÄRVARO</span>
           </div>
 
           {attendanceStats.map((p, i) => {
@@ -343,7 +343,7 @@ export default function StatsContent({
             );
           })}
 
-          <div style={{ fontSize: 10, color: "#475569", marginTop: 8 }}>
+          <div style={{ fontSize: FONT.label, color: "#475569", marginTop: 8 }}>
             Markera närvaro i Träning → Logg → Markera närvaro
           </div>
         </div>

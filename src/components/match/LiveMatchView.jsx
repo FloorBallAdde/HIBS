@@ -111,7 +111,7 @@ export default function LiveMatchView({
             padding: 14,
             textAlign: "center",
           }}>
-            <div style={{ fontSize: 10, color, fontWeight: 700, marginBottom: 8 }}>{label}</div>
+            <div style={{ fontSize: FONT.label, color, fontWeight: 700, marginBottom: 8 }}>{label}</div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <button
                 onClick={() => setMatchResult(r => ({ ...r, [key]: Math.max(0, (parseInt(r[key]) || 0) - 1) }))}
@@ -158,18 +158,18 @@ export default function LiveMatchView({
 
         return (
           <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px", marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b", marginBottom: 12, letterSpacing: "0.08em" }}>
+            <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#64748b", marginBottom: 12, letterSpacing: "0.08em" }}>
               SKOTTSTATISTIK
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {/* HIBS — skott framåt */}
               <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.14)", borderRadius: 12, padding: "12px 10px" }}>
-                <div style={{ fontSize: 9, fontWeight: 800, color: "#22c55e", marginBottom: 6 }}>🏒 HIBS SKOTT</div>
+                <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#22c55e", marginBottom: 6 }}>🏒 HIBS SKOTT</div>
                 <div style={{ fontSize: 32, fontWeight: 900, color: "#22c55e", lineHeight: 1, marginBottom: 2 }}>{sf}</div>
                 {shotConv !== null
-                  ? <div style={{ fontSize: 10, color: "#64748b", marginBottom: 10 }}>{goalsFor} mål · {shotConv}%</div>
-                  : <div style={{ fontSize: 10, color: "#475569", marginBottom: 10 }}>{goalsFor} mål</div>
+                  ? <div style={{ fontSize: FONT.label, color: "#64748b", marginBottom: 10 }}>{goalsFor} mål · {shotConv}%</div>
+                  : <div style={{ fontSize: FONT.label, color: "#475569", marginBottom: 10 }}>{goalsFor} mål</div>
                 }
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setMatchShotsFor(s => Math.max(0, s - 1))} style={UndoStyle}>−</button>
@@ -179,14 +179,14 @@ export default function LiveMatchView({
 
               {/* KEEPER — skott mot */}
               <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.14)", borderRadius: 12, padding: "12px 10px" }}>
-                <div style={{ fontSize: 9, fontWeight: 800, color: "#a78bfa", marginBottom: 2 }}>🧤 RÄDDNINGAR</div>
+                <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#a78bfa", marginBottom: 2 }}>🧤 RÄDDNINGAR</div>
                 {keeperNames.length > 0 && (
-                  <div style={{ fontSize: 9, color: "#64748b", marginBottom: 4 }}>{keeperNames.join(" / ")}</div>
+                  <div style={{ fontSize: FONT.label, color: "#64748b", marginBottom: 4 }}>{keeperNames.join(" / ")}</div>
                 )}
                 <div style={{ fontSize: 32, fontWeight: 900, color: "#a78bfa", lineHeight: 1, marginBottom: 2 }}>{saves}</div>
                 {savePct !== null
-                  ? <div style={{ fontSize: 10, color: "#64748b", marginBottom: 10 }}>{sa} skott · {savePct}%</div>
-                  : <div style={{ fontSize: 10, color: "#475569", marginBottom: 10 }}>{goalsAgainst} insläppta</div>
+                  ? <div style={{ fontSize: FONT.label, color: "#64748b", marginBottom: 10 }}>{sa} skott · {savePct}%</div>
+                  : <div style={{ fontSize: FONT.label, color: "#475569", marginBottom: 10 }}>{goalsAgainst} insläppta</div>
                 }
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setMatchShots(s => Math.max(0, s - 1))} style={UndoStyle}>−</button>
@@ -232,7 +232,7 @@ export default function LiveMatchView({
             marginTop: 8,
           }}>
             {/* Steg 1: Välj spelare UT */}
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#f87171", marginBottom: 8, letterSpacing: "0.06em" }}>
+            <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#f87171", marginBottom: 8, letterSpacing: "0.06em" }}>
               {subOut ? "✓ UT: " + (players.find(p => p.id === subOut)?.name || "?") : "1. VÄLJ SPELARE UT"}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
@@ -264,7 +264,7 @@ export default function LiveMatchView({
             {/* Steg 2: Välj spelare IN (visas bara om UT vald) */}
             {subOut && (
               <>
-                <div style={{ fontSize: 10, fontWeight: 800, color: "#22c55e", marginBottom: 8, letterSpacing: "0.06em" }}>
+                <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#22c55e", marginBottom: 8, letterSpacing: "0.06em" }}>
                   2. VÄLJ SPELARE IN
                 </div>
                 {offPitch.length === 0 ? (
@@ -303,7 +303,7 @@ export default function LiveMatchView({
         {/* Byte-logg */}
         {substitutions?.length > 0 && (
           <div style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 4 }}>
+            <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 4 }}>
               BYTEN
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
@@ -336,7 +336,7 @@ export default function LiveMatchView({
           padding: "10px 14px",
           marginBottom: 14,
         }}>
-          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, marginBottom: 6 }}>
+          <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, marginBottom: 6 }}>
             LAGMÅL — tryck för att bocka av
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -373,7 +373,7 @@ export default function LiveMatchView({
           {/* Progress indicator */}
           {activeMatch.teamGoals.length > 0 && (
             <div style={{
-              fontSize: 10,
+              fontSize: FONT.label,
               color: "#64748b",
               marginTop: 8,
               fontWeight: 600,
@@ -387,7 +387,7 @@ export default function LiveMatchView({
       {/* Målgörare + Assist */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, color: "#fbbf24", fontWeight: 700, marginBottom: 8 }}>MÅL</div>
+          <div style={{ fontSize: FONT.label, color: "#fbbf24", fontWeight: 700, marginBottom: 8 }}>MÅL</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {allMatchPlayers.map(p => {
               const cnt = matchScorers.filter(s => s.name === p.name && s.type === "goal").length;
@@ -418,7 +418,7 @@ export default function LiveMatchView({
         </div>
 
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, color: "#38bdf8", fontWeight: 700, marginBottom: 8 }}>ASSIST</div>
+          <div style={{ fontSize: FONT.label, color: "#38bdf8", fontWeight: 700, marginBottom: 8 }}>ASSIST</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {allMatchPlayers.map(p => {
               const cnt = matchScorers.filter(s => s.name === p.name && s.type === "assist").length;
@@ -449,7 +449,7 @@ export default function LiveMatchView({
       {/* Händelselogg — tryck ✕ för att ta bort valfri händelse */}
       {matchScorers.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>
+          <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 6 }}>
             HÄNDELSELOGG — tryck ✕ för att ångra
           </div>
           {[...matchScorers].reverse().map((s, ri) => {
