@@ -25,6 +25,7 @@ import BottomNav from "./components/ui/BottomNav.jsx";
 import ProfilePanel from "./components/ui/ProfilePanel.jsx";
 import LiveMatchBanner from "./components/ui/LiveMatchBanner.jsx";
 import AppHeader from "./components/ui/AppHeader.jsx";
+import SubTabBar from "./components/ui/SubTabBar.jsx";
 
 // MAIN APP
 export default function App(){
@@ -192,18 +193,18 @@ export default function App(){
 
       <div style={{padding:"16px 16px 0"}}>
         {tab==="traning"&&(
-          <div style={{display:"flex",gap:6,marginBottom:16}}>
-            {[["kedjor","Kedjor"],["planera","Planera"],["ovningar","Övningar"],["tavla","🎨 Tavla"]].map(([id,label])=>(
-              <button key={id} onClick={()=>setTrainSub(id)} style={{flex:1,padding:"9px 0",border:"1px solid "+(trainSub===id?"#22c55e":"rgba(255,255,255,0.07)"),borderRadius:10,background:trainSub===id?"rgba(34,197,94,0.1)":"transparent",color:trainSub===id?"#22c55e":"#4a5568",fontSize:12,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>{label}</button>
-            ))}
-          </div>
+          <SubTabBar
+            tabs={[["kedjor","Kedjor"],["planera","Planera"],["ovningar","Övningar"],["tavla","🎨 Tavla"]]}
+            current={trainSub}
+            onChange={setTrainSub}
+          />
         )}
         {tab==="match"&&!activeMatch&&(
-          <div style={{display:"flex",gap:6,marginBottom:16}}>
-            {[["select","Trupp"],["lines","Kedjor"]].map(([id,label])=>(
-              <button key={id} onClick={()=>setMatchStep(id)} style={{flex:1,padding:"9px 0",border:"1px solid "+(matchStep===id?"#22c55e":"rgba(255,255,255,0.07)"),borderRadius:10,background:matchStep===id?"rgba(34,197,94,0.1)":"transparent",color:matchStep===id?"#22c55e":"#4a5568",fontSize:12,fontWeight:700,fontFamily:"inherit",cursor:"pointer"}}>{label}</button>
-            ))}
-          </div>
+          <SubTabBar
+            tabs={[["select","Trupp"],["lines","Kedjor"]]}
+            current={matchStep}
+            onChange={setMatchStep}
+          />
         )}
       </div>
 

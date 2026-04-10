@@ -213,6 +213,21 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
   const endMatch = async () => {
     if (!activeMatch || !clubId) return;
     setSaveError(null);
+
+    // Sprint 31: Snapshot av kedjorna med spelarnamn (inte IDs) — self-contained i historik.
+    // ⚠️ Supabase-schema: kör `ALTER TABLE matches ADD COLUMN lines2 jsonb;` för att spara i DB.
+    const lines2Snapshot = lines
+      .filter(l => Object.values(l.slots).some(Boolean))
+      .map(l => ({
+        name: l.name,
+        slots: {
+          forward: l.slots.forward ? (players.find(p => p.id === l.slots.forward)?.name || null) : null,
+          vanster: l.slots.vanster ? (players.find(p => p.id === l.slots.vanster)?.name || null) : null,
+          hoger:   l.slots.hoger   ? (players.find(p => p.id === l.slots.hoger)?.name   || null) : null,
+          back:    l.slots.back    ? (players.find(p => p.id === l.slots.back)?.name    || null) : null,
+        },
+      }));
+
     // Fullständig lokal post (inkl. fält som inte finns i DB-schemat)
     const entry = {
       club_id: clubId,
@@ -228,9 +243,11 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
       teamGoals: activeMatch.teamGoals || [],
       checked_goals: [...checkedGoals],
       substitutions: [...substitutions],
+      lines2: lines2Snapshot,
     };
     // DB-payload: bara kolumner som faktiskt finns i Supabase matches-tabellen.
     // OBS: checked_goals saknas i schemat → utelämnas. substitutions lagras permanent (Sprint 24/25).
+    // OBS: lines2 kräver schema-migration (se kommentar ovan) — faller tillbaka på lokal post vid 400.
     const dbEntry = {
       club_id: entry.club_id,
       date: entry.date,
@@ -244,9 +261,10 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
       created_by: entry.created_by,
       teamGoals: entry.teamGoals,
       substitutions: entry.substitutions,
+      lines2: lines2Snapshot,
     };
 
-    // Hjälpfunktion: spara till DB, vid schema-fel (400) försök igen utan substitutions
+    // Hjälpfunktion: spara till DB, vid schema-fel (400) försök igen utan okända kolumner
     const saveToDb = async (payload) => {
       if (liveMatchId) {
         return await sbPatch("matches", liveMatchId, { ...payload, is_live: false, live_state: null }, tok);
@@ -254,28 +272,32 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
       return await sbPost("matches", payload, tok);
     };
 
+    const applyResult = (res) => {
+      if (liveMatchId) {
+        return Array.isArray(res) ? [{ ...entry, ...res[0] }] : [{ ...entry, id: liveMatchId }];
+      }
+      return Array.isArray(res) ? [{ ...entry, ...res[0] }] : res;
+    };
+
     let saved;
     try {
-      const res = await saveToDb(dbEntry);
-      if (liveMatchId) {
-        saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : [{ ...entry, id: liveMatchId }];
-      } else {
-        saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : res;
-      }
+      saved = applyResult(await saveToDb(dbEntry));
     } catch (e) {
-      // Defensivt: om felet beror på okänd kolumn (PostgREST 400), försök utan substitutions
+      // Defensivt: vid schema-fel (PostgREST 400) pröva progressivt utan nyare kolumner.
       const isSchemaError = e?.message?.includes("400") || e?.status === 400;
       if (isSchemaError) {
+        // Steg 1: utan lines2 (Sprint 31 — kräver schema-migration)
         try {
-          const { substitutions: _drop, ...fallbackPayload } = dbEntry;
-          const res = await saveToDb(fallbackPayload);
-          if (liveMatchId) {
-            saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : [{ ...entry, id: liveMatchId }];
-          } else {
-            saved = Array.isArray(res) ? [{ ...entry, ...res[0] }] : res;
-          }
+          const { lines2: _l2, ...noLines2 } = dbEntry;
+          saved = applyResult(await saveToDb(noLines2));
         } catch (_) {
-          // Fallback misslyckades också
+          // Steg 2: utan substitutions och lines2
+          try {
+            const { substitutions: _s, lines2: _l2b, ...minPayload } = dbEntry;
+            saved = applyResult(await saveToDb(minPayload));
+          } catch (_2) {
+            // Alla DB-försök misslyckades
+          }
         }
       }
       if (!saved && liveMatchId) {

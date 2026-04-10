@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { FMT } from "../../lib/constants.js";
-import { sbPatch } from "../../lib/supabase.js";
+import MatchEditForm from "./MatchEditForm.jsx";
 
 export default function MatchCard({ match, players, tok, onEditNote, onDelete, onUpdate }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [editResult, setEditResult] = useState({ us: 0, them: 0 });
-  const [editScorers, setEditScorers] = useState([]);
-  const [editTeamGoals, setEditTeamGoals] = useState(["", "", ""]);
-  const [editNote, setEditNote] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(null);
   const [confirmDel, setConfirmDel] = useState(false);
 
   const sc = match.serie === "14A" ? "#f472b6" : match.serie === "15A" ? "#38bdf8" : "#fbbf24";
@@ -20,46 +14,12 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
   const isObj = scorers.length > 0 && typeof scorers[0] === "object";
   const goals = isObj ? scorers.filter(s => s.type === "goal") : scorers;
   const assists = isObj ? scorers.filter(s => s.type === "assist") : [];
+  const substitutions = match.substitutions || [];
 
   // Spelare som deltog i matchen
   const matchPlayers = (players || []).filter(p =>
     (match.players || []).includes(p.id) || (match.goalkeeper || []).includes(p.id)
   );
-
-  const startEdit = () => {
-    // Konvertera "" → 0 så +/- fungerar direkt
-    const us = parseInt(match.result?.us);
-    const them = parseInt(match.result?.them);
-    setEditResult({ us: isNaN(us) ? 0 : us, them: isNaN(them) ? 0 : them });
-    setEditScorers([...(match.scorers || [])]);
-    // Fyll lagmål med befintliga värden (eller tomma fält om de saknas)
-    const tg = match.teamGoals || [];
-    setEditTeamGoals([tg[0] || "", tg[1] || "", tg[2] || ""]);
-    setEditNote(match.note || "");
-    setEditing(true);
-    setOpen(true);
-  };
-
-  const saveEdit = async () => {
-    setSaving(true);
-    setSaveError(null);
-    const teamGoals = editTeamGoals.map(g => g.trim()).filter(Boolean);
-    const patch = { result: editResult, scorers: editScorers, teamGoals, note: editNote };
-    try {
-      const res = await sbPatch("matches", match.id, patch, tok);
-      // Supabase returnerar ett error-objekt (inte array) vid misslyckad patch
-      if (res && !Array.isArray(res) && res.code) {
-        setSaveError("Sparandet misslyckades: " + (res.message || res.code));
-        setSaving(false);
-        return;
-      }
-      onUpdate?.({ ...match, result: editResult, scorers: editScorers, teamGoals, note: editNote });
-      setEditing(false);
-    } catch (e) {
-      setSaveError("Nätverksfel — försök igen");
-    }
-    setSaving(false);
-  };
 
   return (
     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 10 }}>
@@ -112,12 +72,44 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
               </div>
             </div>
           )}
+          {/* Byten (Sprint 24) */}
+          {substitutions.length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 9, color: "#a78bfa", fontWeight: 700, marginBottom: 5 }}>BYTEN</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {substitutions.map((s, i) => (
+                  <span key={i} style={{ fontSize: 12, color: "#a78bfa", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 99, padding: "3px 10px" }}>
+                    ↕ {s.outName} → {s.inName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Kedjor (Sprint 31) */}
+          {(match.lines2 || []).filter(l => Object.values(l.slots || {}).some(Boolean)).length > 0 && (
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 9, color: "#34d399", fontWeight: 700, marginBottom: 5 }}>KEDJOR</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {match.lines2.filter(l => Object.values(l.slots || {}).some(Boolean)).map((line, i) => {
+                  const names = ["forward", "vanster", "hoger", "back"]
+                    .map(pos => line.slots?.[pos])
+                    .filter(Boolean);
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 10, color: "#64748b", fontWeight: 800, flexShrink: 0 }}>{line.name}</span>
+                      <span style={{ fontSize: 12, color: "#34d399" }}>{names.join(" · ")}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {/* Notering */}
           {match.note && (
             <div style={{ fontSize: 12, color: "#94a3b8", background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "8px 12px", marginBottom: 10, lineHeight: 1.5 }}>{match.note}</div>
           )}
           <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-            <button onClick={startEdit} style={{ padding: "7px 14px", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 99, background: "rgba(34,197,94,0.08)", color: "#22c55e", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>✏ Redigera</button>
+            <button onClick={() => { setEditing(true); setOpen(true); }} style={{ padding: "7px 14px", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 99, background: "rgba(34,197,94,0.08)", color: "#22c55e", fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>✏ Redigera</button>
             <button onClick={() => onEditNote(match)} style={{ padding: "7px 14px", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 99, background: "rgba(167,139,250,0.06)", color: "#a78bfa", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>📋 Kopiera för Claude</button>
             {!confirmDel
               ? <button onClick={() => setConfirmDel(true)} style={{ padding: "7px 14px", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 99, background: "transparent", color: "#f87171", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>Ta bort</button>
@@ -127,96 +119,15 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
         </div>
       )}
 
-      {/* ── EDIT MODE ── */}
+      {/* ── EDIT MODE (extraherat till MatchEditForm — Sprint 24) ── */}
       {editing && (
-        <div style={{ padding: "0 16px 20px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginTop: 14, marginBottom: 10 }}>REDIGERA RESULTAT</div>
-
-          {/* Resultat-editor */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 12, textAlign: "center" }}>
-              <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 700, marginBottom: 8 }}>HIBS</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <button onClick={() => setEditResult(r => ({ ...r, us: Math.max(0, r.us - 1) }))} style={{ width: 36, height: 36, border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 20, fontFamily: "inherit", cursor: "pointer" }}>-</button>
-                <span style={{ fontSize: 30, fontWeight: 900, color: "#fff", minWidth: 32, textAlign: "center" }}>{editResult.us}</span>
-                <button onClick={() => setEditResult(r => ({ ...r, us: r.us + 1 }))} style={{ width: 36, height: 36, border: "none", borderRadius: "50%", background: "#22c55e", color: "#0b0d14", fontSize: 20, fontFamily: "inherit", cursor: "pointer", fontWeight: 700 }}>+</button>
-              </div>
-            </div>
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 12, textAlign: "center" }}>
-              <div style={{ fontSize: 10, color: "#f87171", fontWeight: 700, marginBottom: 8 }}>MOT</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <button onClick={() => setEditResult(r => ({ ...r, them: Math.max(0, r.them - 1) }))} style={{ width: 36, height: 36, border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: 20, fontFamily: "inherit", cursor: "pointer" }}>-</button>
-                <span style={{ fontSize: 30, fontWeight: 900, color: "#fff", minWidth: 32, textAlign: "center" }}>{editResult.them}</span>
-                <button onClick={() => setEditResult(r => ({ ...r, them: r.them + 1 }))} style={{ width: 36, height: 36, border: "none", borderRadius: "50%", background: "#f87171", color: "#fff", fontSize: 20, fontFamily: "inherit", cursor: "pointer", fontWeight: 700 }}>+</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Målgörare/assist — visas bara om vi har matchspelare */}
-          {matchPlayers.length > 0 && (
-            <>
-              <div style={{ fontSize: 10, color: "#fbbf24", fontWeight: 700, marginBottom: 6 }}>MÅL</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                {matchPlayers.map(p => {
-                  const cnt = editScorers.filter(s => s.name === p.name && s.type === "goal").length;
-                  return (
-                    <button key={p.id} onClick={() => setEditScorers(s => [...s, { name: p.name, type: "goal" }])} style={{ padding: "6px 12px", border: "1px solid " + (cnt > 0 ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.07)"), borderRadius: 99, background: cnt > 0 ? "rgba(251,191,36,0.1)" : "transparent", color: cnt > 0 ? "#fbbf24" : "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
-                      {p.name}{cnt > 0 ? " (" + cnt + ")" : ""}
-                    </button>
-                  );
-                })}
-              </div>
-              <div style={{ fontSize: 10, color: "#38bdf8", fontWeight: 700, marginBottom: 6 }}>ASSIST</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                {matchPlayers.map(p => {
-                  const cnt = editScorers.filter(s => s.name === p.name && s.type === "assist").length;
-                  return (
-                    <button key={p.id} onClick={() => setEditScorers(s => [...s, { name: p.name, type: "assist" }])} style={{ padding: "6px 12px", border: "1px solid " + (cnt > 0 ? "rgba(56,189,248,0.4)" : "rgba(255,255,255,0.07)"), borderRadius: 99, background: cnt > 0 ? "rgba(56,189,248,0.1)" : "transparent", color: cnt > 0 ? "#38bdf8" : "#4a5568", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
-                      {p.name}{cnt > 0 ? " (" + cnt + ")" : ""}
-                    </button>
-                  );
-                })}
-              </div>
-              {editScorers.length > 0 && (
-                <button onClick={() => setEditScorers(s => s.slice(0, -1))} style={{ padding: "7px 14px", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, background: "transparent", color: "#4a5568", fontSize: 11, fontFamily: "inherit", cursor: "pointer", marginBottom: 14, display: "block" }}>Ångra senaste</button>
-              )}
-            </>
-          )}
-
-          {/* Notering */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, marginBottom: 6 }}>NOTERING</div>
-            <textarea
-              value={editNote}
-              onChange={e => setEditNote(e.target.value)}
-              placeholder="T.ex. bra press, jobbig domare, fantastisk energi..."
-              style={{ width: "100%", minHeight: 70, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 10, color: "#fff", fontSize: 12, padding: "9px 12px", fontFamily: "inherit", outline: "none", resize: "none", boxSizing: "border-box" }}
-            />
-          </div>
-
-          {/* Lagmål — redigerbara fält */}
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 700, marginBottom: 6 }}>LAGMÅL</div>
-            {editTeamGoals.map((g, i) => (
-              <input key={i} value={g} onChange={e => setEditTeamGoals(gs => gs.map((x, j) => j === i ? e.target.value : x))}
-                placeholder={"Mål " + (i + 1) + " — t.ex. Pressa högt"}
-                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 10, color: "#fff", fontSize: 12, padding: "9px 12px", fontFamily: "inherit", outline: "none", marginBottom: 6, boxSizing: "border-box" }}
-              />
-            ))}
-          </div>
-
-          {saveError && (
-            <div style={{ fontSize: 12, color: "#f87171", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10, padding: "8px 12px", marginBottom: 10 }}>
-              ⚠ {saveError}
-            </div>
-          )}
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={saveEdit} disabled={saving} style={{ flex: 2, padding: "14px 0", border: "none", borderRadius: 12, background: saving ? "rgba(34,197,94,0.3)" : "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 14, fontWeight: 800, fontFamily: "inherit", cursor: saving ? "not-allowed" : "pointer" }}>
-              {saving ? "Sparar..." : "Spara"}
-            </button>
-            <button onClick={() => setEditing(false)} style={{ flex: 1, padding: "14px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#4a5568", fontSize: 13, fontFamily: "inherit", cursor: "pointer" }}>Avbryt</button>
-          </div>
-        </div>
+        <MatchEditForm
+          match={match}
+          matchPlayers={matchPlayers}
+          tok={tok}
+          onSaved={(updated) => { onUpdate?.(updated); setEditing(false); }}
+          onCancel={() => setEditing(false)}
+        />
       )}
     </div>
   );
