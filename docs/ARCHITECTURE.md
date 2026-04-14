@@ -91,14 +91,22 @@ hibs-app/
     │   │   ├── GrupperMode.jsx
     │   │   ├── BlandaMode.jsx
     │   │   ├── PlaneraTab.jsx
-    │   │   └── OvningarTab.jsx
+    │   │   ├── OvningarTab.jsx
+    │   │   ├── ExerciseDetailSheet.jsx ← Sprint 33: extraherad från OvningarTab
+    │   │   └── TaktiktavlaTab.jsx      ← Sprint 12: canvas-ritverktyg
     │   ├── season/
     │   │   ├── Checklist.jsx
     │   │   └── Roadmap.jsx
     │   ├── mer/
-    │   │   └── MerContent.jsx      ← Sprint 3: extraherad mer-vy
+    │   │   ├── MerContent.jsx      ← Sprint 3: extraherad mer-vy
+    │   │   ├── GrupperDnD.jsx      ← Sprint 28: DnD-grupperingsvy
+    │   │   ├── FeedbackTrend.jsx   ← Sprint 28: UX-trend-kort
+    │   │   └── TeamMessages.jsx    ← Sprint 26: lagmeddelanden (P11 Fas 1)
     │   └── home/
-    │       └── HomeContent.jsx   ← Sprint 1: extraherad hem-vy
+    │       ├── HomeContent.jsx     ← Sprint 1: extraherad hem-vy
+    │       ├── UpcomingMatchCard.jsx ← Sprint 15: kommande matcher
+    │       ├── MatchRsvpModal.jsx  ← Sprint 11: RSVP-modal
+    │       └── ParentView.jsx      ← Sprint 33: förenklad föräldravy (P11 Fas 2)
     ├── match/
     │   ├── MatchContent.jsx      ← Sprint 2: extraherat match-flöde
     │   ├── MatchCard.jsx
@@ -150,3 +158,5 @@ hibs-app/
 | 21 | 2026-03-24 | AbortController 10s-timeout i sbGet + lagmål sparas vid matchslut + ✓/○ chips i matchhistorik | 210 → 210 | ✅ Klar |
 | 22–27 | 2026-03-26 – 2026-04-05 | AbortController sbPatch/sbPost/sbDel · AppHeader · ObservationModal · P12 närvaro-hook · TeamMessages · PostMatchFeedback (app_feedback-tabell + RLS) | 210 → 259 | ✅ Klar |
 | 28 | 2026-04-06 | GrupperDnD+PlayerChip extraherade från MerContent.jsx → src/components/mer/GrupperDnD.jsx · FeedbackTrend: UX-trend-kort i Mer-fliken (app_feedback-data) | 259 → 259 | ✅ Klar |
+| 29–32 | 2026-04-08 – 2026-04-12 | AbortController sbAuth/sbRefresh · F3 canvas_drawing-thumbnail + numrerade HUR-steg i OvningarTab · Diverse auto-detected backlog-items | 259 → 261 | ✅ Klar |
+| 33 | 2026-04-14 | ExerciseDetailSheet extraherad från OvningarTab · P11 Fas 2 Steg 1: ParentView (föräldra-läsvy) + roll-routing i App.jsx · ARCHITECTURE.md uppdaterad med saknade komponenter | 261 → 262 | ✅ Klar |

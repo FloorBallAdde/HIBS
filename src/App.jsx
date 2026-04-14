@@ -26,6 +26,7 @@ import ProfilePanel from "./components/ui/ProfilePanel.jsx";
 import LiveMatchBanner from "./components/ui/LiveMatchBanner.jsx";
 import AppHeader from "./components/ui/AppHeader.jsx";
 import SubTabBar from "./components/ui/SubTabBar.jsx";
+import ParentView from "./components/home/ParentView.jsx";
 
 // MAIN APP
 export default function App(){
@@ -144,6 +145,8 @@ export default function App(){
   const { attendance, togglePlayer } = useAttendance();
 
   if(!auth||!profile)return<AuthScreen onAuth={handleAuth}/>;
+  // P11 Fas 2: Föräldrar ser en förenklad läsvy (ParentView)
+  if(profile.role==="parent")return<ParentView profile={profile} auth={auth} onSignOut={onSignOut}/>;
   if(loadingApp)return(
     <div style={{minHeight:"100vh",background:"#0b0d14",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,fontFamily:"system-ui,sans-serif"}}>
       <div style={{fontSize:28,fontWeight:900,color:"#fff"}}>HIBS</div>
