@@ -15,6 +15,15 @@ export default function AuthScreen({ onAuth }) {
   const [error, setError] = useState("");
   const [authData, setAuthData] = useState(null);
 
+  // P11 Fas 2 Steg 2: Invite-länk — ?invite=CLUB_ID&role=parent
+  const [invite] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const clubId = params.get("invite");
+    const role = params.get("role");
+    if (clubId && role === "parent") return { clubId, role };
+    return null;
+  });
+
   const err = (msg) => { setError(msg); setLoading(false); };
   const inpStyle = { width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, color: "#fff", fontSize: 14, padding: "12px 14px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 12 };
 
@@ -30,6 +39,8 @@ export default function AuthScreen({ onAuth }) {
         const tok = res.access_token; const uid = res.user?.id;
         if (!tok || !uid) return err("Registrering misslyckades — försök igen");
         if (res.refresh_token) ls.set("hibs_refresh", res.refresh_token);
+        // P11 Fas 2: Om invite-länk → auto-join som förälder
+        if (invite) { const ok = await doInviteJoin(tok, uid, username); if (ok) return; }
         setAuthData({ tok, uid, username });
         setLoading(false);
         setMode("choose_club");
@@ -53,6 +64,8 @@ export default function AuthScreen({ onAuth }) {
       const prof = await sbGet("profiles", "id=eq." + uid + "&select=*", tok);
       const profile = Array.isArray(prof) && prof[0] ? prof[0] : null;
       if (!profile) return err("Profil: " + JSON.stringify(prof).slice(0, 150));
+      // P11 Fas 2: Om invite-länk och användaren inte redan tillhör en klubb → auto-join
+      if (!profile.club_id && invite) { const ok = await doInviteJoin(tok, uid, profile.username || username); if (ok) return; }
       if (!profile.club_id) { setAuthData({ tok, uid, username: profile.username || username }); setMode("choose_club"); setLoading(false); return; }
       if (!profile.approved && profile.role !== "owner" && profile.role !== "admin") { setLoading(false); setMode("pending"); return; }
       ls.set("hibs_token", tok); ls.set("hibs_uid", uid);
@@ -119,6 +132,31 @@ export default function AuthScreen({ onAuth }) {
     setClubs(Array.isArray(res) ? res : []);
   };
 
+  // P11 Fas 2 Steg 2: Auto-join as parent via invite link
+  const doInviteJoin = async (tok, uid, uname) => {
+    if (!invite) return false;
+    setLoading(true); setError("");
+    try {
+      // Verify club exists
+      const res = await sbGet("clubs", "id=eq." + invite.clubId, tok);
+      const club = Array.isArray(res) && res[0] ? res[0] : null;
+      if (!club) { err("Klubben hittades inte — länken kan vara felaktig."); return false; }
+      // Create or update profile with role=parent, auto-approved
+      const existing = await sbGet("profiles", "id=eq." + uid, tok);
+      if (Array.isArray(existing) && existing.length > 0) {
+        await sbPatch("profiles", uid, { username: uname || existing[0].username, club_id: club.id, role: "parent", approved: true }, tok);
+      } else {
+        await sbPost("profiles", { id: uid, username: uname, club_id: club.id, role: "parent", approved: true }, tok);
+      }
+      // Clean invite params from URL (cosmetic)
+      try { window.history.replaceState({}, "", window.location.pathname); } catch { /* ignore */ }
+      const profile = { id: uid, username: uname, club_id: club.id, role: "parent", approved: true, clubs: club };
+      ls.set("hibs_token", tok); ls.set("hibs_uid", uid);
+      onAuth({ tok, uid, profile });
+      return true;
+    } catch (e) { err("Kunde inte gå med — försök igen."); return false; }
+  };
+
   const Btn = ({ label, onClick }) => (
     <button onClick={onClick} disabled={loading}
       style={{ width: "100%", padding: "14px 0", border: "none", borderRadius: 14, background: loading ? "rgba(255,255,255,0.06)" : "#a78bfa", color: loading ? "#4a5568" : "#fff", fontSize: 15, fontWeight: 900, fontFamily: "inherit", cursor: loading ? "not-allowed" : "pointer", marginBottom: 10 }}>
@@ -133,6 +171,24 @@ export default function AuthScreen({ onAuth }) {
           <div style={{ fontSize: 32, fontWeight: 900, color: "#fff", letterSpacing: "-1px" }}>HIBS</div>
           <div style={{ fontSize: 12, color: "#4a5568", marginTop: 4 }}>Tränarapp P2015</div>
         </div>
+
+        {/* P11 Fas 2: Invite banner för föräldrar */}
+        {invite && (mode === "login" || mode === "register") && (
+          <div style={{
+            background: "rgba(244,114,182,0.06)",
+            border: "1px solid rgba(244,114,182,0.2)",
+            borderRadius: 14,
+            padding: "14px 16px",
+            marginBottom: 20,
+            textAlign: "center",
+          }}>
+            <div style={{ fontSize: 18, marginBottom: 6 }}>👪</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#f472b6" }}>Föräldra-inbjudan</div>
+            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 4, lineHeight: 1.5 }}>
+              Registrera dig eller logga in för att se lagets meddelanden och matchschema.
+            </div>
+          </div>
+        )}
 
         {mode === "check_email" && (
           <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 16, padding: 24, textAlign: "center" }}>

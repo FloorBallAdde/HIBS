@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { GROUPS, gc, FITNESS_META, nextFitness } from "../../lib/constants.js";
 import MatchCard from "../match/MatchCard.jsx";
 import TeamMessages from "./TeamMessages.jsx";
 import GrupperDnD from "./GrupperDnD.jsx";
 import FeedbackTrend from "./FeedbackTrend.jsx";
+import ParentInvite from "./ParentInvite.jsx";
 
 /**
  * MerContent — "Mer"-fliken med spelare, lagmål, matchhistorik, säsongsplan.
@@ -48,6 +50,7 @@ export default function MerContent({
             ["lagmal",        "🎯", "Lagmål och checklist","Säsongens mål och checklistor"],
             ["matchhistorik", "📊", "Matchhistorik",      "Alla spelade matcher"],
             ["sasongsplan",   "🗓", "Säsongsplan",        "Periodsplan för säsongen"],
+            ["foraldrainbjud","👪", "Bjud in föräldrar",  "Dela en länk så föräldrar kan logga in"],
           ].map(([id, icon, label, desc]) => (
             <button key={id} onClick={() => setMerSub(id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
               <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
@@ -63,6 +66,10 @@ export default function MerContent({
 
       {merSub === "meddelanden" && (
         <TeamMessages clubId={clubId} uid={uid} tok={tok} profile={profile} />
+      )}
+
+      {merSub === "foraldrainbjud" && (
+        <ParentInvite clubId={clubId} />
       )}
 
       {merSub === "spelare" && (
