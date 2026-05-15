@@ -12,21 +12,35 @@ function hdrs(tok) {
 }
 
 export async function sbAuth(path, body) {
-  const r = await fetch(SB_URL + "/auth/v1/" + path, {
-    method: "POST",
-    headers: hdrs(),
-    body: JSON.stringify(body),
-  });
-  return r.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10_000);
+  try {
+    const r = await fetch(SB_URL + "/auth/v1/" + path, {
+      method: "POST",
+      headers: hdrs(),
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    return r.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function sbRefresh(refreshToken) {
-  const r = await fetch(SB_URL + "/auth/v1/token?grant_type=refresh_token", {
-    method: "POST",
-    headers: hdrs(),
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  });
-  return r.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10_000);
+  try {
+    const r = await fetch(SB_URL + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: hdrs(),
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      signal: ctrl.signal,
+    });
+    return r.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function sbGet(table, query, tok) {

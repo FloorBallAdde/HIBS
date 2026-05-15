@@ -1,4 +1,6 @@
-import { CAT_COLOR, CAT_DESC } from "../../lib/constants.js";
+import { useState, useEffect } from "react";
+import { sbGet } from "../../lib/supabase.js";
+import { CAT_COLOR, CAT_DESC, intensityColor } from "../../lib/constants.js";
 
 /* ─── Split hur-text into numbered steps (split on newlines) ─── */
 const splitSteps = (text) =>
@@ -7,21 +9,44 @@ const splitSteps = (text) =>
 /**
  * ExerciseDetailSheet — Detaljvy för en övning (bottom sheet).
  * Extraherad från OvningarTab i Sprint 33.
+ * Sprint 37: Lazy-loads canvas_drawing on demand (not included in list fetch).
  *
  * Props:
  *   sel        — vald övning (objekt)
+ *   token      — Supabase auth token
  *   onClose    — stäng sheeten
  *   onEdit     — öppna redigeringsvy
  *   onDraw     — öppna taktiktavla
  *   favorites  — Set med favorit-ID:n
  *   toggleFav  — (e, id) => void
  */
-export default function ExerciseDetailSheet({ sel, onClose, onEdit, onDraw, favorites, toggleFav }) {
+export default function ExerciseDetailSheet({ sel, token, onClose, onEdit, onDraw, favorites, toggleFav }) {
+  const [drawing, setDrawing] = useState(null);
+  const [loadingDrawing, setLoadingDrawing] = useState(false);
+
+  // Lazy-load canvas_drawing when a new exercise is selected
+  useEffect(() => {
+    if (!sel) { setDrawing(null); return; }
+    // If canvas_drawing was already on the object (e.g. after saving), use it
+    if (sel.canvas_drawing) { setDrawing(sel.canvas_drawing); return; }
+    let cancelled = false;
+    setDrawing(null);
+    setLoadingDrawing(true);
+    sbGet("exercises", "select=canvas_drawing&id=eq." + sel.id, token)
+      .then(res => {
+        if (!cancelled && Array.isArray(res) && res[0]) {
+          setDrawing(res[0].canvas_drawing || null);
+        }
+      })
+      .finally(() => { if (!cancelled) setLoadingDrawing(false); });
+    return () => { cancelled = true; };
+  }, [sel?.id, token]);
+
   if (!sel) return null;
 
   const cc = CAT_COLOR[sel.category] || "#64748b";
   const isFav = favorites.has(sel.id);
-  const hasDrawing = !!sel.canvas_drawing;
+  const hasDrawing = !!drawing;
 
   return (
     <div onClick={onClose} className="hibs-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -36,9 +61,12 @@ export default function ExerciseDetailSheet({ sel, onClose, onEdit, onDraw, favo
           </div>
           <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
             {sel.players && <div style={{ fontSize: 11, color: "#4a5568" }}>{sel.players} sp</div>}
-            <div style={{ fontSize: 11, color: sel.intensity === "Hög" ? "#f87171" : sel.intensity === "Medel" ? "#fbbf24" : "#34d399" }}>{sel.intensity}</div>
+            <div style={{ fontSize: 11, color: intensityColor(sel.intensity) }}>{sel.intensity}</div>
             <button onClick={e => toggleFav(e, sel.id)}
-              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1, padding: "2px 0", color: isFav ? "#fbbf24" : "#4a5568" }}>
+              title={isFav ? "Ta bort från favoriter" : "Spara som favorit"}
+              aria-label={isFav ? "Ta bort " + sel.name + " från favoriter" : "Spara " + sel.name + " som favorit"}
+              aria-pressed={isFav}
+              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1, padding: 0, minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", color: isFav ? "#fbbf24" : "#4a5568" }}>
               {isFav ? "★" : "☆"}
             </button>
           </div>
@@ -53,8 +81,12 @@ export default function ExerciseDetailSheet({ sel, onClose, onEdit, onDraw, favo
               {hasDrawing ? "✏️ Redigera" : "🎨 Rita"}
             </button>
           </div>
-          {hasDrawing ? (
-            <img src={sel.canvas_drawing} alt="Taktiktavla"
+          {loadingDrawing ? (
+            <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 12, padding: "22px 16px", textAlign: "center" }}>
+              <div style={{ fontSize: 12, color: "#4a5568" }}>Laddar ritning...</div>
+            </div>
+          ) : hasDrawing ? (
+            <img src={drawing} alt="Taktiktavla"
               style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", display: "block" }} />
           ) : (
             <div onClick={() => onDraw(sel.id)}

@@ -65,6 +65,17 @@ export const CAT_DESC = {
 };
 export const INTENSITIES = ["Alla", "Låg", "Medel", "Hög"];
 
+// Intensity colors — semantisk färgkodning som speglar uppvärmnings/risk-nivå.
+// Källa till sanning för fyra konsumenter: OvningarTab (lista + filterchips),
+// ExerciseDetailSheet, DrawingOverlay och CreateExerciseForm. Sprint 45.
+export const INTENSITY_COLOR = {
+  Hög:   "#f87171",
+  Medel: "#fbbf24",
+  Låg:   "#34d399",
+};
+// Fallback-säker accessor — returnerar muted slate om intensity saknas/okänd.
+export const intensityColor = (i) => INTENSITY_COLOR[i] || "#64748b";
+
 // Chain positions
 export const CHAIN_POS = ["1:a", "V2:a", "H2:a", "3:a"];
 export const CHAIN_COL = { "1:a": "#f472b6", "V2:a": "#38bdf8", "H2:a": "#34d399", "3:a": "#a78bfa" };

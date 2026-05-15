@@ -39,3 +39,36 @@
 - Scoped till inloggad tränares egna svar (RLS-begränsning från Sprint 27).
 
 **Slutsats:** Enkel, differentierad funktion. Ger Andreas direkt synlighet i appkvalitet utan extra navigering.
+
+## Sprint 40 — F: has_drawing listindikator (2026-04-28)
+
+**Fråga:** Hur visar man "har bilaga/ritning" i en lista utan att ladda full mediadata?
+
+**Mönster (egen praxis + standard-UX):**
+- Apple Notes / Bear / Notion: liten ikon till höger om titeln markerar att noten har bilaga, inte själva bilagan.
+- Trello: paperclip-ikon på kort visar att en attachment finns, men laddas in lazy.
+- Slutsats: en boolean-kolumn kostar ~1 byte per rad och eliminerar 100–500 KB base64-payload per övning vid listladdning.
+
+**SQL-migration (Andreas kör manuellt i Supabase SQL editor):**
+
+```sql
+-- Sprint 40: Lägg till has_drawing flag som spegling av canvas_drawing IS NOT NULL
+ALTER TABLE exercises ADD COLUMN IF NOT EXISTS has_drawing boolean NOT NULL DEFAULT false;
+
+-- Backfill: existerande rader med ritning får has_drawing = true
+UPDATE exercises SET has_drawing = true WHERE canvas_drawing IS NOT NULL;
+```
+
+Inga ytterligare RLS-policies krävs — has_drawing ärver SELECT/UPDATE från befintlig exercises-policy.
+
+**Klient-syncing:**
+- `OvningarTab.handleSaveDrawing` skriver både `canvas_drawing` och `has_drawing: true` i samma sbPatch så listindikatorn uppdateras direkt utan reload.
+- Nya övningar (CreateExerciseForm) sätter inte has_drawing → DB-default false → ingen ikon förrän ritning sparas.
+- Listan filtrerar inte ut övningar utan has_drawing — den visar bara 🎨 där det är true (graceful om kolumn saknas: `ex.has_drawing` blir undefined → ingen ikon).
+
+**UX-beslut:**
+- 🎨-emoji ovanför ★/☆-knappen i top-right-kolumnen (Approach A).
+- Liten storlek (fontSize 13, opacity 0.85) för att inte konkurrera med intensitetsfärgen ovanför.
+- title + aria-label på svenska — accessibility utan extra UI-yta.
+
+**Slutsats:** Enkel migration, mätbar prestanda-vinst (Sprint 37:s lazy-load + Sprint 40:s indikator) utan att offra glance-information.

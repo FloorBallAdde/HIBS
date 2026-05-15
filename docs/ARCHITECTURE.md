@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-03-24 (Sprint 21 klar)*
+*Senast uppdaterad: 2026-05-14 (Sprint 48 klar)*
 
 ---
 
@@ -89,9 +89,14 @@ hibs-app/
     │   │   ├── KedjorTab.jsx
     │   │   ├── ScrambleMode.jsx
     │   │   ├── GrupperMode.jsx
+    │   │   ├── PlayerPool.jsx          ← Sprint 47: extraherad från GrupperMode
+    │   │   ├── ChainCard.jsx           ← Sprint 48: extraherad från GrupperMode
     │   │   ├── BlandaMode.jsx
     │   │   ├── PlaneraTab.jsx
     │   │   ├── OvningarTab.jsx
+    │   │   ├── FilterChips.jsx        ← Sprint 46: extraherad från OvningarTab
+    │   │   ├── DrawingOverlay.jsx     ← Sprint 44: extraherad från OvningarTab
+    │   │   ├── CreateExerciseForm.jsx
     │   │   ├── ExerciseDetailSheet.jsx ← Sprint 33: extraherad från OvningarTab
     │   │   └── TaktiktavlaTab.jsx      ← Sprint 12: canvas-ritverktyg
     │   ├── season/
@@ -106,7 +111,11 @@ hibs-app/
     │       ├── HomeContent.jsx     ← Sprint 1: extraherad hem-vy
     │       ├── UpcomingMatchCard.jsx ← Sprint 15: kommande matcher
     │       ├── MatchRsvpModal.jsx  ← Sprint 11: RSVP-modal
-    │       └── ParentView.jsx      ← Sprint 33: förenklad föräldravy (P11 Fas 2)
+    │       ├── ParentView.jsx     ← Sprint 33: förenklad föräldravy (P11 Fas 2)
+    │       ├── SeasonRecordHero.jsx ← Sprint 38: hero med säsongsrekord
+    │       ├── LatestMatchCard.jsx ← Sprint 39: senaste match-kort
+    │       ├── QuickStatsStrip.jsx ← Sprint 40: 4 mini-stat-kort
+    │       └── FormStrip.jsx ← Sprint 41: form senaste 5 + målskillnad-indikator
     ├── match/
     │   ├── MatchContent.jsx      ← Sprint 2: extraherat match-flöde
     │   ├── MatchCard.jsx
@@ -160,3 +169,15 @@ hibs-app/
 | 28 | 2026-04-06 | GrupperDnD+PlayerChip extraherade från MerContent.jsx → src/components/mer/GrupperDnD.jsx · FeedbackTrend: UX-trend-kort i Mer-fliken (app_feedback-data) | 259 → 259 | ✅ Klar |
 | 29–32 | 2026-04-08 – 2026-04-12 | AbortController sbAuth/sbRefresh · F3 canvas_drawing-thumbnail + numrerade HUR-steg i OvningarTab · Diverse auto-detected backlog-items | 259 → 261 | ✅ Klar |
 | 33 | 2026-04-14 | ExerciseDetailSheet extraherad från OvningarTab · P11 Fas 2 Steg 1: ParentView (föräldra-läsvy) + roll-routing i App.jsx · ARCHITECTURE.md uppdaterad med saknade komponenter | 261 → 262 | ✅ Klar |
+| 34–37 | 2026-04-16 – 2026-04-22 | P11 Fas 2 Steg 2 (ParentInvite) · Mer-extraktioner (PlayerListView, ChecklistView, SeasonPlanView, MatchHistoryView) · Lazy-load canvas_drawing | 262 → 266 | ✅ Klar |
+| 38 | 2026-04-24 | SeasonRecordHero extraherad från HomeContent.jsx (287→228 rader) · FeedbackTrend: per-tränare-uppdelning (expanderbar) när ≥2 tränare har loggat | 266 → 267 | ✅ Klar |
+| 39 | 2026-04-26 | LatestMatchCard extraherad från HomeContent.jsx (228→180 rader) · Förbättrad invite-UX: parent-specifik check_email-vy med 3-stegs-lista och pink theme när invite-länk är aktiv | 263 → 263 | ✅ Klar |
+| 40 | 2026-04-28 | QuickStatsStrip extraherad från HomeContent.jsx (180→174 rader) · F: has_drawing boolean — listindikator (🎨) i OvningarTab visar vilka övningar som har taktiktavla-ritning utan att ladda full canvas-data (kräver SQL-migration, se docs/RESEARCH.md) | 263 → 263 | ✅ Klar |
+| 41 | 2026-04-30 | FormStrip extraherad från HomeContent.jsx (174→153 rader) · F: Målskillnad-indikator (±N) i FormStrip-headern — aggregerad goal differential över de 5 visade matcherna, färgkodad grön/röd/grå, glance-vänligt vid rinken | 263 → 263 | ✅ Klar |
+| 42 | 2026-05-02 | TopScorers extraherad från HomeContent.jsx (152→134 rader) · F: Koncentrationsindikator "TOPP 3: X% AV MÅLEN" i TopScorers-headern — andel av lagets mål från topp 3, glance-värde för bidragsbas vs riskkoncentration | 263 → 263 | ✅ Klar |
+| 43 | 2026-05-04 | LatestTrainings extraherad från HomeContent.jsx (134→96 rader) · F: Snitt-tid-indikator "SNITT X MIN" i LatestTrainings-headern — snittminuter över senaste pass, lila #a78bfa matchar per-rad-färgen, kodifierar header-mönstret från S41–42 | 263 → 263 | ✅ Klar |
+| 44 | 2026-05-06 | DrawingOverlay extraherad från OvningarTab.jsx (246→235 rader) → src/components/training/DrawingOverlay.jsx · F: Contextual metadata-rad i overlay-headern visar kategori-badge + intensitet (auto-fallback) | 263 → 263 | ✅ Klar |
+| 45 | 2026-05-08 | INTENSITY_COLOR-helper i constants.js (DRY: 4 callsites — OvningarTab list/filter, ExerciseDetailSheet, DrawingOverlay, CreateExerciseForm) · F: Semantisk färg på aktiva intensitet-filterknappar i OvningarTab (Låg=grön, Medel=gul, Hög=röd) — glance-värde vid rinken (auto-fallback) | 263 → 263 | ✅ Klar |
+| 46 | 2026-05-11 | FilterChips extraherad från OvningarTab.jsx (246→187 rader) → src/components/training/FilterChips.jsx (sök + kategori-chips + kategori-desc + intensitet-filter) · F: Touch-targets höjda till ≥44px på alla filter-chips (kategori-rad + intensitet-rad) för rink-bruk med kalla händer — a11y-attribut även på kategori-knapparna (auto-fallback) | 263 → 263 | ✅ Klar |
+| 47 | 2026-05-12 | PlayerPool extraherad från GrupperMode.jsx (307→269 rader) → src/components/training/PlayerPool.jsx (TILLGÄNGLIGA SPELARE-pool med touch-swap + kedjepicker) · F: Favorite-toggle (★/☆) i OvningarTab listrad + ExerciseDetailSheet höjd till ≥44px touch-target + a11y-attribut (title/aria-label/aria-pressed) — paritet med filter-chips från S46 (auto-fallback) | 263 → 263 | ✅ Klar |
+| 48 | 2026-05-14 | ChainCard extraherad från GrupperMode.jsx (269→212 rader) → src/components/training/ChainCard.jsx (kedja-header med rename + slots-lista med positioner + drop-zon) · F: Båda ✕-knapparna (radera kedja / ta bort spelare ur kedjan) höjda till ≥44×44 touch-target + aria-label/title — paritet med S46/S47-mönstret (auto-fallback, 14:e sprintet utan ✅ Approved feature) | 263 → 263 | ✅ Klar |

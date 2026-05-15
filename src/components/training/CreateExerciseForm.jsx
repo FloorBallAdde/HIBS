@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { sbPost, sbPatch } from "../../lib/supabase.js";
-import { CATEGORIES, INTENSITIES, CAT_COLOR } from "../../lib/constants.js";
+import { CATEGORIES, INTENSITIES, CAT_COLOR, intensityColor } from "../../lib/constants.js";
 
 const CATS_FORM = CATEGORIES.filter(c => c !== "Alla");
 
@@ -133,7 +133,7 @@ export default function CreateExerciseForm({ token, onSaved, onCancel, initialDa
             <div style={{ fontSize: 10, color: "#4a5568", fontWeight: 700, marginBottom: 6 }}>INTENSITET <span style={{ color: "#f87171" }}>*</span></div>
             <div style={{ display: "flex", gap: 8 }}>
               {["Låg", "Medel", "Hög"].map(i => {
-                const col = i === "Hög" ? "#f87171" : i === "Medel" ? "#fbbf24" : "#34d399";
+                const col = intensityColor(i);
                 const active = form.intensity === i;
                 return (
                   <button key={i} onClick={() => set("intensity")(i)} style={{

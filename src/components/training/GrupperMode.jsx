@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
-import { GROUPS, GC, gc, CHAIN_POS, CHAIN_COL } from "../../lib/constants.js";
+import { GROUPS } from "../../lib/constants.js";
 import { useTouchSwap } from "../../hooks/useTouchSwap.js";
+import PlayerPool from "./PlayerPool.jsx";
+import ChainCard from "./ChainCard.jsx";
 
 /**
  * GrupperMode — Kedjor med drag-and-drop.
@@ -25,6 +27,7 @@ export default function GrupperMode({ field, onUpdateGroup }) {
     return field.filter(p => !assigned.has(p.id)).map(p => p.id);
   });
   const [editName, setEditName] = useState(null);
+  const [pickingChain, setPickingChain] = useState(null); // spelare-id som väntar på kedjeval
 
   // Hitta spelare-objekt från id
   const pById = (id) => field.find(p => p.id === id);
@@ -179,113 +182,31 @@ export default function GrupperMode({ field, onUpdateGroup }) {
 
       <div style={{ fontSize: 11, color: "#64748b", marginBottom: 16 }}>Dra ⠿ handtaget för att flytta spelare mellan kedjorna.</div>
 
-      {chains.map((chain, ci) => {
-        const gColor = chain.groupId ? GC[chain.groupId]?.color : "#a78bfa";
-        return (
-          <div key={ci} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, marginBottom: 14, overflow: "hidden" }}>
-            {/* Kedja header */}
-            <div style={{ background: gColor + "15", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 9, background: gColor + "25", border: "1px solid " + gColor + "50", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 13, fontWeight: 900, color: gColor }}>{ci + 1}</span>
-              </div>
-              {editName === ci ? (
-                <input
-                  autoFocus
-                  value={chain.name}
-                  onChange={e => renameChain(ci, e.target.value)}
-                  onBlur={() => setEditName(null)}
-                  onKeyDown={e => e.key === "Enter" && setEditName(null)}
-                  style={{ fontSize: 13, fontWeight: 800, color: "#e2e8f0", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "4px 8px", fontFamily: "inherit", outline: "none", flex: 1 }}
-                />
-              ) : (
-                <span onClick={() => setEditName(ci)} style={{ fontSize: 13, fontWeight: 800, color: "#e2e8f0", cursor: "pointer", flex: 1 }}>{chain.name}</span>
-              )}
-              <span style={{ fontSize: 10, color: "#4a5568" }}>{chain.slots.length} spelare</span>
-              <button onClick={() => removeChain(ci)} style={{ fontSize: 12, color: "#4a5568", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontFamily: "inherit" }}>✕</button>
-            </div>
-
-            {/* Spelare i kedjan */}
-            <div style={{ padding: chain.slots.length > 0 ? "8px 0" : "0" }}>
-              {chain.slots.map((id, pi) => {
-                const p = pById(id);
-                if (!p) return null;
-                const pos = CHAIN_POS[pi] || ("Pos " + (pi + 1));
-                const pc = CHAIN_COL[pos] || "#64748b";
-                const slotData = JSON.stringify({ area: ci, index: pi });
-                return (
-                  <div
-                    key={id}
-                    data-swap-slot={slotData}
-                    onTouchMove={touchSwap.onTouchMove}
-                    onTouchEnd={touchSwap.onTouchEnd}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderBottom: pi < chain.slots.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", userSelect: "none" }}
-                  >
-                    <span
-                      onTouchStart={e => touchSwap.onTouchStart(e, { area: ci, index: pi }, p.name)}
-                      style={{ fontSize: 16, color: "#2e3d50", padding: "8px 6px", touchAction: "none", cursor: "grab", flexShrink: 0, lineHeight: 1, letterSpacing: "1px" }}
-                    >⠿</span>
-                    <span style={{ fontSize: 10, fontWeight: 900, color: pc, background: pc + "15", border: "1px solid " + pc + "30", borderRadius: 6, padding: "3px 6px", width: 38, textAlign: "center", flexShrink: 0 }}>{pos}</span>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: gc(p.group).color, flexShrink: 0 }} />
-                    <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", flex: 1 }}>{p.name}</span>
-                    <button onClick={() => removeFromChain(ci, pi)} style={{ fontSize: 11, color: "#4a5568", background: "none", border: "none", cursor: "pointer", padding: "4px 8px", fontFamily: "inherit" }}>✕</button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Drop-zon om kedjan är tom */}
-            {chain.slots.length === 0 && (
-              <div
-                data-swap-slot={JSON.stringify({ area: ci, index: 0 })}
-                onTouchMove={touchSwap.onTouchMove}
-                onTouchEnd={touchSwap.onTouchEnd}
-                style={{ padding: "20px 16px", textAlign: "center", fontSize: 12, color: "#4a5568" }}
-              >
-                Dra spelare hit eller tryck i poolen nedan
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {chains.map((chain, ci) => (
+        <ChainCard
+          key={ci}
+          chain={chain}
+          ci={ci}
+          editName={editName}
+          setEditName={setEditName}
+          pById={pById}
+          touchSwap={touchSwap}
+          renameChain={renameChain}
+          removeChain={removeChain}
+          removeFromChain={removeFromChain}
+        />
+      ))}
 
       {/* Pool — spelare som inte tillhör någon kedja */}
-      {pool.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: "#64748b", letterSpacing: "0.1em", marginBottom: 10 }}>TILLGÄNGLIGA SPELARE ({pool.length})</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-            {pool.map((id, pi) => {
-              const p = pById(id);
-              if (!p) return null;
-              const pgc = gc(p.group);
-              const slotData = JSON.stringify({ area: "pool", index: pi });
-              return (
-                <div
-                  key={id}
-                  data-swap-slot={slotData}
-                  onTouchMove={touchSwap.onTouchMove}
-                  onTouchEnd={touchSwap.onTouchEnd}
-                  style={{ display: "flex", alignItems: "center", gap: 6, userSelect: "none" }}
-                >
-                  <span
-                    onTouchStart={e => touchSwap.onTouchStart(e, { area: "pool", index: pi }, p.name)}
-                    style={{ fontSize: 14, color: "#2e3d50", padding: "6px 2px", touchAction: "none", cursor: "grab", lineHeight: 1 }}
-                  >⠿</span>
-                  <button
-                    onClick={() => {
-                      // Snabb-lägg till i första kedja med < 4 spelare, annars sista kedjan
-                      const target = chains.findIndex(c => c.slots.length < 4);
-                      addToChain(target >= 0 ? target : chains.length - 1, id);
-                    }}
-                    style={{ padding: "7px 14px", border: "1.5px solid " + pgc.color, borderRadius: 99, background: pgc.bg, color: pgc.color, fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
-                  >
-                    {p.name}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <PlayerPool
+        pool={pool}
+        pById={pById}
+        chains={chains}
+        touchSwap={touchSwap}
+        pickingChain={pickingChain}
+        setPickingChain={setPickingChain}
+        addToChain={addToChain}
+      />
     </div>
   );
 }

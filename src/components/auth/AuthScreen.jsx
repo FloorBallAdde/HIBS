@@ -191,11 +191,43 @@ export default function AuthScreen({ onAuth }) {
         )}
 
         {mode === "check_email" && (
-          <div style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 16, padding: 24, textAlign: "center" }}>
-            <div style={{ fontSize: 28, marginBottom: 12 }}>📧</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 8 }}>Kolla din mail!</div>
-            <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, marginBottom: 16 }}>Vi har skickat en bekräftelselänk till <span style={{ color: "#fff", fontWeight: 700 }}>{email}</span>. Klicka på länken och logga sedan in här.</div>
-            <button onClick={() => setMode("login")} style={{ padding: "12px 24px", border: "none", borderRadius: 12, background: "#a78bfa", color: "#fff", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>Gå till inloggning</button>
+          <div style={{
+            background: invite ? "rgba(244,114,182,0.08)" : "rgba(34,197,94,0.08)",
+            border: "1px solid " + (invite ? "rgba(244,114,182,0.25)" : "rgba(34,197,94,0.25)"),
+            borderRadius: 16,
+            padding: 24,
+            textAlign: "center",
+          }}>
+            <div style={{ fontSize: 28, marginBottom: 12 }}>{invite ? "👪" : "📧"}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 8 }}>
+              {invite ? "Du har en föräldra-inbjudan!" : "Kolla din mail!"}
+            </div>
+            {invite ? (
+              <div style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 16, textAlign: "left" }}>
+                Vi har skickat en bekräftelselänk till <span style={{ color: "#fff", fontWeight: 700 }}>{email}</span>.
+                <ol style={{ paddingLeft: 20, marginTop: 10, marginBottom: 0, color: "#94a3b8" }}>
+                  <li style={{ marginBottom: 4 }}>Öppna mailet och klicka på bekräftelselänken.</li>
+                  <li style={{ marginBottom: 4 }}>Kom tillbaka hit och logga in.</li>
+                  <li>Du läggs automatiskt till som <span style={{ color: "#f472b6", fontWeight: 700 }}>förälder</span> i laget och ser matchschema och meddelanden.</li>
+                </ol>
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6, marginBottom: 16 }}>
+                Vi har skickat en bekräftelselänk till <span style={{ color: "#fff", fontWeight: 700 }}>{email}</span>. Klicka på länken och logga sedan in här.
+              </div>
+            )}
+            <button onClick={() => setMode("login")} style={{
+              padding: "12px 24px",
+              border: "none",
+              borderRadius: 12,
+              background: invite ? "#f472b6" : "#a78bfa",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+              minHeight: 44,
+            }}>Gå till inloggning</button>
           </div>
         )}
 
