@@ -6,268 +6,12 @@
  * Apple Pencil-stöd via Pointer Events med tryckkänslighet.
  */
 import { useRef, useState, useEffect, useCallback } from "react";
-
-/* ─────────── Rink ─────────── */
-function drawRink(ctx, W, H) {
-  const m = 14, rw = W - m * 2, rh = H - m * 2;
-
-  // Rounded-corner rink path (IFF standard: rounded corners, ~7.5% of shorter side)
-  const cr = Math.min(rw, rh) * 0.075;
-  function rrPath(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y,     x + w, y + r,     r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h,     x, y + h - r,     r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y,         x + r, y,          r);
-    ctx.closePath();
-  }
-
-  // Background (boards color)
-  ctx.fillStyle = "#1a4a8a";
-  ctx.fillRect(0, 0, W, H);
-
-  // Rink surface — rounded
-  ctx.fillStyle = "#1e55a0";
-  rrPath(m, m, rw, rh, cr);
-  ctx.fill();
-
-  // Board outline — rounded, white
-  ctx.strokeStyle = "rgba(255,255,255,0.92)";
-  ctx.lineWidth = 2.5;
-  rrPath(m, m, rw, rh, cr);
-  ctx.stroke();
-
-  // Center red line
-  ctx.strokeStyle = "rgba(220,40,40,0.88)";
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(W/2, m); ctx.lineTo(W/2, m + rh); ctx.stroke();
-
-  // Center circle + dot
-  ctx.strokeStyle = "rgba(255,255,255,0.75)";
-  ctx.lineWidth = 1.8;
-  ctx.beginPath(); ctx.arc(W/2, H/2, rw * 0.09, 0, Math.PI*2); ctx.stroke();
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.beginPath(); ctx.arc(W/2, H/2, 3, 0, Math.PI*2); ctx.fill();
-
-  // ── Goal lines (set in from end boards — space behind goal) ──
-  // In a 40m rink the goal line is ~2.7m from the end board = 6.75%
-  const glInset = rw * 0.068;
-  const glL = m + glInset;   // left goal line x
-  const glR = m + rw - glInset; // right goal line x
-
-  ctx.strokeStyle = "rgba(220,40,40,0.82)";
-  ctx.lineWidth = 1.8;
-  ctx.beginPath(); ctx.moveTo(glL, m); ctx.lineTo(glL, m + rh); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(glR, m); ctx.lineTo(glR, m + rh); ctx.stroke();
-
-  // ── Goals (on goal lines, extending TOWARD the boards = "behind") ──
-  // IFF: goal is 160cm wide, ~65cm deep. Proportionally: ~24% of rink height, ~2.2% of rink width
-  const goalH = rh * 0.24;
-  const goalD = rw * 0.022;
-  const goalY = H/2 - goalH/2;
-
-  // Left goal: door faces right (toward center), net extends left (toward board)
-  ctx.fillStyle = "rgba(255,255,255,0.07)";
-  ctx.fillRect(glL - goalD, goalY, goalD, goalH);
-  ctx.strokeStyle = "rgba(255,255,255,0.88)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(glL - goalD, goalY, goalD, goalH);
-
-  // Right goal: door faces left (toward center), net extends right (toward board)
-  ctx.fillRect(glR, goalY, goalD, goalH);
-  ctx.strokeRect(glR, goalY, goalD, goalH);
-
-  // ── Goal crease / D-zone (semicircle in front of goal, toward center) ──
-  const creaseR = rh * 0.125;
-  ctx.strokeStyle = "rgba(220,40,40,0.50)";
-  ctx.lineWidth = 1.4;
-  ctx.beginPath(); ctx.arc(glL, H/2, creaseR, -Math.PI/2, Math.PI/2);  ctx.stroke(); // left D
-  ctx.beginPath(); ctx.arc(glR, H/2, creaseR,  Math.PI/2, Math.PI*1.5); ctx.stroke(); // right D
-
-  // ── Face-off dots ──
-  const fpX = rw * 0.22, fpY = rh * 0.15;
-  [[m+fpX,m+fpY],[m+fpX,m+rh-fpY],[m+rw-fpX,m+fpY],[m+rw-fpX,m+rh-fpY]].forEach(([x,y]) => {
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
-  });
-}
-
-/* ─────────── Arrow helpers ─────────── */
-function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
-  const dx = x2-x1, dy = y2-y1;
-  const len = Math.sqrt(dx*dx+dy*dy);
-  if (len < 4) return;
-  const angle = Math.atan2(dy, dx);
-  const head = Math.max(12, lw * 5);
-  ctx.save();
-  ctx.strokeStyle = color; ctx.fillStyle = color;
-  ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
-  const stopX = x2 - Math.cos(angle) * head * 0.6;
-  const stopY = y2 - Math.sin(angle) * head * 0.6;
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(stopX, stopY); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - head*Math.cos(angle-Math.PI/6), y2 - head*Math.sin(angle-Math.PI/6));
-  ctx.lineTo(x2 - head*Math.cos(angle+Math.PI/6), y2 - head*Math.sin(angle+Math.PI/6));
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
-
-/* Curved arrow with explicit control point — used for bidirectional run arrows */
-function drawCurvedArrowCtrl(ctx, x1, y1, x2, y2, cx, cy, color, lw) {
-  const dx = x2-x1, dy = y2-y1;
-  const len = Math.sqrt(dx*dx+dy*dy);
-  if (len < 4) return;
-  const tx = x2 - cx, ty = y2 - cy;
-  const tLen = Math.sqrt(tx*tx+ty*ty);
-  const angle = tLen > 0 ? Math.atan2(ty/tLen, tx/tLen) : Math.atan2(dy, dx);
-  const head = Math.max(12, lw * 5);
-  ctx.save();
-  ctx.strokeStyle = color; ctx.fillStyle = color;
-  ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
-  const t = Math.max(0, 1 - (head * 0.6) / len);
-  const shaftEndX = (1-t)*(1-t)*x1 + 2*(1-t)*t*cx + t*t*x2;
-  const shaftEndY = (1-t)*(1-t)*y1 + 2*(1-t)*t*cy + t*t*y2;
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(cx, cy, shaftEndX, shaftEndY); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(x2 - head*Math.cos(angle-Math.PI/6), y2 - head*Math.sin(angle-Math.PI/6));
-  ctx.lineTo(x2 - head*Math.cos(angle+Math.PI/6), y2 - head*Math.sin(angle+Math.PI/6));
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
-
-/* Curved arrow — uses actual pointer path to determine curve direction & shape.
-   canvasW/canvasH used for smart fallback: curves toward rink center, never toward boards. */
-function drawCurvedArrow(ctx, x1, y1, x2, y2, color, lw, pathPts, canvasW, canvasH) {
-  const dx = x2-x1, dy = y2-y1;
-  const len = Math.sqrt(dx*dx+dy*dy);
-  if (len < 4) return;
-
-  let cx, cy;
-  if (pathPts && pathPts.length >= 4) {
-    // Follow user's actual arc — 40% into the path is the natural control point
-    const mid = pathPts[Math.floor(pathPts.length * 0.4)];
-    cx = mid.x; cy = mid.y;
-  } else {
-    // Smart default: curve toward the rink center (never toward the boards)
-    const mx = (x1+x2)/2, my = (y1+y2)/2;
-    const perpX = -dy/len, perpY = dx/len; // left perpendicular unit vector
-    const offset = len * 0.35;
-    if (canvasW && canvasH) {
-      // Pick whichever perpendicular direction points toward canvas center
-      const toCenterX = canvasW/2 - mx, toCenterY = canvasH/2 - my;
-      const sign = (perpX * toCenterX + perpY * toCenterY) >= 0 ? 1 : -1;
-      cx = mx + perpX * sign * offset;
-      cy = my + perpY * sign * offset;
-    } else {
-      cx = mx + perpX * offset;
-      cy = my + perpY * offset;
-    }
-  }
-  drawCurvedArrowCtrl(ctx, x1, y1, x2, y2, cx, cy, color, lw);
-}
-
-/* Dashed line for passes — no arrowhead, just dashed stroke */
-function drawDashedLine(ctx, x1, y1, x2, y2, color, lw) {
-  const dx = x2-x1, dy = y2-y1;
-  const len = Math.sqrt(dx*dx+dy*dy);
-  if (len < 4) return;
-  const dashLen = Math.max(8, lw * 4), gapLen = Math.max(5, lw * 2.5);
-  ctx.save();
-  ctx.strokeStyle = color; ctx.lineWidth = lw;
-  ctx.lineCap = "round"; ctx.setLineDash([dashLen, gapLen]);
-  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-  ctx.setLineDash([]); // reset
-  ctx.restore();
-}
+import { drawRink, drawArrow, drawCurvedArrow, drawDashedLine } from "./rinkDraw";
+import TokenOverlay from "./TokenOverlay";
 
 const PEN_COLORS  = [{ hex: "#ffffff" }, { hex: "#ef4444" }, { hex: "#fbbf24" }, { hex: "#22c55e" }];
 const PEN_SIZES   = [2, 4, 7];
 const PLAYER_COLS = [{ hex: "#ef4444", label: "Röd" }, { hex: "#38bdf8", label: "Blå" }];
-
-/* ─────────── Token overlay ─────────── */
-function TokenOverlay({ tokens, tool, onTokenDown, onTokenMove, onTokenUp, onTokenDelete }) {
-  // In select mode or placement modes: tokens are interactive (draggable)
-  const isInteractive = tool === "player" || tool === "cone" || tool === "ball" || tool === "select";
-  const showDelete    = tool === "select"; // show × badge in select mode
-
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-      {tokens.map(tok => {
-        const base = {
-          position: "absolute",
-          left: `${tok.xF * 100}%`, top: `${tok.yF * 100}%`,
-          transform: "translate(-50%, -50%)",
-          touchAction: "none", userSelect: "none",
-          pointerEvents: isInteractive ? "auto" : "none",
-          cursor: isInteractive ? "grab" : "default",
-          zIndex: 10,
-        };
-        const handlers = {
-          onPointerDown: e => onTokenDown(e, tok.id),
-          onPointerMove: onTokenMove,
-          onPointerUp: onTokenUp,
-          onPointerCancel: onTokenUp,
-        };
-
-        // Small red × badge shown in select mode
-        const deleteBadge = showDelete && (
-          <div
-            onPointerDown={e => { e.stopPropagation(); onTokenDelete(tok.id); }}
-            style={{
-              position: "absolute", top: -8, right: -8,
-              width: 18, height: 18, borderRadius: "50%",
-              background: "#ef4444", border: "1.5px solid #fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, fontWeight: 900, color: "#fff",
-              cursor: "pointer", zIndex: 20, pointerEvents: "auto",
-              lineHeight: 1,
-            }}>×</div>
-        );
-
-        if (tok.type === "player") {
-          return (
-            <div key={tok.id} {...handlers} style={{
-              ...base, width: 30, height: 30, borderRadius: "50%",
-              background: tok.color, border: "2.5px solid #fff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: tok.num > 9 ? 10 : 12, fontWeight: 900, color: "#fff",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.6)",
-            }}>
-              {tok.num}{deleteBadge}
-            </div>
-          );
-        }
-        if (tok.type === "cone") {
-          return (
-            <div key={tok.id} {...handlers} style={{
-              ...base, width: 40, height: 40,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 32, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))",
-            }}>🔺{deleteBadge}</div>
-          );
-        }
-        if (tok.type === "ball") {
-          return (
-            <div key={tok.id} {...handlers} style={{
-              ...base, width: 28, height: 28, borderRadius: "50%",
-              background: "radial-gradient(circle at 35% 35%, #fff 0%, #f0e68c 50%, #daa520 100%)",
-              border: "2px solid rgba(0,0,0,0.3)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(0,0,0,0.15)",
-            }}>{deleteBadge}</div>
-          );
-        }
-        return null;
-      })}
-    </div>
-  );
-}
 
 /* ─────────── Main component ─────────── */
 export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
@@ -283,6 +27,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   const dragState    = useRef(null);
   const resizeTimer  = useRef(null);
   const runPathRef   = useRef([]); // tracks pointer path for bidirectional curved arrows
+  const confirmTimer = useRef(null); // auto-avväpning av 🗑-bekräftelsen
 
   const [tool,        setTool]        = useState("pen");
   const [penColor,    setPenColor]    = useState("#ffffff");
@@ -291,6 +36,7 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
   const [playerColor, setPlayerColor] = useState("#ef4444");
   const [tokens,      setTokens]      = useState([]);
   const [fullscreen,  setFullscreen]  = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false); // 🗑 två-stegs-bekräftelse
 
   /* ── Canvas init ── */
   const initCanvas = useCallback(() => {
@@ -333,6 +79,25 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
     const c = canvasRef.current;
     if (c && rinkRef.current) { snap(); c.getContext("2d").drawImage(rinkRef.current, 0, 0); setTokens([]); setPlayerNum(1); }
   };
+
+  /* ── Rensa med två-stegs-bekräftelse ──
+     Rensa är destruktivt: streck OCH alla utplacerade tokens (spelare/koner/boll)
+     försvinner. Undo gäller bara canvasen — tokens går INTE att få tillbaka. Vid
+     rinken med kalla händer ska en feltryckning inte radera hela taktikuppställningen.
+     Första tryck = väpna (knappen blir röd "🗑 Säker?"), andra tryck inom 3s = rensa.
+     Avväpnas automatiskt efter 3s om inget andra tryck kommer. */
+  const handleClearClick = () => {
+    clearTimeout(confirmTimer.current);
+    if (confirmClear) {
+      setConfirmClear(false);
+      clear();
+    } else {
+      setConfirmClear(true);
+      confirmTimer.current = setTimeout(() => setConfirmClear(false), 3000);
+    }
+  };
+
+  useEffect(() => () => clearTimeout(confirmTimer.current), []);
 
   /* ── Export with tokens baked in ── */
   const exportDrawing = useCallback(() => {
@@ -637,9 +402,19 @@ export default function TaktiktavlaTab({ onSave = null, onCancel = null }) {
       </button>
       {sep}
 
-      {/* Undo / Clear */}
-      <button onClick={undo}  style={{ ...tb(false), width:34, fontSize:15 }}>↩</button>
-      <button onClick={clear} style={{ ...tb(false), width:34, fontSize:14, color:"#f87171" }}>🗑</button>
+      {/* Undo / Clear — Rensa har två-stegs-bekräftelse (destruktiv, tokens går ej att ångra) */}
+      <button onClick={undo}  style={{ ...tb(false), width:34, fontSize:15 }} title="Ångra senaste streck">↩</button>
+      <button onClick={handleClearClick}
+        style={{ ...tb(false),
+          width: confirmClear ? "auto" : 34, padding: confirmClear ? "0 10px" : 0,
+          gap: 5, fontSize: confirmClear ? 12 : 14, fontWeight: confirmClear ? 800 : 400,
+          background: confirmClear ? "rgba(248,113,113,0.22)" : "transparent",
+          border: "1.5px solid " + (confirmClear ? "#f87171" : "rgba(255,255,255,0.1)"),
+          color: "#f87171" }}
+        title={confirmClear ? "Tryck igen för att rensa hela tavlan" : "Rensa tavlan (streck + tokens)"}
+        aria-label={confirmClear ? "Bekräfta: rensa hela tavlan" : "Rensa tavlan"}>
+        {confirmClear ? "🗑 Säker?" : "🗑"}
+      </button>
       {sep}
 
       {/* Fullscreen */}
