@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { sbGet, sbPatch } from "../../lib/supabase.js";
-import { CAT_COLOR, intensityColor } from "../../lib/constants.js";
 import ls from "../../lib/storage.js";
 import ExerciseDetailSheet from "./ExerciseDetailSheet.jsx";
 import CreateExerciseForm from "./CreateExerciseForm.jsx";
 import DrawingOverlay from "./DrawingOverlay.jsx";
 import FilterChips from "./FilterChips.jsx";
+import ExerciseListItem from "./ExerciseListItem.jsx";
 
 const FAV_KEY   = "hibs_fav_ex";
 
@@ -113,42 +113,47 @@ export default function OvningarTab({ token }) {
         </div>
       )}
 
-      {/* Exercise list */}
-      {filtered.map(ex => {
-        const cc = CAT_COLOR[ex.category] || "#64748b";
-        const isFav = favorites.has(ex.id);
-        return (
-          <div key={ex.id} onClick={() => setSel(ex)}
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "14px 16px", marginBottom: 8, cursor: "pointer" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: cc, background: cc + "15", border: "1px solid " + cc + "25", borderRadius: 99, padding: "2px 8px" }}>{ex.category}</span>
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>{ex.name}</div>
-                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2, lineHeight: 1.4 }}>{ex.vad}</div>
-              </div>
-              <div style={{ flexShrink: 0, textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                {ex.players && <div style={{ fontSize: 11, color: "#4a5568" }}>{ex.players} sp</div>}
-                <div style={{ fontSize: 11, color: intensityColor(ex.intensity) }}>{ex.intensity}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  {ex.has_drawing && (
-                    <span title="Har taktiktavla-ritning" aria-label="Har ritning"
-                      style={{ fontSize: 13, lineHeight: 1, opacity: 0.85 }}>🎨</span>
-                  )}
-                  <button onClick={e => toggleFav(e, ex.id)}
-                    title={isFav ? "Ta bort från favoriter" : "Spara som favorit"}
-                    aria-label={isFav ? "Ta bort " + ex.name + " från favoriter" : "Spara " + ex.name + " som favorit"}
-                    aria-pressed={isFav}
-                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1, padding: 0, minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", color: isFav ? "#fbbf24" : "#4a5568" }}>
-                    {isFav ? "★" : "☆"}
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* Sprint 49 — Tydligt empty-state när filter ger noll träffar.
+          Innan: skärmen blev tom och Andreas trodde appen hängde.
+          Nu: visar VARFÖR (search, kategori, intensitet) + en återställ-knapp ≥44×44.
+          Hoppar över när "★ Favoriter" är valt — där har vi redan ett eget empty-state ovan. */}
+      {!loading && filtered.length === 0 && !(cat === "★ Favoriter" && favorites.size === 0) && (
+        <div role="status" aria-live="polite"
+          style={{ textAlign: "center", padding: "32px 16px", color: "#4a5568", fontSize: 13 }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
+          <div style={{ marginBottom: 6, color: "#94a3b8" }}>Inga övningar matchar filtren</div>
+          <div style={{ fontSize: 11, marginBottom: 12 }}>
+            {[
+              search    && "sökning: “" + search + "”",
+              cat       !== "Alla" && cat !== "★ Favoriter" && "kategori: " + cat,
+              intensity !== "Alla" && "intensitet: " + intensity,
+            ].filter(Boolean).join(" · ") || "Justera filtren ovan eller skapa en ny övning."}
           </div>
-        );
-      })}
+          {(search || cat !== "Alla" || intensity !== "Alla") && (
+            <button onClick={() => { setSearch(""); setCat("Alla"); setIntensity("Alla"); }}
+              aria-label="Återställ alla filter"
+              style={{
+                minHeight: 44, padding: "10px 18px",
+                background: "rgba(34,197,94,0.10)", color: "#22c55e",
+                border: "1px solid rgba(34,197,94,0.3)", borderRadius: 99,
+                fontSize: 13, fontWeight: 700, cursor: "pointer",
+              }}>
+              Återställ filter
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Exercise list */}
+      {filtered.map(ex => (
+        <ExerciseListItem
+          key={ex.id}
+          ex={ex}
+          isFav={favorites.has(ex.id)}
+          onSelect={() => setSel(ex)}
+          onToggleFav={toggleFav}
+        />
+      ))}
 
       {/* Extra padding so FAB doesn't cover last item */}
       <div style={{ height: 80 }} />
