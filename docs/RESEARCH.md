@@ -72,3 +72,26 @@ Inga ytterligare RLS-policies krävs — has_drawing ärver SELECT/UPDATE från 
 - title + aria-label på svenska — accessibility utan extra UI-yta.
 
 **Slutsats:** Enkel migration, mätbar prestanda-vinst (Sprint 37:s lazy-load + Sprint 40:s indikator) utan att offra glance-information.
+
+## Sprint 50 — F: Två-stegs-bekräftelse på Rensa-knappen i Taktiktavlan (2026-05-20)
+
+**Fråga:** Hur skyddar man mot oavsiktlig destruktiv åtgärd (rensa hela tavlan) i en mobil tränarapp utan att lägga på onödig friktion?
+
+**Källor undersökta:** UX Movement (destructive actions), UX Psychology / UX Planet (confirmation dialogs), DesignMonks (delete button UI), Indie Hackers UX-tips.
+
+**Fynd:**
+- För **reversibla** lågrisk-åtgärder är ångra (undo) bättre än en bekräftelse-dialog. För **irreversibla** åtgärder är ett medvetet bekräftelse-steg att föredra.
+- Bekräftelse-dialoger tappar effekt om de visas ofta — de blir "bakgrundsbrus". Använd sparsamt och bara för verkligt destruktiva åtgärder.
+- Rött är ett starkt visuellt varningstecken; destruktiva knappar bör inte ha neutral färg.
+- Friktionsmekanismer (t.ex. tvinga ett extra medvetet steg + papperskorgs-ikon som förstärker "radera") gör åtgärden deliberat utan tung modal.
+
+**Insikt om appen:** `clear()` kör `snap()` så själva canvasen kan ångras — MEN `setTokens([])` är inte ångringsbart. Utplacerade spelare/koner/boll försvinner permanent vid ett feltryck. Det är den verkliga risken vid rinken med kalla händer.
+
+**Mini Design Phase:**
+- **A — Två-stegs inline-bekräftelse** på 🗑-knappen: första tryck väpnar (knappen blir röd, "🗑 Säker?"), andra tryck inom 3s rensar, auto-avväpning efter 3s.
+- **B — Bekräftelse-modal** ("Rensa hela tavlan? Ja/Avbryt"): säkrast men tyngst — kräver läsa + två tryck, mer friktion vid rinken.
+- **C — Gör clear ångringsbart** (snapshotta tokens): "magiskt" men osynligt — tränaren vet inte att det går att ångra, paniken vid rinken kvarstår, och det ändrar undo-stackens semantik (risk).
+
+**Val:** A. Matchar rink-kontexten (snabbt, glance-baserat, kalla händer), inga nya beroenden, additivt, scoped till samma fil som refaktoreringen, ingen schemamigration. Det väpnade läget är starkt synligt (röd + "Säker?") och adresserar feltrycks-problemet direkt.
+
+**Slutsats:** Lättviktig friktion på exakt rätt ställe — skyddar den enda icke-ångringsbara åtgärden i Taktiktavlan utan att sakta ner det vanliga flödet (en penna/pil-tryck väpnar inget).

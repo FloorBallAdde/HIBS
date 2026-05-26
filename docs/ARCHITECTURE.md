@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-05-14 (Sprint 48 klar)*
+*Senast uppdaterad: 2026-05-26 (Sprint 51 klar)*
 
 ---
 
@@ -181,3 +181,6 @@ hibs-app/
 | 46 | 2026-05-11 | FilterChips extraherad från OvningarTab.jsx (246→187 rader) → src/components/training/FilterChips.jsx (sök + kategori-chips + kategori-desc + intensitet-filter) · F: Touch-targets höjda till ≥44px på alla filter-chips (kategori-rad + intensitet-rad) för rink-bruk med kalla händer — a11y-attribut även på kategori-knapparna (auto-fallback) | 263 → 263 | ✅ Klar |
 | 47 | 2026-05-12 | PlayerPool extraherad från GrupperMode.jsx (307→269 rader) → src/components/training/PlayerPool.jsx (TILLGÄNGLIGA SPELARE-pool med touch-swap + kedjepicker) · F: Favorite-toggle (★/☆) i OvningarTab listrad + ExerciseDetailSheet höjd till ≥44px touch-target + a11y-attribut (title/aria-label/aria-pressed) — paritet med filter-chips från S46 (auto-fallback) | 263 → 263 | ✅ Klar |
 | 48 | 2026-05-14 | ChainCard extraherad från GrupperMode.jsx (269→212 rader) → src/components/training/ChainCard.jsx (kedja-header med rename + slots-lista med positioner + drop-zon) · F: Båda ✕-knapparna (radera kedja / ta bort spelare ur kedjan) höjda till ≥44×44 touch-target + aria-label/title — paritet med S46/S47-mönstret (auto-fallback, 14:e sprintet utan ✅ Approved feature) | 263 → 263 | ✅ Klar |
+| 49 | 2026-05-18 | ExerciseListItem extraherad från OvningarTab.jsx (33 inline-rader → 53-rad presentations-komponent) → src/components/training/ExerciseListItem.jsx (CAT_COLOR/intensityColor co-located) · F: Empty-state när filter ger 0 träffar i OvningarTab — 🔍-glyph + aktiva filter-summering + Återställ-knapp (≥44px, aria-live=polite) (auto-fallback, 15:e sprintet utan ✅ Approved feature) | 263 → 263 | ✅ Klar |
+| 50 | 2026-05-20 | rinkDraw.js (197 rader) extraherad från TaktiktavlaTab.jsx → src/components/training/rinkDraw.js — rena canvas-ritprimitiver (drawRink/drawArrow/drawCurvedArrow/drawDashedLine); TaktiktavlaTab 710→562 rader · F: Två-stegs-bekräftelse på 🗑 Rensa-knappen i Taktiktavlan — första tryck väpnar ("🗑 Säker?", röd), andra inom 3s rensar, auto-avväpning. Skyddar mot feltryck vid rinken eftersom utplacerade tokens (spelare/koner/boll) ej går att ångra (auto-fallback, 16:e sprintet utan ✅ Approved feature) | 263 → 263 | ✅ Klar |
+| 51 | 2026-05-26 | TokenOverlay extraherad från TaktiktavlaTab.jsx (562→485 rader) → src/components/training/TokenOverlay.jsx — interaktiva spelare/kon/boll-tokens med drag-handlers och radera-badge · F: ✕-radera-badge på tokens i select-läge förstorad från 18×18 → 22×22 (~50 % större träffyta) + role/aria-label/title — INTE 44×44 hit-area eftersom det skulle överlappa 30×30 player-token och äta drag-tryck (auto-fallback, 17:e sprintet utan ✅ Approved feature) | 263 → 264 | ✅ Klar |
