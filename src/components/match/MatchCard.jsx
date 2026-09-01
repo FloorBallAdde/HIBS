@@ -91,7 +91,8 @@ export default function MatchCard({ match, players, tok, onEditNote, onDelete, o
               <div style={{ fontSize: 9, color: "#34d399", fontWeight: 700, marginBottom: 5 }}>KEDJOR</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {match.lines2.filter(l => Object.values(l.slots || {}).some(Boolean)).map((line, i) => {
-                  const names = ["forward", "vanster", "hoger", "back"]
+                  // Täcker båda formaten: 5-manna (etta/h2/v2/h3/v3) och 4-manna (forward/vanster/hoger/back)
+                  const names = ["etta", "h2", "v2", "h3", "v3", "forward", "vanster", "hoger", "back"]
                     .map(pos => line.slots?.[pos])
                     .filter(Boolean);
                   return (

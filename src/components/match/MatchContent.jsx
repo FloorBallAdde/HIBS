@@ -26,13 +26,13 @@ export default function MatchContent({
   usedInLines, gkPlayers, field,
   startMatch, endMatch, abortMatch,
   assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
+  setLineFormat, loadGrundkedjor,
   toggleSelected, teamGoals, setTeamGoals,
   saveError, setSaveError,
   matchShots, setMatchShots,
   matchShotsFor, setMatchShotsFor,
   upcomingMatches, loadFromSchedule,
   cupMode, setCupMode,
-  reserves, setReserves,
   substitutions, makeSubstitution,
   checkedGoals, toggleGoal,
 }) {
@@ -65,7 +65,6 @@ export default function MatchContent({
       matchShotsFor={matchShotsFor}
       setMatchShotsFor={setMatchShotsFor}
       cupMode={cupMode}
-      reserves={reserves}
       substitutions={substitutions}
       makeSubstitution={makeSubstitution}
       checkedGoals={checkedGoals}
@@ -118,6 +117,26 @@ export default function MatchContent({
         </button>
       </div>
 
+      {/* Ladda grundkedjor — fyller linorna med grunduppställningen ur vald trupp */}
+      <button
+        onClick={loadGrundkedjor}
+        style={{
+          width: "100%",
+          padding: "13px 0",
+          border: "1px solid rgba(167,139,250,0.35)",
+          borderRadius: 14,
+          background: "rgba(167,139,250,0.08)",
+          color: "#a78bfa",
+          fontSize: 13,
+          fontWeight: 800,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          marginBottom: 12,
+        }}
+      >
+        ⭐ Ladda grundkedjor
+      </button>
+
       {lines.map((line, li) => (
         <FormationCard
           key={line.id}
@@ -129,6 +148,7 @@ export default function MatchContent({
           onRemove={removeSlot}
           onRename={renameLine}
           onDelete={deleteLine}
+          onFormat={setLineFormat}
           touchSwap={touchSwap}
         />
       ))}

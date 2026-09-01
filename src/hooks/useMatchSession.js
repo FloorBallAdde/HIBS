@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import ls from "../lib/storage.js";
 import { sbGet, sbPost, sbPatch, sbDel } from "../lib/supabase.js";
-import { TODAY, mkLine } from "../lib/constants.js";
+import { TODAY, mkLine, LINE_FORMATS, POS_MAP_5TO4, lineSlotKeys, GRUNDKEDJOR, matchPlayerByName } from "../lib/constants.js";
+
+// Standarduppsättning: 4 tomma 5-mannalinor
+const defaultLines = () => [mkLine(1), mkLine(2), mkLine(3), mkLine(4)];
 
 // Kapslar in all match-session state, persistence och actions.
 export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setPlayers, setHistory }) {
   // STATE
-  const [lines, setLines] = useState(() => ls.get("hibs_lines2", [mkLine(1), mkLine(2), mkLine(3)]));
-  const [reserves, setReserves] = useState(() => ls.get("hibs_reserves2", []));
+  const [lines, setLines] = useState(() => ls.get("hibs_lines2", defaultLines()));
   const [selected, setSelected] = useState(() => new Set(ls.get("hibs_sel2", [])));
   const [matchDate, setMatchDate] = useState(() => ls.get("hibs_mdate2", TODAY()));
   const [opponent, setOpponent] = useState(() => ls.get("hibs_opp2", ""));
@@ -48,7 +50,6 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
 
   // PERSISTENCE
   useEffect(() => { ls.set("hibs_lines2", lines); }, [lines]);
-  useEffect(() => { ls.set("hibs_reserves2", reserves); }, [reserves]);
   useEffect(() => { ls.set("hibs_sel2", [...selected]); }, [selected]);
   useEffect(() => { ls.set("hibs_mdate2", matchDate); }, [matchDate]);
   useEffect(() => { ls.set("hibs_opp2", opponent); }, [opponent]);
@@ -126,8 +127,7 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
       // Normalt läge: nollställ trupp och kedjor
       setSelected(new Set());
       setGoalkeeper([]);
-      setLines([mkLine(1), mkLine(2), mkLine(3)]);
-      setReserves([]);
+      setLines(defaultLines());
     }
     // OBS: teamGoals nollställs INTE — lagmål gäller ofta hela turneringen
   };
@@ -150,6 +150,37 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
         return { ...l, slots: s };
       }));
     }
+  };
+
+  // Byt format på en lina (5-manna 1-2-2 ↔ 4-manna 1-2-1).
+  // Spelare mappas positionsvis via POS_MAP_5TO4; V3 tappas vid 5→4 (blir valbar igen).
+  const setLineFormat = (li, format) => setLines(ls2 => ls2.map((l, i) => {
+    if (i !== li) return l;
+    const curFormat = lineSlotKeys(l).length === 5 ? 5 : 4;
+    if (curFormat === format) return l.format ? l : { ...l, format };
+    const slots = Object.fromEntries(LINE_FORMATS[format].map(k => [k, null]));
+    Object.entries(POS_MAP_5TO4).forEach(([k5, k4]) => {
+      if (format === 4) slots[k4] = l.slots[k5] ?? null;
+      else slots[k5] = l.slots[k4] ?? null;
+    });
+    return { ...l, format, slots };
+  }));
+
+  // Ladda grundkedjorna (HT-26) — fyller linorna med spelare ur vald trupp via namnmatchning.
+  // Spelare som inte är i truppen lämnas tomma; målvakter ingår aldrig.
+  const loadGrundkedjor = () => {
+    const pool = players.filter(p => selected.has(p.id) && p.role !== "malvakt");
+    const used = new Set();
+    const newLines = GRUNDKEDJOR.map((g, i) => {
+      const slots = {};
+      LINE_FORMATS[5].forEach(k => {
+        const hit = matchPlayerByName(g.slots[k], pool.filter(p => !used.has(p.id)));
+        if (hit) used.add(hit.id);
+        slots[k] = hit ? hit.id : null;
+      });
+      return { id: i + 1, name: g.name, format: 5, slots };
+    });
+    setLines(newLines);
   };
 
   const removeSlot = (li, pos) => setLines(ls2 => ls2.map((l, i) => i === li ? { ...l, slots: { ...l.slots, [pos]: null } } : l));
@@ -216,16 +247,18 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
 
     // Sprint 31: Snapshot av kedjorna med spelarnamn (inte IDs) — self-contained i historik.
     // ⚠️ Supabase-schema: kör `ALTER TABLE matches ADD COLUMN lines2 jsonb;` för att spara i DB.
+    // Formatoberoende: snapshotar alla slot-nycklar (5-manna eller 4-manna).
     const lines2Snapshot = lines
       .filter(l => Object.values(l.slots).some(Boolean))
       .map(l => ({
         name: l.name,
-        slots: {
-          forward: l.slots.forward ? (players.find(p => p.id === l.slots.forward)?.name || null) : null,
-          vanster: l.slots.vanster ? (players.find(p => p.id === l.slots.vanster)?.name || null) : null,
-          hoger:   l.slots.hoger   ? (players.find(p => p.id === l.slots.hoger)?.name   || null) : null,
-          back:    l.slots.back    ? (players.find(p => p.id === l.slots.back)?.name    || null) : null,
-        },
+        format: lineSlotKeys(l).length,
+        slots: Object.fromEntries(
+          lineSlotKeys(l).map(k => [
+            k,
+            l.slots[k] ? (players.find(p => p.id === l.slots[k])?.name || null) : null,
+          ])
+        ),
       }));
 
     // Fullständig lokal post (inkl. fält som inte finns i DB-schemat)
@@ -388,7 +421,6 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
 
   return {
     lines, setLines,
-    reserves, setReserves,
     selected, setSelected,
     matchDate, setMatchDate,
     opponent, setOpponent,
@@ -403,6 +435,7 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
     teamGoals, setTeamGoals,
     usedInLines,
     assignSlot, removeSlot, renameLine, deleteLine, swapSlots,
+    setLineFormat, loadGrundkedjor,
     toggleSelected,
     startMatch, endMatch, abortMatch,
     addUpcoming, removeUpcoming, loadFromSchedule, updateUpcomingRsvp,

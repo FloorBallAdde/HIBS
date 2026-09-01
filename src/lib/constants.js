@@ -5,11 +5,29 @@ export const FMT = (d) =>
     ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", month: "short" })
     : "-";
 
-// Line helper
-export const mkLine = (id) => ({
+// ── Linje-format (Sprint: 5-manna) ───────────────────────────────────────────
+// 5-manna (1-2-2): 1:a, Höger 2, Vänster 2, Höger 3, Vänster 3 — standard från HT-26
+// 4-manna (1-2-1): forward, vänster, höger, back — behålls för 4v4
+export const LINE_FORMATS = {
+  5: ["etta", "h2", "v2", "h3", "v3"],
+  4: ["forward", "vanster", "hoger", "back"],
+};
+
+// Positionsmappning vid formatbyte 5↔4 (v3 tappas vid 5→4)
+export const POS_MAP_5TO4 = { etta: "forward", h2: "hoger", v2: "vanster", h3: "back" };
+
+// Slot-nycklar för en lina — gamla sparade linor saknar format men har "forward"-nyckeln
+export const lineSlotKeys = (line) =>
+  line.format
+    ? LINE_FORMATS[line.format]
+    : ("forward" in (line.slots || {}) ? LINE_FORMATS[4] : LINE_FORMATS[5]);
+
+// Line helper — 5-manna är default
+export const mkLine = (id, format = 5) => ({
   id,
-  name: "Linje " + id,
-  slots: { forward: null, vanster: null, hoger: null, back: null },
+  name: "Lina " + id,
+  format,
+  slots: Object.fromEntries(LINE_FORMATS[format].map(k => [k, null])),
 });
 
 // Shuffle helper
@@ -34,9 +52,17 @@ export const GC = {
 };
 export const gc = (g) => GC[g] || GC._;
 
-// Position colors & labels
-export const PCOLOR = { forward: "#f472b6", vanster: "#38bdf8", hoger: "#34d399", back: "#a78bfa" };
-export const PLABEL = { forward: "FWD", vanster: "VA", hoger: "HO", back: "BCK" };
+// Position colors & labels — båda formaten
+export const PCOLOR = {
+  // 5-manna (1-2-2)
+  etta: "#f472b6", h2: "#34d399", v2: "#38bdf8", h3: "#a78bfa", v3: "#fbbf24",
+  // 4-manna (1-2-1)
+  forward: "#f472b6", vanster: "#38bdf8", hoger: "#34d399", back: "#a78bfa",
+};
+export const PLABEL = {
+  etta: "1:a", h2: "H2", v2: "V2", h3: "H3", v3: "V3",
+  forward: "FWD", vanster: "VA", hoger: "HO", back: "BCK",
+};
 
 // Series & groups
 export const SERIES = ["14A", "15A", "Cupmatch", "Traningsmatch"];
@@ -76,9 +102,31 @@ export const INTENSITY_COLOR = {
 // Fallback-säker accessor — returnerar muted slate om intensity saknas/okänd.
 export const intensityColor = (i) => INTENSITY_COLOR[i] || "#64748b";
 
-// Chain positions
-export const CHAIN_POS = ["1:a", "V2:a", "H2:a", "3:a"];
-export const CHAIN_COL = { "1:a": "#f472b6", "V2:a": "#38bdf8", "H2:a": "#34d399", "3:a": "#a78bfa" };
+// Chain positions (träning) — 5 positioner från HT-26: 1:a, H2:a, V2:a, H3:a, V3:a
+export const CHAIN_POS = ["1:a", "H2:a", "V2:a", "H3:a", "V3:a"];
+export const CHAIN_COL = { "1:a": "#f472b6", "H2:a": "#34d399", "V2:a": "#38bdf8", "H3:a": "#a78bfa", "V3:a": "#fbbf24" };
+
+// ── Grundkedjor HT-26 (namn — matchas mot truppen vid laddning) ──────────────
+export const GRUNDKEDJOR = [
+  { name: "Lina 1", slots: { etta: "William", h2: "Rasmus", v2: "Mille",  h3: "Charlie M", v3: "Lucas" } },
+  { name: "Lina 2", slots: { etta: "Joel",    h2: "Lo",     v2: "Oliver", h3: "Viktor",    v3: "Jacob" } },
+  { name: "Lina 3", slots: { etta: "Jonas",   h2: "Ludde",  v2: "Freke",  h3: "Noah",      v3: "Marcus" } },
+  { name: "Lina 4", slots: { etta: "Linus",   h2: "Hugo",   v2: "Arvid",  h3: null,        v3: null } },
+];
+
+// Namnmatchning: exakt → ordgräns-prefix ("Ludde" → "Ludde M") → entydigt förnamn.
+// Returnerar null vid tvetydighet (t.ex. två spelare med samma förnamn) — slot lämnas tom.
+export const matchPlayerByName = (needle, pool) => {
+  if (!needle) return null;
+  const n = needle.toLowerCase().trim();
+  let hit = pool.find(p => p.name.toLowerCase().trim() === n);
+  if (hit) return hit;
+  hit = pool.find(p => p.name.toLowerCase().startsWith(n + " "));
+  if (hit) return hit;
+  const first = n.split(" ")[0];
+  const firstHits = pool.filter(p => p.name.toLowerCase().split(" ")[0] === first);
+  return firstHits.length === 1 ? firstHits[0] : null;
+};
 
 // Default players (used when creating a new club)
 export const DEFAULT_PLAYERS = [

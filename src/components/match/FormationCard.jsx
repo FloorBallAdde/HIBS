@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { PCOLOR, PLABEL, gc } from "../../lib/constants.js";
+import { PCOLOR, PLABEL, gc, lineSlotKeys } from "../../lib/constants.js";
 
 /**
- * FormationCard — visar en linje med 4 positioner.
+ * FormationCard — visar en lina med 5 positioner (1-2-2) eller 4 (1-2-1).
  * Sprint 9: onTouchStart begränsad till ⠿-handtaget — förhindrar oavsiktliga
  * drag vid scroll eller när man trycker på spelarnamnet.
+ * Sprint 5-manna: format-toggle 5v5/4v4 per lina; slot-nycklar via lineSlotKeys.
  */
 export default function FormationCard({
   line,
@@ -15,6 +16,7 @@ export default function FormationCard({
   onRemove,
   onRename,
   onDelete,
+  onFormat,
   touchSwap,
 }) {
   const [editName, setEditName] = useState(false);
@@ -23,6 +25,9 @@ export default function FormationCard({
   const available = allPlayers.filter(
     p => !usedIds.has(p.id) || Object.values(line.slots).includes(p.id)
   );
+
+  const slotKeys = lineSlotKeys(line);
+  const curFormat = slotKeys.length === 5 ? 5 : 4;
 
   return (
     <div style={{
@@ -55,12 +60,37 @@ export default function FormationCard({
             {line.name}
           </span>
         )}
-        <button onClick={() => onDelete(lineIndex)} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: 0 }}>×</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Format-toggle 5v5/4v4 — 44px touch-höjd */}
+          <div style={{ display: "flex", borderRadius: 9, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+            {[5, 4].map(f => (
+              <button
+                key={f}
+                onClick={() => onFormat && onFormat(lineIndex, f)}
+                aria-label={f + "-manna för " + line.name}
+                style={{
+                  padding: "10px 12px",
+                  minHeight: 44,
+                  border: "none",
+                  background: curFormat === f ? "rgba(34,197,94,0.15)" : "transparent",
+                  color: curFormat === f ? "#22c55e" : "#4a5568",
+                  fontSize: 11,
+                  fontWeight: 900,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                }}
+              >
+                {f}v{f}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => onDelete(lineIndex)} aria-label={"Ta bort " + line.name} style={{ background: "none", border: "none", color: "#475569", cursor: "pointer", fontSize: 16, padding: "10px 8px", minHeight: 44 }}>×</button>
+        </div>
       </div>
 
       {/* Slots */}
       <div style={{ padding: "10px 16px" }}>
-        {["forward", "vanster", "hoger", "back"].map((pos, pi) => {
+        {slotKeys.map((pos, pi) => {
           const pid = line.slots[pos];
           const player = pid ? allPlayers.find(p => p.id === pid) : null;
           const pc = PCOLOR[pos];
@@ -75,7 +105,7 @@ export default function FormationCard({
                 alignItems: "center",
                 gap: 10,
                 padding: "10px 0",
-                borderBottom: pi < 3 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                borderBottom: pi < slotKeys.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                 borderRadius: 8,
                 transition: "background 0.12s",
               }}
