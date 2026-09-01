@@ -3,13 +3,16 @@ import { mkLine, FONT } from "../../lib/constants.js";
 import StableInput from "../ui/StableInput.jsx";
 import FormationCard from "./FormationCard.jsx";
 import LiveMatchView from "./LiveMatchView.jsx";
+import MatchStartView from "./MatchStartView.jsx";
+import MatchStepBar from "./MatchStepBar.jsx";
+import MatchSetupStep from "./MatchSetupStep.jsx";
 import MatchSquadSection from "./MatchSquadSection.jsx";
 import { useTouchSwap } from "../../hooks/useTouchSwap.js";
 
 /**
- * MatchContent — hanterar matchflödet: trupp → kedjor → live match.
- * Sprint 9: Live-vy extraherad till LiveMatchView. Cup Mode tillagt.
- * Sprint 16: Trupp-vy extraherad till MatchSquadSection. Spelarbyten tillagt i LiveMatchView.
+ * MatchContent — orkestrerar matchflödet (Sprint 69: steg-baserat).
+ * start → setup (1 Match) → select (2 Trupp) → lines (3 Kedjor) → live.
+ * Smarta defaults: alla friska förvalda i truppen, grundkedjor auto-laddas.
  */
 export default function MatchContent({
   activeMatch,
@@ -46,6 +49,39 @@ export default function MatchContent({
     }, [swapSlots]),
   });
 
+  // ── Steg-navigation med smarta defaults ──
+  const isInjured = (p) => (p.note && p.note?.startsWith("⚠")) || p.fitness === "injured";
+
+  // Inverterat truppval: förvälj alla friska utespelare
+  const autoSelectAll = () => setSelected(new Set(field.filter(p => !isInjured(p)).map(p => p.id)));
+
+  const goTrupp = () => {
+    if (selected.size === 0) autoSelectAll();
+    setMatchStep("select");
+  };
+
+  const goLines = () => {
+    if (usedInLines.size === 0) loadGrundkedjor();
+    setMatchStep("lines");
+  };
+
+  const onSchedule = (m) => {
+    loadFromSchedule(m); // sätter motståndare/datum/serie + ev. RSVP-trupp, steg "select"
+    if (!Array.isArray(m.rsvp) || m.rsvp.length === 0) autoSelectAll();
+  };
+
+  const canGo = (stepId) => {
+    if (stepId === "setup") return true;
+    if (stepId === "select") return opponent.trim().length > 0;
+    return opponent.trim().length > 0 && selected.size > 0; // lines
+  };
+
+  const onStep = (stepId) => {
+    if (stepId === "select") goTrupp();
+    else if (stepId === "lines") goLines();
+    else setMatchStep(stepId);
+  };
+
   // ── LIVE MATCH → delegera till LiveMatchView ──
   if (activeMatch) return (
     <LiveMatchView
@@ -72,10 +108,67 @@ export default function MatchContent({
     />
   );
 
-  // ── KEDJOR (LINEUP) ──
-  if (matchStep === "lines") return (
+  // ── STARTVY ──
+  if (matchStep === "start" || (matchStep !== "setup" && matchStep !== "select" && matchStep !== "lines")) return (
+    <MatchStartView
+      upcomingMatches={upcomingMatches}
+      cupMode={cupMode}
+      onSchedule={onSchedule}
+      onNew={() => setMatchStep("setup")}
+      onCupContinue={() => setMatchStep("lines")}
+    />
+  );
+
+  const stepBar = (
+    <MatchStepBar
+      current={matchStep}
+      onStep={onStep}
+      canGo={canGo}
+      onHome={() => setMatchStep("start")}
+    />
+  );
+
+  // ── STEG 1: MATCH ──
+  if (matchStep === "setup") return (
     <div>
-      {/* Cup-läge: motståndare-input + indikator direkt här */}
+      {stepBar}
+      <MatchSetupStep
+        opponent={opponent} setOpponent={setOpponent}
+        matchDate={matchDate} setMatchDate={setMatchDate}
+        serie={serie} setSerie={setSerie}
+        cupMode={cupMode} setCupMode={setCupMode}
+        teamGoals={teamGoals} setTeamGoals={setTeamGoals}
+        onNext={goTrupp}
+      />
+    </div>
+  );
+
+  // ── STEG 2: TRUPP ──
+  if (matchStep === "select") return (
+    <div>
+      {stepBar}
+      <MatchSquadSection
+        selected={selected}
+        setSelected={setSelected}
+        toggleSelected={toggleSelected}
+        goalkeeper={goalkeeper}
+        setGoalkeeper={setGoalkeeper}
+        gkPlayers={gkPlayers}
+        field={field}
+        opponent={opponent}
+        matchDate={matchDate}
+        serie={serie}
+        onNext={goLines}
+      />
+    </div>
+  );
+
+  // ── STEG 3: KEDJOR ──
+  return (
+    <div>
+      {stepBar}
+
+      {/* Cup-läge: motståndare-input direkt här (trupp sparad, ny motståndare per match) */}
       {cupMode && (
         <div style={{
           background: "rgba(251,191,36,0.07)",
@@ -107,16 +200,6 @@ export default function MatchContent({
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff" }}>Kedjor</div>
-        <button
-          onClick={() => setMatchStep("select")}
-          style={{ fontSize: 12, color: "#64748b", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
-        >
-          Tillbaka
-        </button>
-      </div>
-
       {/* Ladda grundkedjor — fyller linorna med grunduppställningen ur vald trupp */}
       <button
         onClick={loadGrundkedjor}
@@ -134,7 +217,7 @@ export default function MatchContent({
           marginBottom: 12,
         }}
       >
-        ⭐ Ladda grundkedjor
+        ⭐ Ladda om grundkedjor
       </button>
 
       {lines.map((line, li) => (
@@ -169,7 +252,7 @@ export default function MatchContent({
           marginBottom: 8,
         }}
       >
-        + Ny linje
+        + Ny lina
       </button>
 
       {/* STICKY Starta match — alltid synlig ovanför bottenmenyn */}
@@ -234,63 +317,5 @@ export default function MatchContent({
         </div>
       )}
     </div>
-  );
-
-  // ── TRUPP (SELECT SQUAD) — delegerat till MatchSquadSection ──
-  return (
-    <>
-      <MatchSquadSection
-        selected={selected}
-        setSelected={setSelected}
-        toggleSelected={toggleSelected}
-        opponent={opponent}
-        setOpponent={setOpponent}
-        matchDate={matchDate}
-        setMatchDate={setMatchDate}
-        serie={serie}
-        setSerie={setSerie}
-        goalkeeper={goalkeeper}
-        setGoalkeeper={setGoalkeeper}
-        gkPlayers={gkPlayers}
-        field={field}
-        teamGoals={teamGoals}
-        setTeamGoals={setTeamGoals}
-        upcomingMatches={upcomingMatches}
-        loadFromSchedule={loadFromSchedule}
-        cupMode={cupMode}
-        setCupMode={setCupMode}
-        usedInLines={usedInLines}
-        setMatchStep={setMatchStep}
-        startMatch={startMatch}
-        onConfirmNoLines={() => setConfirmNoLines(true)}
-      />
-
-      {confirmNoLines && (
-        <div
-          onClick={() => setConfirmNoLines(false)}
-          className="hibs-overlay"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="hibs-dialog"
-            style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
-          >
-            <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
-            <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
-              Du har inte satt upp kedjor. Vill du sätta kedjor eller starta ändå?
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { setConfirmNoLines(false); setMatchStep("lines"); }} style={{ flex: 1, padding: "13px 0", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 12, background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
-                Sätt kedjor
-              </button>
-              <button onClick={() => { setConfirmNoLines(false); startMatch(); }} style={{ flex: 1, padding: "13px 0", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}>
-                Starta ändå
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
   );
 }

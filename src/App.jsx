@@ -79,7 +79,7 @@ export default function App(){
 
   // MATCH SESSION HOOK (encapsulates all match state, persistence & actions)
   const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory,onMatchEnded:()=>setShowFeedback(true)});
-  const{upcomingMatches,addUpcoming,removeUpcoming,loadFromSchedule,updateUpcomingRsvp,matchStep,setMatchStep,activeMatch}=matchSession;
+  const{upcomingMatches,addUpcoming,removeUpcoming,updateUpcomingRsvp}=matchSession; // Sprint 69: matchStep-nav flyttad in i MatchContent
 
   // LOAD DATA — silent=true används vid bakgrundspolling (ingen spinner, ingen scroll-reset)
   const loadData=useCallback(async(silent=false)=>{
@@ -206,13 +206,7 @@ export default function App(){
             onChange={setTrainSub}
           />
         )}
-        {tab==="match"&&!activeMatch&&(
-          <SubTabBar
-            tabs={[["select","Trupp"],["lines","Kedjor"]]}
-            current={matchStep}
-            onChange={setMatchStep}
-          />
-        )}
+        {/* Sprint 69: match-SubTabBar borttagen — MatchStepBar inne i MatchContent äger navigationen */}
       </div>
 
       <div style={{padding:"0 16px"}}>

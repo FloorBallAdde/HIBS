@@ -19,7 +19,7 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
   const [matchResult, setMatchResult] = useState(() => ls.get("hibs_result", { us: "", them: "" }));
   const [matchScorers, setMatchScorers] = useState(() => ls.get("hibs_scorers", []) || []);
   const [upcomingMatches, setUpcomingMatches] = useState([]);
-  const [matchStep, setMatchStep] = useState("select");
+  const [matchStep, setMatchStep] = useState("start"); // Sprint 69: landa i startvyn
   const [confirmAbort, setConfirmAbort] = useState(false);
   const [teamGoals, setTeamGoals] = useState(() => ls.get("hibs_team_goals", ["", "", ""]));
   const [saveError, setSaveError] = useState(null);
@@ -372,13 +372,13 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
 
     if (onMatchEnded) onMatchEnded();
     _resetMatch();
-    // Cup-läge: hoppa direkt till kedjor (trupp sparad) — annars tillbaka till trupp
-    setMatchStep(cupMode ? "lines" : "select");
+    // Cup-läge: hoppa direkt till kedjor (trupp sparad) — annars tillbaka till startvyn
+    setMatchStep(cupMode ? "lines" : "start");
   };
 
   const abortMatch = () => {
     _resetMatch();
-    setMatchStep(cupMode ? "lines" : "select");
+    setMatchStep(cupMode ? "lines" : "start");
     setConfirmAbort(false);
   };
 
