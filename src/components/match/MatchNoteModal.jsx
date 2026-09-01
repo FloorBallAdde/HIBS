@@ -4,6 +4,7 @@
  * redo att klistras in i Claude-chatten för att generera 3 texter.
  */
 import { useState } from "react";
+import Sheet from "../ui/Sheet.jsx";
 
 function buildClaudeText(match, note) {
   const result = match.result
@@ -68,23 +69,7 @@ export default function MatchNoteModal({ match, onClose, onSave }) {
   };
 
   return (
-    <div
-      onClick={onClose}
-      className="hibs-overlay"
-      style={{
-        position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)",
-        zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center",
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        className="hibs-sheet"
-        style={{
-          background: "#161926", border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "20px 20px 0 0", padding: "24px 20px 40px",
-          width: "100%", maxWidth: 430,
-        }}
-      >
+    <Sheet onClose={onClose} overlayOpacity={0.82}>
         <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>
           Notering — vs {match.opponent}
         </div>
@@ -154,7 +139,6 @@ export default function MatchNoteModal({ match, onClose, onSave }) {
             {copied ? "✓ Kopierat!" : "📋 Kopiera för Claude"}
           </button>
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
 }

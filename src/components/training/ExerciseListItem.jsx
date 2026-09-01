@@ -1,4 +1,5 @@
 import { CAT_COLOR, intensityColor } from "../../lib/constants.js";
+import IconButton from "../ui/IconButton.jsx";
 
 /**
  * Presentational kort för en övning i OvningarTab-listan.
@@ -38,13 +39,14 @@ export default function ExerciseListItem({ ex, isFav, onSelect, onToggleFav }) {
               <span title="Har taktiktavla-ritning" aria-label="Har ritning"
                 style={{ fontSize: 13, lineHeight: 1, opacity: 0.85 }}>🎨</span>
             )}
-            <button onClick={e => onToggleFav(e, ex.id)}
-              title={isFav ? "Ta bort från favoriter" : "Spara som favorit"}
-              aria-label={isFav ? "Ta bort " + ex.name + " från favoriter" : "Spara " + ex.name + " som favorit"}
-              aria-pressed={isFav}
-              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1, padding: 0, minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", color: isFav ? "#fbbf24" : "#4a5568" }}>
+            <IconButton onClick={e => onToggleFav(e, ex.id)}
+              label={isFav ? "Ta bort " + ex.name + " från favoriter" : "Spara " + ex.name + " som favorit"}
+              ariaPressed={isFav}
+              fontSize={22}
+              color={isFav ? "#fbbf24" : "#4a5568"}
+            >
               {isFav ? "★" : "☆"}
-            </button>
+            </IconButton>
           </div>
         </div>
       </div>

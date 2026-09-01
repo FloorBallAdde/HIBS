@@ -1,4 +1,5 @@
 import { GC, gc, CHAIN_POS, CHAIN_COL } from "../../lib/constants.js";
+import IconButton from "../ui/IconButton.jsx";
 
 /**
  * ChainCard — en kedja i GrupperMode med header, slots och drop-zon.
@@ -9,6 +10,9 @@ import { GC, gc, CHAIN_POS, CHAIN_COL } from "../../lib/constants.js";
  * Feature S48: ✕-knappar (radera kedja, ta bort spelare från kedja)
  * fick 44×44 touch-target + aria-label/title — samma a11y-paritet som
  * filter-chips (S46) och favorite-toggle (S47).
+ *
+ * Sprint 52: båda ✕-knapparna använder nu <IconButton> — samma rendering,
+ * a11y-mönstret kodifierat i en återanvändbar komponent.
  *
  * Props:
  *   chain            — { name, groupId, slots[] }
@@ -55,12 +59,11 @@ export default function ChainCard({
           <span onClick={() => setEditName(ci)} style={{ fontSize: 13, fontWeight: 800, color: "#e2e8f0", cursor: "pointer", flex: 1 }}>{chain.name}</span>
         )}
         <span style={{ fontSize: 10, color: "#4a5568" }}>{chain.slots.length} spelare</span>
-        <button
+        <IconButton
           onClick={() => removeChain(ci)}
-          title={"Ta bort " + chain.name}
-          aria-label={"Ta bort " + chain.name}
-          style={{ fontSize: 14, color: "#4a5568", background: "none", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, fontFamily: "inherit" }}
-        >✕</button>
+          label={"Ta bort " + chain.name}
+          color="#4a5568"
+        >✕</IconButton>
       </div>
 
       {/* Spelare i kedjan */}
@@ -86,12 +89,13 @@ export default function ChainCard({
               <span style={{ fontSize: 10, fontWeight: 900, color: pc, background: pc + "15", border: "1px solid " + pc + "30", borderRadius: 6, padding: "3px 6px", width: 38, textAlign: "center", flexShrink: 0 }}>{pos}</span>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: gc(p.group).color, flexShrink: 0 }} />
               <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", flex: 1 }}>{p.name}</span>
-              <button
+              <IconButton
                 onClick={() => removeFromChain(ci, pi)}
-                title={"Ta bort " + p.name + " ur kedjan"}
-                aria-label={"Ta bort " + p.name + " ur " + chain.name}
-                style={{ fontSize: 13, color: "#4a5568", background: "none", border: "none", cursor: "pointer", minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, fontFamily: "inherit", flexShrink: 0 }}
-              >✕</button>
+                label={"Ta bort " + p.name + " ur " + chain.name}
+                color="#4a5568"
+                fontSize={13}
+                style={{ flexShrink: 0 }}
+              >✕</IconButton>
             </div>
           );
         })}

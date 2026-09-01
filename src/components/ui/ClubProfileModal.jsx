@@ -1,4 +1,6 @@
 import { useState } from "react";
+import IconButton from "./IconButton.jsx";
+import Sheet from "./Sheet.jsx";
 
 const FIELD = (label, key, type = "text", placeholder = "") => ({ label, key, type, placeholder });
 const FIELDS = [
@@ -34,23 +36,14 @@ export default function ClubProfileModal({ club, onClose, onSave }) {
   };
 
   return (
-    <div
-      onClick={onClose}
-      className="hibs-overlay"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 400, display: "flex", alignItems: "flex-end", fontFamily: "system-ui,sans-serif" }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        className="hibs-sheet"
-        style={{ width: "100%", background: "#111827", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", boxSizing: "border-box", maxHeight: "90vh", overflowY: "auto" }}
-      >
+    <Sheet onClose={onClose} overlayOpacity={0.78} zIndex={400} background="#111827" maxWidth="none" maxHeight="90vh">
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Klubbprofil</div>
             <div style={{ fontSize: 11, color: "#4a5568", marginTop: 2 }}>{club?.name}</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#4a5568", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1 }}>✕</button>
+          <IconButton label="Stäng" onClick={onClose} color="#4a5568" fontSize={22}>✕</IconButton>
         </div>
 
         {/* Logo preview */}
@@ -97,7 +90,6 @@ export default function ClubProfileModal({ club, onClose, onSave }) {
         >
           {saving ? "Sparar…" : "💾 Spara klubbprofil"}
         </button>
-      </div>
-    </div>
+    </Sheet>
   );
 }

@@ -121,8 +121,13 @@ HIBS är en tränarapp för innebandylaget P2015, byggd med React + Vite + Supab
 | 2026-03-13 | Sprint 5 klar | useTouchSwap hook. F8: Touch drag-and-drop byte mellan positions-slots i kedjor och live-match. |
 | 2026-03-13 | Sprint 6 klar | MatchNoteModal extraherad. F9: Soft guard — dialog om inga kedjor satta vid matchstart. |
 | 2026-03-13 | Sprint 7 klar | BottomNav extraherad (238→232 rader). F6: 3 lagmål per match — sätts i trupp-steget, visas under live-match, sparas med matchdata. |
+| 2026-06-08 | Sprint 55 klar | 4 sheets migrerade till `<Sheet>`-wrappern (ProfilePanel, ClubProfileModal, MatchRsvpModal, ExerciseDetailSheet) → swipe-dismiss konsekvent på 8/9 sheets. CreateExerciseForm medvetet exkluderad (sticky-header + osparad-data-skydd). F: "Markera alla"-knapp i MatchRsvpModal (snabb föranmälan). Detaljerad sprintlogg förs nu i ARCHITECTURE.md. |
+| 2026-06-10 | Sprint 56 klar | useTaktiktavlaCanvas-hook extraherad (TaktiktavlaTab 485→217 rader). F (✅ Approved): Närvaro till Supabase (training_attendance) — delad mellan tränare, kräver SQL-migration (se docs/RESEARCH.md Sprint 56). |
+| 2026-07-20 | Sprint 67 klar | Andreas har approvat P2–P10 → auto-fallback-eran slut. T (✅ Approved): dubbel övningsladdning löst (App enda källan för exercises, OvningarTab props). F (✅ Approved, P2): trend per spelare — expanderbar sparkline i SPELARSTATISTIK-listan. |
+| 2026-06-12 | Sprint 57 klar | usePoll-hook konsoliderar 3 polling-loopar (pausar vid dold flik/offline, refetch vid wake) — Supabase Realtime utvärderad/avvisad (RESEARCH.md S57). F: OfflineBanner — gul offline-banner som förklarar rollbackade skrivningar vid rinken. |
+| 2026-07-08 | Sprint 66 klar | MessageComposer extraherad ur TeamMessages.jsx (254→238 rader) — inputfält + brådskande-toggle med eget state, exponerar onSend(body, urgent). F: Två-stegs-bekräftelse på "🗑 Ta bort" i Lagmeddelanden — skyddar mot permanenta feltryck vid rinken (auto-fallback, 31 sprintar utan ✅ Approved feature — P11 Fas 2 Steg 3 push-notiser väntar fortfarande). |
 
 ---
 
 *Ops Backlog: [HIBS Tränarapp — Ops Backlog](https://www.notion.so/3794e06aac9d4855afdfbae687960938) (Notion)*
-*Nästa sprint: Sprint 8 — F4/F5 Övningsbibliotek (favoriter + typbeskrivning)*
+*Sprintlogg förs i ARCHITECTURE.md · backlog i Notion.*

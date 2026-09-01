@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sbPost, sbPatch } from "../../lib/supabase.js";
+import IconButton from "../ui/IconButton.jsx";
 import { CATEGORIES, INTENSITIES, CAT_COLOR, intensityColor } from "../../lib/constants.js";
 
 const CATS_FORM = CATEGORIES.filter(c => c !== "Alla");
@@ -100,8 +101,7 @@ export default function CreateExerciseForm({ token, onSaved, onCancel, initialDa
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px 0" }}>
           <div style={{ fontSize: 18, fontWeight: 900, color: "#fff" }}>{isEdit ? "Redigera övning" : "Ny övning"}</div>
-          <button onClick={onCancel}
-            style={{ background: "none", border: "none", color: "#4a5568", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1, fontFamily: "inherit" }}>✕</button>
+          <IconButton label="Stäng" onClick={onCancel} color="#4a5568" fontSize={22}>✕</IconButton>
         </div>
 
         <div style={{ overflowY: "auto", padding: "20px 20px 32px", flex: 1 }}>

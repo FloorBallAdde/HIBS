@@ -1,4 +1,6 @@
 import { gc } from "../../lib/constants.js";
+import IconButton from "../ui/IconButton.jsx";
+import Sheet from "../ui/Sheet.jsx";
 
 /**
  * MatchRsvpModal — Spelaranmälan per kommande match.
@@ -10,11 +12,18 @@ export default function MatchRsvpModal({ match, players, onToggle, onClose }) {
   const field = players.filter(p => p.role !== "malvakt");
   const keepers = players.filter(p => p.role === "malvakt");
 
+  const allSelected = players.length > 0 && rsvp.length >= players.length;
+
   const handleTap = (id) => {
     const next = rsvp.includes(id)
       ? rsvp.filter(x => x !== id)
       : [...rsvp, id];
     onToggle(match.id, next);
+  };
+
+  // Markera/avmarkera hela truppen i ett tryck — snabb föranmälan vid rinken.
+  const handleToggleAll = () => {
+    onToggle(match.id, allSelected ? [] : players.map(p => p.id));
   };
 
   const PlayerRow = ({ p }) => {
@@ -52,12 +61,7 @@ export default function MatchRsvpModal({ match, players, onToggle, onClose }) {
   };
 
   return (
-    <div
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      className="hibs-overlay"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 300, display: "flex", alignItems: "flex-end" }}
-    >
-      <div className="hibs-sheet" style={{ width: "100%", background: "#131620", borderRadius: "20px 20px 0 0", padding: "20px 16px 36px", maxHeight: "88vh", overflowY: "auto", boxSizing: "border-box" }}>
+    <Sheet onClose={onClose} overlayOpacity={0.72} zIndex={300} background="#131620" maxWidth="none" maxHeight="88vh" padding="20px 16px 36px">
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
@@ -69,8 +73,24 @@ export default function MatchRsvpModal({ match, players, onToggle, onClose }) {
               <span style={{ color: "#22c55e", fontWeight: 700 }}>{rsvp.length}</span> anmälda av {players.length}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#4a5568", fontSize: 24, cursor: "pointer", padding: 0, lineHeight: 1, marginTop: -2 }}>×</button>
+          <IconButton label="Stäng" onClick={onClose} color="#4a5568" fontSize={24}>×</IconButton>
         </div>
+
+        {/* Markera/avmarkera hela truppen i ett tryck — snabb föranmälan */}
+        {players.length > 0 && (
+          <button
+            onClick={handleToggleAll}
+            style={{
+              width: "100%", padding: "12px 0", marginBottom: 16,
+              background: allSelected ? "rgba(248,113,113,0.08)" : "rgba(34,197,94,0.08)",
+              border: "1px solid " + (allSelected ? "rgba(248,113,113,0.28)" : "rgba(34,197,94,0.28)"),
+              borderRadius: 12, color: allSelected ? "#f87171" : "#22c55e",
+              fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
+            }}
+          >
+            {allSelected ? "Avmarkera alla" : `Markera alla · ${players.length}`}
+          </button>
+        )}
 
         {/* Goalkeepers */}
         {keepers.length > 0 && (
@@ -100,7 +120,6 @@ export default function MatchRsvpModal({ match, players, onToggle, onClose }) {
         >
           Klar{rsvp.length > 0 ? ` · ${rsvp.length} anmälda` : ""}
         </button>
-      </div>
-    </div>
+    </Sheet>
   );
 }

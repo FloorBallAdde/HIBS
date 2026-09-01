@@ -7,6 +7,7 @@ import { useMatchSession } from "./hooks/useMatchSession.js";
 import { useSeasonStats } from "./hooks/useSeasonStats.js";
 import { useAttendance } from "./hooks/useAttendance.js";
 import { useLiveMatchPoll } from "./hooks/useLiveMatchPoll.js";
+import { usePoll } from "./hooks/usePoll.js";
 import AuthScreen from "./components/auth/AuthScreen.jsx";
 import PostMatchFeedback from "./components/ui/PostMatchFeedback.jsx";
 import NoteModal from "./components/players/NoteModal.jsx";
@@ -24,6 +25,7 @@ import MerContent from "./components/mer/MerContent.jsx";
 import BottomNav from "./components/ui/BottomNav.jsx";
 import ProfilePanel from "./components/ui/ProfilePanel.jsx";
 import LiveMatchBanner from "./components/ui/LiveMatchBanner.jsx";
+import OfflineBanner from "./components/ui/OfflineBanner.jsx";
 import AppHeader from "./components/ui/AppHeader.jsx";
 import SubTabBar from "./components/ui/SubTabBar.jsx";
 import ParentView from "./components/home/ParentView.jsx";
@@ -89,7 +91,9 @@ export default function App(){
         sbGet("matches","club_id=eq."+clubId+"&is_upcoming=eq.false&order=date.desc",tok),
         sbGet("training_sessions","club_id=eq."+clubId+"&order=date.desc",tok),
         sbGet("training_notes","club_id=eq."+clubId+"&order=created_at.desc",tok),
-        sbGet("exercises","order=name.asc",tok),
+        // Sprint 67: lätt kolumnlista (utan canvas_drawing-blobbar) — samma som OvningarTab
+        // tidigare hämtade. Detta är nu appens ENDA övningsladdning (dubbelladdningen borta).
+        sbGet("exercises","select=id,name,category,intensity,players,vad,varfor,hur,organisation,tips,coaching_fragor,has_drawing&order=name.asc",tok),
       ]);
       if(Array.isArray(pl))setPlayers(pl.map(p=>({...p,goals:p.goals||[]})));
       if(Array.isArray(ma))setHistory(ma);
@@ -103,11 +107,8 @@ export default function App(){
   useEffect(()=>{if(profile)loadData();},[profile]);
 
   // Polling: uppdatera spelardata var 60s (för delade observationer mellan tränare)
-  useEffect(()=>{
-    if(!profile)return;
-    const id=setInterval(()=>loadData(true),60*1000);
-    return()=>clearInterval(id);
-  },[profile,loadData]);
+  // (Sprint 57: via usePoll — pausar när fliken är dold/offline, refetch vid wake)
+  usePoll(()=>loadData(true),60*1000,!!profile);
 
   // Räkna olästa observationer (gjorda av ANDRA tränare, nyare än lastSeenObs)
   const unreadObs=useMemo(()=>{
@@ -139,10 +140,10 @@ export default function App(){
   },[handleSignOut]);
 
   // SEASON STATS — must be before early returns (Rules of Hooks)
-  const{stats,keeperStats,shotStats,totalGoals,totalAssists,latestMatch}=useSeasonStats(history,players);
+  const{stats,keeperStats,shotStats,totalGoals,totalAssists,latestMatch,playerTrends}=useSeasonStats(history,players);
 
-  // P12 ATTENDANCE — must be before early returns (Rules of Hooks)
-  const { attendance, togglePlayer } = useAttendance();
+  // P12 ATTENDANCE — Sprint 56: Supabase-synkad (training_attendance) — must be before early returns (Rules of Hooks)
+  const { attendance, togglePlayer } = useAttendance({ clubId, tok, uid: auth?.uid });
 
   if(!auth||!profile)return<AuthScreen onAuth={handleAuth}/>;
   // P11 Fas 2: Föräldrar ser en förenklad läsvy (ParentView)
@@ -181,6 +182,9 @@ export default function App(){
         onSignOut={onSignOut}
         onUpdateClub={updateClub}
       />
+
+      {/* ── Offline-banner (Sprint 57: förklarar rollbackade skrivningar) ── */}
+      <OfflineBanner/>
 
       {/* ── Live match-banner (visas för co-tränare) ─────────────────── */}
       <LiveMatchBanner liveMatchView={liveMatchView} onNavigate={()=>setTab("match")}/>
@@ -228,14 +232,14 @@ export default function App(){
           attendance={attendance}
           onToggleAttendance={togglePlayer}
         />}
-        {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok}/>}
+        {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok} exercises={exercises} setExercises={setExercises}/>}
         {tab==="traning"&&trainSub==="tavla"&&<TaktiktavlaTab/>}
         {tab==="match"&&<MatchContent
           {...matchSession}
           players={players} gkPlayers={gkPlayers} field={field}
         />}
         {tab==="stats"&&<StatsContent
-          history={history} stats={stats} keeperStats={keeperStats} shotStats={shotStats}
+          history={history} stats={stats} keeperStats={keeperStats} shotStats={shotStats} playerTrends={playerTrends}
           totalGoals={totalGoals} totalAssists={totalAssists}
           players={players} trainHistory={trainHistory}
           attendance={attendance}

@@ -3,6 +3,8 @@
  */
 import { useState } from "react";
 import ClubProfileModal from "./ClubProfileModal.jsx";
+import IconButton from "./IconButton.jsx";
+import Sheet from "./Sheet.jsx";
 
 export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coachStaff, pendingCoaches, onSignOut, onUpdateClub }) {
   const [editingClub, setEditingClub] = useState(false);
@@ -18,16 +20,7 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
 
   return (
     <>
-      <div
-        onClick={() => setProfileOpen(false)}
-        className="hibs-overlay"
-        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.72)", zIndex: 300, display: "flex", alignItems: "flex-end" }}
-      >
-        <div
-          onClick={e => e.stopPropagation()}
-          className="hibs-sheet"
-          style={{ width: "100%", background: "#111827", borderRadius: "20px 20px 0 0", padding: "24px 20px 40px", boxSizing: "border-box", maxHeight: "90vh", overflowY: "auto" }}
-        >
+      <Sheet onClose={() => setProfileOpen(false)} overlayOpacity={0.72} zIndex={300} background="#111827" maxWidth="none" maxHeight="90vh">
           {/* ── Klubbrubrik med logga ─────────────────────────────── */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -43,7 +36,7 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
                 </div>
               </div>
             </div>
-            <button onClick={() => setProfileOpen(false)} style={{ background: "none", border: "none", color: "#4a5568", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1, fontFamily: "inherit" }}>✕</button>
+            <IconButton label="Stäng" onClick={() => setProfileOpen(false)} color="#4a5568" fontSize={22}>✕</IconButton>
           </div>
 
           {/* ── Klubbinfo-kort ────────────────────────────────────── */}
@@ -146,8 +139,7 @@ export default function ProfilePanel({ profile, profileOpen, setProfileOpen, coa
           >
             Logga ut
           </button>
-        </div>
-      </div>
+      </Sheet>
 
       {/* ── Redigera klubbprofil-modal ────────────────────────────── */}
       {editingClub && (

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { sbGet } from "../../lib/supabase.js";
 import { CAT_COLOR, CAT_DESC, intensityColor } from "../../lib/constants.js";
+import IconButton from "../ui/IconButton.jsx";
+import Sheet from "../ui/Sheet.jsx";
 
 /* ─── Split hur-text into numbered steps (split on newlines) ─── */
 const splitSteps = (text) =>
@@ -49,8 +51,7 @@ export default function ExerciseDetailSheet({ sel, token, onClose, onEdit, onDra
   const hasDrawing = !!drawing;
 
   return (
-    <div onClick={onClose} className="hibs-overlay" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} className="hibs-sheet" style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px 20px 0 0", padding: "24px 20px 48px", width: "100%", maxWidth: 430, maxHeight: "92vh", overflowY: "auto" }}>
+    <Sheet onClose={onClose} overlayOpacity={0.88} maxHeight="92vh" padding="24px 20px 48px">
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
             <span style={{ fontSize: 10, fontWeight: 800, color: cc, background: cc + "18", border: "1px solid " + cc + "30", borderRadius: 99, padding: "3px 10px" }}>{sel.category}</span>
@@ -62,13 +63,14 @@ export default function ExerciseDetailSheet({ sel, token, onClose, onEdit, onDra
           <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
             {sel.players && <div style={{ fontSize: 11, color: "#4a5568" }}>{sel.players} sp</div>}
             <div style={{ fontSize: 11, color: intensityColor(sel.intensity) }}>{sel.intensity}</div>
-            <button onClick={e => toggleFav(e, sel.id)}
-              title={isFav ? "Ta bort från favoriter" : "Spara som favorit"}
-              aria-label={isFav ? "Ta bort " + sel.name + " från favoriter" : "Spara " + sel.name + " som favorit"}
-              aria-pressed={isFav}
-              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1, padding: 0, minHeight: 44, minWidth: 44, display: "inline-flex", alignItems: "center", justifyContent: "center", color: isFav ? "#fbbf24" : "#4a5568" }}>
+            <IconButton onClick={e => toggleFav(e, sel.id)}
+              label={isFav ? "Ta bort " + sel.name + " från favoriter" : "Spara " + sel.name + " som favorit"}
+              ariaPressed={isFav}
+              fontSize={22}
+              color={isFav ? "#fbbf24" : "#4a5568"}
+            >
               {isFav ? "★" : "☆"}
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -164,7 +166,6 @@ export default function ExerciseDetailSheet({ sel, token, onClose, onEdit, onDra
           style={{ width: "100%", padding: "12px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#4a5568", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
           Stäng
         </button>
-      </div>
-    </div>
+    </Sheet>
   );
 }

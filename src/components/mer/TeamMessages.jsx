@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { sbGet, sbPost, sbDel } from "../../lib/supabase.js";
+import MessageComposer from "./MessageComposer.jsx";
 
 /**
  * TeamMessages — Lagmeddelanden (P11 Föräldrakommunikation, Fas 1).
@@ -7,15 +8,17 @@ import { sbGet, sbPost, sbDel } from "../../lib/supabase.js";
  * (t.ex. "Träning inställd torsdag") som alla tränare i klubben ser.
  * Stödjer brådskande-flagga (gul markering) och radering av egna meddelanden.
  *
+ * Sprint 66: Composer extraherad till MessageComposer.jsx. Radering av egna
+ * meddelanden kräver nu en bekräftelse (kalla händer + trängsel vid rinken —
+ * ett feltryck ska inte radera ett meddelande permanent).
+ *
  * Supabase-tabell: team_messages (se migrerings-SQL i sprint-loggen).
  */
 export default function TeamMessages({ clubId, uid, tok, profile }) {
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [urgent, setUrgent] = useState(false);
-  const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
-  const inputRef = useRef(null);
+  const [confirmingId, setConfirmingId] = useState(null);
+  const confirmTimerRef = useRef(null);
 
   // Ladda meddelanden
   const loadMessages = useCallback(async () => {
@@ -42,32 +45,41 @@ export default function TeamMessages({ clubId, uid, tok, profile }) {
     return () => clearInterval(id);
   }, [clubId, tok, loadMessages]);
 
+  useEffect(() => () => clearTimeout(confirmTimerRef.current), []);
+
   // Skicka meddelande
-  const send = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || sending) return;
-    setSending(true);
+  const send = async (body, urgent) => {
     try {
       const row = {
         club_id: clubId,
         author_id: uid,
         author_name: profile?.username || "Tränare",
-        body: trimmed,
+        body,
         urgent,
       };
       const saved = await sbPost("team_messages", row, tok);
       const msg = Array.isArray(saved) && saved[0] ? saved[0] : { ...row, id: Date.now(), created_at: new Date().toISOString() };
       setMessages(prev => [msg, ...prev]);
-      setText("");
-      setUrgent(false);
     } catch (e) {
       console.error("TeamMessages send:", e);
     }
-    setSending(false);
   };
 
-  // Radera eget meddelande
-  const remove = async (id) => {
+  // Radera eget meddelande — kräver en bekräftelse-tryck till (rink-säkert).
+  const requestRemove = (id) => {
+    clearTimeout(confirmTimerRef.current);
+    setConfirmingId(id);
+    confirmTimerRef.current = setTimeout(() => setConfirmingId(null), 4000);
+  };
+
+  const cancelRemove = () => {
+    clearTimeout(confirmTimerRef.current);
+    setConfirmingId(null);
+  };
+
+  const confirmRemove = async (id) => {
+    clearTimeout(confirmTimerRef.current);
+    setConfirmingId(null);
     try {
       await sbDel("team_messages", id, tok);
       setMessages(prev => prev.filter(m => m.id !== id));
@@ -94,79 +106,7 @@ export default function TeamMessages({ clubId, uid, tok, profile }) {
 
   return (
     <div>
-      {/* ── Ny meddelande-input ──────────────────────────── */}
-      <div style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 16,
-        padding: "14px 16px",
-        marginBottom: 16,
-      }}>
-        <textarea
-          ref={inputRef}
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Skriv ett meddelande till laget…"
-          rows={2}
-          style={{
-            width: "100%",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 10,
-            color: "#fff",
-            fontSize: 14,
-            padding: "10px 12px",
-            fontFamily: "inherit",
-            resize: "vertical",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-        />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-          {/* Brådskande-toggle */}
-          <button
-            onClick={() => setUrgent(u => !u)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 12px",
-              borderRadius: 99,
-              border: "1px solid " + (urgent ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.1)"),
-              background: urgent ? "rgba(251,191,36,0.1)" : "transparent",
-              color: urgent ? "#fbbf24" : "#4a5568",
-              fontSize: 11,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: "pointer",
-            }}
-          >
-            ⚡ Brådskande
-          </button>
-          {/* Skicka-knapp */}
-          <button
-            onClick={send}
-            disabled={!text.trim() || sending}
-            style={{
-              padding: "8px 20px",
-              borderRadius: 99,
-              border: "none",
-              background: text.trim() ? "#22c55e" : "rgba(255,255,255,0.06)",
-              color: text.trim() ? "#0b0d14" : "#4a5568",
-              fontSize: 13,
-              fontWeight: 800,
-              fontFamily: "inherit",
-              cursor: text.trim() ? "pointer" : "default",
-              opacity: sending ? 0.6 : 1,
-              minWidth: 80,
-              minHeight: 44,
-            }}
-          >
-            {sending ? "…" : "Skicka"}
-          </button>
-        </div>
-      </div>
+      <MessageComposer onSend={send} />
 
       {/* ── Meddelandelista ──────────────────────────────── */}
       {loading && (
@@ -188,6 +128,7 @@ export default function TeamMessages({ clubId, uid, tok, profile }) {
       {messages.map(m => {
         const isOwn = m.author_id === uid;
         const isUrgent = m.urgent;
+        const isConfirming = confirmingId === m.id;
         return (
           <div
             key={m.id}
@@ -227,9 +168,9 @@ export default function TeamMessages({ clubId, uid, tok, profile }) {
             <div style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
               {m.body}
             </div>
-            {isOwn && (
+            {isOwn && !isConfirming && (
               <button
-                onClick={() => remove(m.id)}
+                onClick={() => requestRemove(m.id)}
                 style={{
                   marginTop: 8,
                   padding: "4px 10px",
@@ -241,10 +182,53 @@ export default function TeamMessages({ clubId, uid, tok, profile }) {
                   fontWeight: 600,
                   fontFamily: "inherit",
                   cursor: "pointer",
+                  minHeight: 44,
                 }}
               >
                 🗑 Ta bort
               </button>
+            )}
+            {isOwn && isConfirming && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button
+                  onClick={() => confirmRemove(m.id)}
+                  aria-label="Bekräfta borttagning av meddelandet"
+                  title="Bekräfta borttagning"
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: 99,
+                    border: "1px solid rgba(248,113,113,0.4)",
+                    background: "rgba(248,113,113,0.12)",
+                    color: "#f87171",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    minHeight: 44,
+                  }}
+                >
+                  ✓ Bekräfta borttagning
+                </button>
+                <button
+                  onClick={cancelRemove}
+                  aria-label="Avbryt borttagning"
+                  title="Avbryt"
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: 99,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "transparent",
+                    color: "#64748b",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    minHeight: 44,
+                  }}
+                >
+                  Avbryt
+                </button>
+              </div>
             )}
           </div>
         );

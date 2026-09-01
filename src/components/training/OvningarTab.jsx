@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { sbGet, sbPatch } from "../../lib/supabase.js";
+import { useState, useCallback } from "react";
+import { sbPatch } from "../../lib/supabase.js";
 import ls from "../../lib/storage.js";
 import ExerciseDetailSheet from "./ExerciseDetailSheet.jsx";
 import CreateExerciseForm from "./CreateExerciseForm.jsx";
@@ -9,10 +9,12 @@ import ExerciseListItem from "./ExerciseListItem.jsx";
 
 const FAV_KEY   = "hibs_fav_ex";
 
-/* ─── Main component ─── */
-export default function OvningarTab({ token }) {
-  const [exercises, setExercises]   = useState([]);
-  const [loading,   setLoading]     = useState(true);
+/* ─── Main component ───
+   Sprint 67: exercises-state lyft till App.jsx (T: dubbelladdning löst).
+   App laddar övningslistan EN gång i loadData() (lätt kolumnlista, utan
+   canvas_drawing) och skickar ner exercises + setExercises som props.
+   60s-pollingen i App håller nu även övningarna synkade mellan tränare. */
+export default function OvningarTab({ token, exercises = [], setExercises }) {
   const [cat,       setCat]         = useState("Alla");
   const [intensity, setIntensity]   = useState("Alla");
   const [search,    setSearch]      = useState("");
@@ -22,15 +24,6 @@ export default function OvningarTab({ token }) {
   const [editing,   setEditing]     = useState(null); // exercise being edited
   const [savingId,  setSavingId]    = useState(null);
   const [favorites, setFavorites]   = useState(() => new Set(ls.get(FAV_KEY, [])));
-
-  const loadExercises = useCallback(async () => {
-    setLoading(true);
-    const res = await sbGet("exercises", "select=id,name,category,intensity,players,vad,varfor,hur,organisation,tips,coaching_fragor,has_drawing&order=name.asc", token);
-    if (Array.isArray(res)) setExercises(res);
-    setLoading(false);
-  }, [token]);
-
-  useEffect(() => { loadExercises(); }, [loadExercises]);
 
   const toggleFav = useCallback((e, id) => {
     e.stopPropagation();
@@ -103,7 +96,6 @@ export default function OvningarTab({ token }) {
         favorites={favorites}
       />
 
-      {loading && <div style={{ textAlign: "center", color: "#4a5568", fontSize: 13, padding: 16 }}>Laddar...</div>}
       <div style={{ fontSize: 11, color: "#4a5568", marginBottom: 8 }}>{filtered.length} övningar</div>
 
       {cat === "★ Favoriter" && favorites.size === 0 && (
@@ -117,7 +109,7 @@ export default function OvningarTab({ token }) {
           Innan: skärmen blev tom och Andreas trodde appen hängde.
           Nu: visar VARFÖR (search, kategori, intensitet) + en återställ-knapp ≥44×44.
           Hoppar över när "★ Favoriter" är valt — där har vi redan ett eget empty-state ovan. */}
-      {!loading && filtered.length === 0 && !(cat === "★ Favoriter" && favorites.size === 0) && (
+      {exercises.length > 0 && filtered.length === 0 && !(cat === "★ Favoriter" && favorites.size === 0) && (
         <div role="status" aria-live="polite"
           style={{ textAlign: "center", padding: "32px 16px", color: "#4a5568", fontSize: 13 }}>
           <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>

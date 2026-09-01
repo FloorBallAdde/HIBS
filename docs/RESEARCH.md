@@ -95,3 +95,78 @@ Inga ytterligare RLS-policies krävs — has_drawing ärver SELECT/UPDATE från 
 **Val:** A. Matchar rink-kontexten (snabbt, glance-baserat, kalla händer), inga nya beroenden, additivt, scoped till samma fil som refaktoreringen, ingen schemamigration. Det väpnade läget är starkt synligt (röd + "Säker?") och adresserar feltrycks-problemet direkt.
 
 **Slutsats:** Lättviktig friktion på exakt rätt ställe — skyddar den enda icke-ångringsbara åtgärden i Taktiktavlan utan att sakta ner det vanliga flödet (en penna/pil-tryck väpnar inget).
+
+## Sprint 56 — F: Närvarodata till Supabase, cross-device sync (2026-06-10)
+
+**Fråga:** Hur migrerar man P12-närvarodatan (localStorage `hibs_att`) till Supabase så flera tränare ser samma närvaro — utan att ändra konsument-API:t i PlaneraTab/StatsContent?
+
+**Konkurrensbild:** TeamSnap och Heja har båda delad närvaro som kärnfunktion (alla ledare ser samma avbockningar i realtid) — localStorage-only var en känd MVP-begränsning sedan Sprint 23.
+
+**Mini Design Phase:**
+- **A — En rad per session med jsonb-array av namn:** minimal kodändring, en upsert per toggle. Brister i exakt rink-scenariot: två tränare som bockar av samtidigt skriver över varandras HELA lista (last-write-wins på arrayen).
+- **B — En rad per (session, spelare):** toggle = insert/delete av en rad. Två tränare kan bocka av olika spelare samtidigt utan konflikt; unique-constraint stoppar dubbletter; mappar rent på befintliga sbPost/sbDel.
+- **C — localStorage + bakgrundssync:** offline-first merge-logik — overkill och riskabel komplexitet.
+
+**Val:** B — konfliktfri vid samtidig avbockning, enklast korrekt semantik.
+
+**SQL-migration (Andreas kör manuellt i Supabase SQL editor):**
+
+```sql
+-- Sprint 56: Delad närvaro — en rad per (session, spelare)
+CREATE TABLE IF NOT EXISTS training_attendance (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  club_id     uuid NOT NULL,
+  session_id  uuid NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
+  player_name text NOT NULL,
+  created_by  uuid,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (session_id, player_name)
+);
+
+CREATE INDEX IF NOT EXISTS training_attendance_club_idx ON training_attendance (club_id);
+
+ALTER TABLE training_attendance ENABLE ROW LEVEL SECURITY;
+
+-- ⚠️ Spegla RLS-mönstret från training_sessions. Om policies där bygger på
+-- profiles.club_id ser de ut så här:
+CREATE POLICY "attendance_select" ON training_attendance FOR SELECT
+  USING (club_id IN (SELECT club_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY "attendance_insert" ON training_attendance FOR INSERT
+  WITH CHECK (club_id IN (SELECT club_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY "attendance_delete" ON training_attendance FOR DELETE
+  USING (club_id IN (SELECT club_id FROM profiles WHERE id = auth.uid()));
+```
+
+**Klient-design (`src/hooks/useAttendance.js`):**
+- State = råa rader; `attendance`-map deriveras via useMemo → PlaneraTab/StatsContent oförändrade.
+- Optimistisk toggle med rollback om sbPost inte returnerar en rad (RLS/nätverksfel) eller sbDel kastar.
+- 60s-polling (samma mönster som loadData/observationer i App.jsx) så co-tränarens avbockningar dyker upp.
+- Engångsmigrering: legacy `hibs_att` pushas per-session mot TOM tabell; bara uuid-session-id:n (Date.now()-fallback-id:n pekar inte på riktiga sessioner); flagga `hibs_att_migrated` per enhet. Gamla `hibs_att`-nyckeln lämnas kvar som passiv backup.
+
+**Slutsats:** Delad närvaro utan API-ändring för konsumenterna; relationell modell gör samtidiga avbockningar konfliktfria. Appen är graceful före migrationen (sbGet ger error-objekt → ej array → tom närvaro, inga kraschar), men toggles sparas inte förrän tabellen finns.
+
+## Sprint 57 — T: Konsolidera polling + utvärdering av Supabase Realtime (2026-06-12)
+
+**Fråga:** Tre separata setInterval-loopar (loadData 60s, useAttendance 60s, useLiveMatchPoll 10s) — gemensam refetch-mekanism eller Supabase Realtime?
+
+**Utvärdering Supabase Realtime:** Kräver supabase-js-klienten (WebSocket-baserade channels). Appen använder medvetet raw fetch (`src/lib/supabase.js`, ~0 kB deps, AbortController-timeout). Att dra in supabase-js (~25 kB gzip) + Realtime-publikationer + reconnect-hantering för 3 tabeller är fel trade-off för ett lag med 2–3 tränare — pollingvolymen är trivial. **Avvisad tills vidare.** Omprövas om appen får många klubbar eller realtidskrav <10s.
+
+**Val: gemensam `usePoll`-hook** (Page Visibility API):
+- Pausar ticks när `document.hidden` — telefon i fickan/låst vid rinken = 0 requests → batterisnålare (störst vinst: 10s-loopen).
+- Hoppar över ticks när `navigator.onLine === false`.
+- Omedelbar refetch på `visibilitychange`→synlig och `online`-event — färsk data direkt när telefonen tas upp.
+- Callback i ref → intervallet startas aldrig om när callback-identiteten byter.
+
+**Kvar utanför scope (loggat i backlog):** ParentView.jsx + TeamMessages.jsx har egna 30s-loopar; useAuth 50min-refresh ska INTE pausas vid dold flik (token får inte gå ut) — lämnas medvetet.
+
+
+## Sprint 67 — F: P2 Trend per spelare (2026-07-20)
+
+**Konkurrentkoll (TeamSnap, GameChanger):**
+- TeamSnap: spelarstatistik ligger bakom Premium/Ultra — enkla säsongstotaler, ingen trendvisualisering per spelare.
+- GameChanger: djupast i klassen (150+ stats, spray charts, "season-level at a glance"-vyer som Defensive Innings) — men allt bor i separata spelarprofiler, flera tryck bort.
+- Slutsats för HIBS: ingen av dem visar trend DÄR tränaren redan tittar. Vår vinkel: inline-sparkline i befintlig leaderboard — ett tryck, noll navigation, glance-läsbar vid rinken.
+
+**Designval:** stapel-sparkline (poäng/match, senaste 10) i expanderbar rad, färgkodad amber/blå/dov (mål/assist/spelade utan poäng). Linjediagram för topp-5 förkastat (oläsbart på 390px mörk skärm); fullskärms-sheet förkastat (duplicerar Mer→Spelare).
+
+Källor: teamsnap.com, gc.com/youth-sports-app (App Store/Google Play-beskrivningar).

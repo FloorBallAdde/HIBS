@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TODAY, FMT } from "../../lib/constants.js";
+import Sheet from "../ui/Sheet.jsx";
 
 /**
  * ObservationModal — P9: Spelarobservationer
@@ -52,16 +53,7 @@ export default function ObservationModal({ player, onClose, onSave, profile }) {
   };
 
   return (
-    <div
-      className="hibs-overlay"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", zIndex: 200 }}
-      onClick={onClose}
-    >
-      <div
-        className="hibs-sheet"
-        style={{ width: "100%", background: "#111827", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "82vh", overflowY: "auto", boxSizing: "border-box" }}
-        onClick={e => e.stopPropagation()}
-      >
+    <Sheet onClose={onClose} overlayOpacity={0.75} background="#111827" maxWidth="none" maxHeight="82vh" padding="20px 20px 40px">
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
           <div>
@@ -176,7 +168,6 @@ export default function ObservationModal({ player, onClose, onSave, profile }) {
             {obs.length} observation{obs.length !== 1 ? "er" : ""}
           </div>
         )}
-      </div>
-    </div>
+    </Sheet>
   );
 }

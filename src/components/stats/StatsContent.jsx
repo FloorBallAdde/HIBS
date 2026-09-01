@@ -1,15 +1,59 @@
 import { useState, useMemo } from "react";
 import { FMT, gc, GC, FONT, formResult, formColor } from "../../lib/constants.js";
+import KeeperStatsCard from "./KeeperStatsCard.jsx";
 
 /**
  * StatsContent — Sprint 23: added P12 TRÄNINGSNÄRVARO section.
  * New props: attendance (object { [sessionId]: [playerName, ...] })
  */
+/**
+ * TrendSparkline — P2 (Sprint 67): mini-stapeldiagram med poäng per match,
+ * senaste 10 matcherna i kronologisk ordning. Amber = gjorde mål, blå = enbart
+ * assist, dova staplar = spelade utan poäng. Glance-läsbar vid rinken.
+ */
+function TrendSparkline({ trend }) {
+  const last = trend.slice(-10);
+  const max = Math.max(1, ...last.map(t => t.points));
+  const sumG = last.reduce((s, t) => s + t.goals, 0);
+  const sumA = last.reduce((s, t) => s + t.assists, 0);
+  return (
+    <div style={{ padding: "10px 0 12px 30px" }}>
+      <div
+        role="img"
+        aria-label={"Trend senaste " + last.length + " matcherna: " + sumG + " mål, " + sumA + " assist"}
+        style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 44 }}
+      >
+        {last.map((t, i) => {
+          const h = t.points > 0 ? 8 + Math.round(t.points / max * 36) : 4;
+          const bg = t.goals > 0 ? "#fbbf24" : t.assists > 0 ? "#38bdf8" : "rgba(255,255,255,0.10)";
+          return (
+            <div key={i}
+              title={FMT(t.date) + " vs " + t.opponent + ": " + t.goals + " mål, " + t.assists + " assist"}
+              style={{ flex: 1, maxWidth: 26, height: h, background: bg, borderRadius: 3, transition: "height 0.2s" }}
+            />
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+        <span style={{ fontSize: FONT.label, color: "#475569" }}>
+          Senaste {last.length} matcherna &nbsp;·&nbsp; äldst → nyast
+        </span>
+        <span style={{ fontSize: FONT.label, fontWeight: 700 }}>
+          <span style={{ color: "#fbbf24" }}>{sumG} mål</span>
+          <span style={{ color: "#475569" }}> · </span>
+          <span style={{ color: "#38bdf8" }}>{sumA} assist</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function StatsContent({
   history, stats, keeperStats, shotStats, totalGoals, totalAssists, players, trainHistory,
-  attendance = {},
+  attendance = {}, playerTrends = {},
 }) {
   const [sortBy, setSortBy] = useState("points");
+  const [expanded, setExpanded] = useState(null); // P2 (Sprint 67): spelarnamn med öppen trendgraf
 
   const withRes = history.filter(m => formResult(m) !== null);
   const wins   = withRes.filter(m => formResult(m) === "V").length;
@@ -18,6 +62,19 @@ export default function StatsContent({
   const winRate = withRes.length > 0 ? Math.round(wins / withRes.length * 100) : 0;
   const goalsFor     = withRes.reduce((s, m) => s + (parseInt(m.result?.us)   || 0), 0);
   const goalsAgainst = withRes.reduce((s, m) => s + (parseInt(m.result?.them) || 0), 0);
+  const goalDiff     = goalsFor - goalsAgainst; // Sprint 61: målskillnad (glance-chip i översikten)
+  const diffColor    = goalDiff > 0 ? "#22c55e" : goalDiff < 0 ? "#f87171" : "#94a3b8";
+
+  // Sprint 62: aktuell form-svit — sammanhängande rad med samma resultat, nyaste först (glance-momentum)
+  // history är date.desc (nyaste först), så index 0 = senaste matchen.
+  const formStreak = useMemo(() => {
+    const seq = history.map(formResult).filter(r => r !== null);
+    if (seq.length === 0) return null;
+    const type = seq[0];
+    let count = 0;
+    for (const r of seq) { if (r === type) count++; else break; }
+    return count >= 2 ? { type, count } : null;
+  }, [history]);
 
   // Filtrera bort målvakter från utespelarlistan
   const fieldStats = stats.filter(p => {
@@ -84,8 +141,13 @@ export default function StatsContent({
         <div style={{ height: 5, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden", marginBottom: 7 }}>
           <div style={{ height: "100%", width: winRate + "%", background: "linear-gradient(90deg,#16a34a,#22c55e)", borderRadius: 99 }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontSize: 11, color: "#475569" }}>{withRes.length} matcher med resultat</div>
+          {withRes.length > 0 && (
+            <div style={{ fontSize: 12, fontWeight: 800, color: diffColor }} title="Målskillnad (gjorda − insläppta)">
+              {goalDiff > 0 ? "+" : ""}{goalDiff} <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.7 }}>MÅLSKILLNAD</span>
+            </div>
+          )}
           <div style={{ fontSize: 12, fontWeight: 800, color: "#22c55e" }}>{winRate}% vinstprocent</div>
         </div>
       </div>
@@ -170,21 +232,38 @@ export default function StatsContent({
             const pgc = player ? gc(player.group) : GC._;
             const medals = ["🥇", "🥈", "🥉"];
             const isTop = i < 3;
+            const trend = playerTrends[p.name] || [];
+            const isOpen = expanded === p.name;
             return (
-              <div key={p.name} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "9px 0",
-                borderBottom: i < sortedStats.length - 1 ? "1px solid rgba(255,255,255,0.035)" : "none",
-              }}>
-                <span style={{ width: 24, fontSize: isTop ? 15 : 11, textAlign: "center", color: "#475569", fontWeight: 700 }}>
-                  {isTop ? medals[i] : i + 1}
-                </span>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: pgc.color, flexShrink: 0 }} />
-                <span style={{ flex: 1, fontSize: 13, fontWeight: isTop ? 800 : 500, color: isTop ? "#fff" : "#94a3b8" }}>{p.name}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#a78bfa", fontWeight: sortBy === "matches" ? 900 : 400 }}>{p.matches || 0}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: sortBy === "goals"   ? 900 : 400 }}>{p.goals}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: sortBy === "assists" ? 900 : 400 }}>{p.assists}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 900, color: sortBy === "points" ? "#22c55e" : "#475569" }}>{p.points}</span>
+              <div key={p.name} style={{ borderBottom: i < sortedStats.length - 1 ? "1px solid rgba(255,255,255,0.035)" : "none" }}>
+                {/* P2 (Sprint 67): raden är tappbar — öppnar trend-sparkline. ≥44px touch-target. */}
+                <div
+                  role="button" tabIndex={0}
+                  aria-expanded={isOpen}
+                  aria-label={"Visa trend för " + p.name}
+                  onClick={() => setExpanded(isOpen ? null : p.name)}
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(isOpen ? null : p.name); } }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    minHeight: 44, padding: "4px 0",
+                    cursor: trend.length > 0 ? "pointer" : "default",
+                  }}>
+                  <span style={{ width: 24, fontSize: isTop ? 15 : 11, textAlign: "center", color: "#475569", fontWeight: 700 }}>
+                    {isTop ? medals[i] : i + 1}
+                  </span>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: pgc.color, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: isTop ? 800 : 500, color: isTop ? "#fff" : "#94a3b8" }}>
+                    {p.name}
+                    {trend.length > 0 && (
+                      <span style={{ fontSize: 9, color: isOpen ? "#22c55e" : "#334155", marginLeft: 6 }}>{isOpen ? "▾" : "▸"}</span>
+                    )}
+                  </span>
+                  <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#a78bfa", fontWeight: sortBy === "matches" ? 900 : 400 }}>{p.matches || 0}</span>
+                  <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: sortBy === "goals"   ? 900 : 400 }}>{p.goals}</span>
+                  <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: sortBy === "assists" ? 900 : 400 }}>{p.assists}</span>
+                  <span style={{ width: 28, textAlign: "center", fontSize: 14, fontWeight: 900, color: sortBy === "points" ? "#22c55e" : "#475569" }}>{p.points}</span>
+                </div>
+                {isOpen && trend.length > 0 && <TrendSparkline trend={trend} />}
               </div>
             );
           })}
@@ -194,7 +273,23 @@ export default function StatsContent({
       {/* MATCH HISTORY */}
       {history.length > 0 && (
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: FONT.label, fontWeight: 700, color: "#475569", marginBottom: 12 }}>MATCHHISTORIK</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ fontSize: FONT.label, fontWeight: 700, color: "#475569" }}>MATCHHISTORIK</div>
+            {formStreak && (
+              <span
+                title="Aktuell form-svit (senaste matcherna)"
+                style={{
+                  fontSize: FONT.label, fontWeight: 800,
+                  color: formColor(formStreak.type),
+                  background: formColor(formStreak.type) + "14",
+                  border: "1px solid " + formColor(formStreak.type) + "33",
+                  borderRadius: 99, padding: "3px 10px",
+                }}
+              >
+                {formStreak.type === "V" ? "🔥 " : ""}{formStreak.count} raka {formStreak.type === "V" ? "vinster" : formStreak.type === "F" ? "förluster" : "oavgjorda"}
+              </span>
+            )}
+          </div>
           {history.map((m, i) => {
             const res = formResult(m);
             const col = formColor(res);
@@ -257,53 +352,8 @@ export default function StatsContent({
         </div>
       )}
 
-      {/* MÅLVAKTSSTATISTIK */}
-      {keeperStats && keeperStats.length > 0 && (
-        <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.15)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
-          <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#a78bfa", marginBottom: 12 }}>🧤 MÅLVAKTSSTATISTIK</div>
-
-          {/* Kolumnhuvud */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, paddingBottom: 8, borderBottom: "1px solid rgba(167,139,250,0.1)", marginBottom: 4 }}>
-            <span style={{ flex: 1, fontSize: FONT.label, color: "#475569" }}>KEEPER</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#a78bfa" }}>MAT</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#f87171" }}>INS</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#22c55e" }}>RÄD</span>
-            <span style={{ width: 32, textAlign: "center", fontSize: FONT.label, color: "#38bdf8" }}>%</span>
-            <span style={{ width: 28, textAlign: "center", fontSize: FONT.label, color: "#fbbf24" }}>NOLL</span>
-          </div>
-
-          {keeperStats.map((k, i) => (
-            <div key={k.name}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: "#fff" }}>{k.name}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#a78bfa", fontWeight: 700 }}>{k.matches}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#f87171" }}>{k.goalsAgainst}</span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#22c55e" }}>{k.saves}</span>
-                <span style={{ width: 32, textAlign: "center", fontSize: 13, color: "#38bdf8", fontWeight: k.savePct !== null ? 700 : 400 }}>
-                  {k.savePct !== null ? k.savePct + "%" : "–"}
-                </span>
-                <span style={{ width: 28, textAlign: "center", fontSize: 13, color: "#fbbf24", fontWeight: 700 }}>{k.cleanSheets}</span>
-              </div>
-              {/* V/O/F + GAA */}
-              <div style={{ display: "flex", gap: 10, padding: "4px 0 8px", borderBottom: i < keeperStats.length - 1 ? "1px solid rgba(167,139,250,0.08)" : "none" }}>
-                <span style={{ fontSize: 11, color: "#22c55e" }}>{k.wins}V</span>
-                <span style={{ fontSize: 11, color: "#fbbf24" }}>{k.draws}O</span>
-                <span style={{ fontSize: 11, color: "#f87171" }}>{k.losses}F</span>
-                {k.gaa !== null && (
-                  <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>GAA {k.gaa}</span>
-                )}
-                {k.shots === 0 && (
-                  <span style={{ fontSize: FONT.label, color: "#475569", marginLeft: "auto", fontStyle: "italic" }}>Skott ej trackade ännu</span>
-                )}
-              </div>
-            </div>
-          ))}
-
-          <div style={{ fontSize: FONT.label, color: "#475569", marginTop: 6 }}>
-            INS = insläppta · RÄD = räddningar · NOLL = nollor (clean sheets) · GAA = mål/match
-          </div>
-        </div>
-      )}
+      {/* MÅLVAKTSSTATISTIK (Sprint 61: inline-block ersatt med KeeperStatsCard — slutför S60-extraktionen) */}
+      <KeeperStatsCard keeperStats={keeperStats} />
 
       {/* ── P12 TRÄNINGSNÄRVARO ─────────────────────────────────────────────── */}
       {attendanceStats.length > 0 && (

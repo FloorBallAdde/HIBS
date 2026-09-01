@@ -97,6 +97,44 @@ export function useSeasonStats(history, players = []) {
       .sort((a, b) => b.matches - a.matches);
   }, [history, players]);
 
+  // ── PER-SPELARE TREND (P2, Sprint 67) ────────────────────────────────────
+  // playerTrends: { [namn]: [{ date, opponent, goals, assists, points }, ...] }
+  // Kronologisk ordning (äldst först). Spelare som deltog i en match utan att
+  // registrera poäng får en 0-post — ärlig trend, inte bara topparna.
+  const playerTrends = useMemo(() => {
+    const pt = {};
+    const chrono = [...history].reverse(); // history är date.desc → vänd till äldst först
+
+    chrono.forEach(m => {
+      const perMatch = {};
+
+      (m.scorers || []).forEach(s => {
+        const name = typeof s === "object" ? s.name : s;
+        const type = typeof s === "object" ? s.type : "goal";
+        if (!perMatch[name]) perMatch[name] = { goals: 0, assists: 0 };
+        if (type === "goal") perMatch[name].goals++;
+        else perMatch[name].assists++;
+      });
+
+      // Deltagare utan poäng → 0-stapel
+      const ids = [
+        ...(Array.isArray(m.players)    ? m.players    : []),
+        ...(Array.isArray(m.goalkeeper) ? m.goalkeeper : []),
+      ];
+      ids.forEach(id => {
+        const pl = players.find(x => x.id === id);
+        if (pl && !perMatch[pl.name]) perMatch[pl.name] = { goals: 0, assists: 0 };
+      });
+
+      Object.entries(perMatch).forEach(([name, v]) => {
+        if (!pt[name]) pt[name] = [];
+        pt[name].push({ date: m.date, opponent: m.opponent, goals: v.goals, assists: v.assists, points: v.goals + v.assists });
+      });
+    });
+
+    return pt;
+  }, [history, players]);
+
   const totalGoals   = useMemo(() => stats.reduce((s, p) => s + p.goals,   0), [stats]);
   const totalAssists = useMemo(() => stats.reduce((s, p) => s + p.assists, 0), [stats]);
   const latestMatch  = history[0] || null;
@@ -115,5 +153,5 @@ export function useSeasonStats(history, players = []) {
     };
   }, [history]);
 
-  return { stats, keeperStats, shotStats, totalGoals, totalAssists, latestMatch };
+  return { stats, keeperStats, shotStats, totalGoals, totalAssists, latestMatch, playerTrends };
 }
