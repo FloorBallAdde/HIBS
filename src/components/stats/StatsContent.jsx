@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FMT, gc, GC, FONT, formResult, formColor } from "../../lib/constants.js";
+import { FMT, gc, GC, FONT, formResult, formColor, SEASONS } from "../../lib/constants.js";
 import KeeperStatsCard from "./KeeperStatsCard.jsx";
 
 /**
@@ -51,6 +51,7 @@ function TrendSparkline({ trend }) {
 export default function StatsContent({
   history, stats, keeperStats, shotStats, totalGoals, totalAssists, players, trainHistory,
   attendance = {}, playerTrends = {},
+  season, setSeason,
 }) {
   const [sortBy, setSortBy] = useState("points");
   const [expanded, setExpanded] = useState(null); // P2 (Sprint 67): spelarnamn med öppen trendgraf
@@ -116,6 +117,21 @@ export default function StatsContent({
 
   return (
     <div>
+
+      {/* Sprint 78: säsongsväljare — styr Hem + Statistik (Mer→Matchhistorik visar alltid allt) */}
+      {setSeason && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          {SEASONS.map(s => (
+            <button
+              key={s}
+              onClick={() => setSeason(s)}
+              style={{ flex: 1, padding: "10px 0", minHeight: 44, border: "1px solid " + (season === s ? "#22c55e" : "rgba(255,255,255,0.07)"), borderRadius: 10, background: season === s ? "rgba(34,197,94,0.1)" : "transparent", color: season === s ? "#22c55e" : "#64748b", fontSize: 12, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}
+            >
+              {s === "Alla" ? "Alla säsonger" : "Säsong " + s}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* SEASON OVERVIEW */}
       <div style={{

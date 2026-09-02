@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import ls from "./lib/storage.js";
 import { sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
-import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
+import { CHECKLIST_INIT, ROADMAP_INIT, CURRENT_SEASON, matchSeason } from "./lib/constants.js";
 import { AppCtx } from "./lib/AppContext.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
@@ -145,8 +145,16 @@ export default function App(){
     setPlayers([]);setHistory([]);setTrainHistory([]);setTrainNotes([]);setExercises([]);
   },[handleSignOut]);
 
+  // Sprint 78: säsongsfilter — Hem/Statistik visar vald säsong (default 26/27),
+  // Mer→Matchhistorik visar fortfarande allt (arkiv).
+  const[season,setSeason]=useState(CURRENT_SEASON);
+  const seasonHistory=useMemo(
+    ()=>season==="Alla"?history:history.filter(m=>matchSeason(m)===season),
+    [history,season]
+  );
+
   // SEASON STATS — must be before early returns (Rules of Hooks)
-  const{stats,keeperStats,shotStats,totalGoals,totalAssists,latestMatch,playerTrends}=useSeasonStats(history,players);
+  const{stats,keeperStats,shotStats,totalGoals,totalAssists,latestMatch,playerTrends}=useSeasonStats(seasonHistory,players);
 
   // P12 ATTENDANCE — Sprint 56: Supabase-synkad (training_attendance) — must be before early returns (Rules of Hooks)
   const { attendance, togglePlayer } = useAttendance({ clubId, tok, uid: auth?.uid });
@@ -224,7 +232,7 @@ export default function App(){
         {tab==="home"&&<HomeContent
           injured={injured} upcomingMatches={upcomingMatches} addUpcoming={addUpcoming} removeUpcoming={removeUpcoming} updateUpcomingRsvp={updateUpcomingRsvp}
           latestMatch={latestMatch} stats={stats} totalGoals={totalGoals} totalAssists={totalAssists}
-          history={history} players={players} trainHistory={trainHistory}
+          history={seasonHistory} players={players} trainHistory={trainHistory}
           trainNoteInput={trainNoteInput} setTrainNoteInput={setTrainNoteInput}
           trainNotes={trainNotes} setTrainNotes={setTrainNotes}
           onGoMatch={()=>setTab("match")}
@@ -237,7 +245,7 @@ export default function App(){
           players={players}
           attendance={attendance}
           onToggleAttendance={togglePlayer}
-          matchFuel={history[0]?.note ? { opponent: history[0].opponent, date: history[0].date, note: history[0].note } : null}
+          matchFuel={seasonHistory[0]?.note ? { opponent: seasonHistory[0].opponent, date: seasonHistory[0].date, note: seasonHistory[0].note } : null}
           trainNotes={trainNotes}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok} exercises={exercises} setExercises={setExercises}/>}
@@ -247,10 +255,11 @@ export default function App(){
           players={players} gkPlayers={gkPlayers} field={field}
         />}
         {tab==="stats"&&<StatsContent
-          history={history} stats={stats} keeperStats={keeperStats} shotStats={shotStats} playerTrends={playerTrends}
+          history={seasonHistory} stats={stats} keeperStats={keeperStats} shotStats={shotStats} playerTrends={playerTrends}
           totalGoals={totalGoals} totalAssists={totalAssists}
           players={players} trainHistory={trainHistory}
           attendance={attendance}
+          season={season} setSeason={setSeason}
         />}
         {/* Sprint 72: clubId/uid/tok/profile/players/updP + sbPatch/sbDel via AppContext/imports */}
         {tab==="mer"&&<MerContent

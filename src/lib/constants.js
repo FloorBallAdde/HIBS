@@ -64,6 +64,14 @@ export const PLABEL = {
   forward: "FWD", vanster: "VA", hoger: "HO", back: "BCK",
 };
 
+// ── Säsonger (Sprint 78) ─────────────────────────────────────────────────────
+// Hem + Statistik filtrerar på säsong (default aktuell); Mer→Matchhistorik visar allt.
+export const CURRENT_SEASON = "26/27";
+export const SEASONS = ["26/27", "25/26", "Alla"];
+// Säsongsgräns 1 aug — matcher utan season-kolumn härleds från datum
+export const seasonOf = (date) => ((date || "") >= "2026-08-01" ? "26/27" : "25/26");
+export const matchSeason = (m) => m.season || seasonOf(m.date);
+
 // Series & groups — säsong 26/27: 14A, 14B, 15A 4vs4 (Sprint 77)
 export const SERIES = ["14A", "14B", "15A 4vs4", "Cupmatch", "Traningsmatch"];
 export const serieColor = (s) =>

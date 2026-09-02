@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-09-02 (Sprint 77 klar)*
+*Senast uppdaterad: 2026-09-02 (Sprint 78 klar)*
 
 ---
 
@@ -211,3 +211,4 @@ hibs-app/
 | 75 | 2026-09-02 | F (Andreas-direkt): Matchlärdomar — MatchLessonsModal ("Vad såg du? 🧠") öppnas direkt efter Avsluta match, före feedback-overlayen; text sparas i matchens befintliga note-kolumn (append, skriver aldrig över) · PlaneraTab visar "🧠 Bensin från senaste matchen" (expanderbar, pre-wrap) överst i bygg-läget via matchFuel-prop — lärdomarna ligger exakt där nästa träning planeras · 0 schema-ändringar; modalen använder AppContext (S72) | 264 → 268 | ✅ Klar |
 | 76 | 2026-09-02 | F (Andreas-direkt): Snabbanteckningar överallt — 🧠-knapp i AppHeader (alla flikar) öppnar QuickNoteSheet: textarea (16px = ingen iOS-zoom) → sparas i training_notes (delas mellan tränarna, samma tabell som Hem-notiserna) · PlaneraTab visar "🧠 Anteckningar att träna på" (trainNotes-prop) tillsammans med matchbensinen — allt underlag för nästa träning på ett ställe · QuickNoteSheet använder AppContext | 268 → 272 | ✅ Klar |
 | 77 | 2026-09-02 | F (Andreas-direkt): Säsongsimport 26/27 — 40 matcher (serier 14A/14B/15A 4vs4 + 5 cuper som cupdagar) importerade till Supabase från laget-kalenderns skärmbilder · Schema-migration: `matches.time` + `matches.venue` (text, nullable) — KÖRD i produktion via Supabase MCP · App: SERIES utökad (14B, 15A 4vs4), delad serieColor()-helper i constants (ersätter två inline-varianter), tid+hall visas i TodayCard/UpcomingMatchCard/MatchStartView, startvyn visar max 5 kommande + räknare · OBS: 5 gamla vårposter (mars–apr) ligger kvar som is_upcoming — Andreas tar bort i appen | 272 → 272 | ✅ Klar |
+| 78 | 2026-09-02 | F (Andreas-direkt): Ren säsongsstart 26/27 — migration `add_season_and_archive_spring` (KÖRD i prod): matches.season backfyllt (gräns 1 aug), 5 kvarblivna vårposter arkiverade (is_upcoming=false — INGET raderat) · App: CURRENT_SEASON/SEASONS/seasonOf/matchSeason i constants, seasonHistory-filter i App.jsx — Hem + Statistik visar vald säsong (default 26/27 = allt nollat), säsongsväljare-chips i Statistik (26/27 · 25/26 · Alla), Mer→Matchhistorik orörd = fullt arkiv, matchFuel följer säsongen · nya matcher får season via datum-inferens | 272 → 279 | ✅ Klar |
