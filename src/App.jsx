@@ -22,6 +22,7 @@ import HomeContent from "./components/home/HomeContent.jsx";
 import StatsContent from "./components/stats/StatsContent.jsx";
 import MatchContent from "./components/match/MatchContent.jsx";
 import MatchNoteModal from "./components/match/MatchNoteModal.jsx";
+import MatchLessonsModal from "./components/match/MatchLessonsModal.jsx";
 import MerContent from "./components/mer/MerContent.jsx";
 import BottomNav from "./components/ui/BottomNav.jsx";
 import ProfilePanel from "./components/ui/ProfilePanel.jsx";
@@ -76,10 +77,12 @@ export default function App(){
 
   const tok=auth?.tok;
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showLessons, setShowLessons] = useState(false); // Sprint 75: "Vad såg du?" efter match
   const clubId=profile?.club_id;
 
   // MATCH SESSION HOOK (encapsulates all match state, persistence & actions)
-  const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory,onMatchEnded:()=>setShowFeedback(true)});
+  // Sprint 75: matchslut → först lärdomsmodal, sedan feedback-overlay
+  const matchSession=useMatchSession({clubId,tok,auth,players,setPlayers,setHistory,onMatchEnded:()=>setShowLessons(true)});
   const{upcomingMatches,addUpcoming,removeUpcoming,updateUpcomingRsvp}=matchSession; // Sprint 69: matchStep-nav flyttad in i MatchContent
 
   // LOAD DATA — silent=true används vid bakgrundspolling (ingen spinner, ingen scroll-reset)
@@ -228,6 +231,7 @@ export default function App(){
           players={players}
           attendance={attendance}
           onToggleAttendance={togglePlayer}
+          matchFuel={history[0]?.note ? { opponent: history[0].opponent, date: history[0].date, note: history[0].note } : null}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok} exercises={exercises} setExercises={setExercises}/>}
         {tab==="traning"&&trainSub==="tavla"&&<TaktiktavlaTab/>}
@@ -256,6 +260,7 @@ export default function App(){
         />}
       </div>
 
+      {showLessons && <MatchLessonsModal match={history[0]} setHistory={setHistory} onClose={()=>{setShowLessons(false);setShowFeedback(true);}} />}
       {showFeedback && <PostMatchFeedback onClose={()=>setShowFeedback(false)} clubId={clubId} uid={auth?.uid} />}
       <BottomNav tab={tab} setTab={(t)=>{setTab(t);if(t==="mer")markObsSeen();if(t!=="mer")setMerSub(null);}} setMerSub={setMerSub} merBadge={unreadObs+pendingCoaches.length}/>
     </div>

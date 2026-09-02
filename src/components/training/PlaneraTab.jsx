@@ -9,8 +9,9 @@ const FMT = d => d ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", m
  * PlaneraTab — Sprint 23: added P12 attendance marking in history view.
  * New props: players, attendance, onToggleAttendance
  */
-export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance }) {
+export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance, matchFuel = null }) {
   const [phase, setPhase] = useState("build");
+  const [fuelOpen, setFuelOpen] = useState(false); // Sprint 75: bensin från senaste matchen
   const [plan, setPlan] = useState(() => ls.get("hibs_plan_draft", []));
   const [note, setNote] = useState(() => ls.get("hibs_plan_note", ""));
   const [picking, setPicking] = useState(false);
@@ -144,6 +145,27 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, 
         <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Dagens träning</div>
         <button onClick={() => setPhase("history")} style={{ fontSize: 11, color: "#4a5568", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Logg</button>
       </div>
+
+      {/* Sprint 75: Bensin från senaste matchen — matchlärdomar direkt där träningen planeras */}
+      {matchFuel && (
+        <div style={{ background: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: 14, marginBottom: 12, overflow: "hidden" }}>
+          <button
+            onClick={() => setFuelOpen(o => !o)}
+            style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", minHeight: 44, background: "transparent", border: "none", fontFamily: "inherit", cursor: "pointer", textAlign: "left" }}
+          >
+            <span style={{ fontSize: 16, flexShrink: 0 }}>🧠</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 800, color: "#fbbf24" }}>
+              BENSIN FRÅN SENASTE MATCHEN — vs {matchFuel.opponent} {FMT(matchFuel.date)}
+            </span>
+            <span style={{ color: "#fbbf24", fontSize: 12, flexShrink: 0 }}>{fuelOpen ? "▾" : "▸"}</span>
+          </button>
+          {fuelOpen && (
+            <div style={{ padding: "0 14px 12px", fontSize: 13, color: "#e2d9b8", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+              {matchFuel.note}
+            </div>
+          )}
+        </div>
+      )}
       {plan.length > 0 && <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>{plan.length} övningar</span><span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>{totalMin} min</span></div>}
       {plan.length === 0 && !picking && <div style={{ textAlign: "center", padding: "28px 0 12px", color: "#475569", fontSize: 13 }}>Tryck + för att lägga till övningar.</div>}
       {plan.map((item, idx) => { const cc = CAT_COLOR[item.exercise.category] || "#64748b"; const isExp = expandedId === item.id; return (
