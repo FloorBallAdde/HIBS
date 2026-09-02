@@ -56,7 +56,7 @@ export default function FormationCard({
             style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, color: "#fff", fontSize: 13, padding: "4px 8px", fontFamily: "inherit", outline: "none", width: 120 }}
           />
         ) : (
-          <span onClick={() => setEditName(true)} style={{ fontSize: 13, fontWeight: 800, color: "#fff", cursor: "pointer" }}>
+          <span onClick={() => setEditName(true)} style={{ fontSize: 13, fontWeight: 800, color: "#fff", cursor: "pointer", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {line.name}
           </span>
         )}
@@ -125,7 +125,7 @@ export default function FormationCard({
                 <div
                   onTouchMove={touchSwap?.onTouchMove}
                   onTouchEnd={touchSwap?.onTouchEnd}
-                  style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, userSelect: "none" }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0, userSelect: "none" }}
                 >
                   {/* ⠿ Drag-handtag — ENDA elementet som startar drag */}
                   <span
@@ -156,7 +156,7 @@ export default function FormationCard({
                 </div>
               ) : (
                 /* Tom slot — knapplista */
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, flex: 1 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, flex: 1, minWidth: 0 }}>
                   {available
                     .filter(p => p.role !== "malvakt" && !Object.values(line.slots).includes(p.id))
                     .map(p => (

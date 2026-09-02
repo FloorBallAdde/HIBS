@@ -9,6 +9,13 @@
   box-sizing: border-box;
 }
 
+/* Mobilapp = aldrig horisontell scroll. Skyddar mot att någon
+   flex-rad eller lång text trycker layouten utanför skärmen. */
+html, body, #root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Ta bort iOS blå tap-highlight — ser billig ut på mobile */
 * {
   -webkit-tap-highlight-color: transparent;

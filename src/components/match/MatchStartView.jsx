@@ -58,8 +58,8 @@ export default function MatchStartView({ upcomingMatches, cupMode, onSchedule, o
                   display: "flex", alignItems: "center", gap: 12,
                 }}
               >
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: FONT.title, fontWeight: 900 }}>vs {m.opponent}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: FONT.title, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>vs {m.opponent}</div>
                   <div style={{ fontSize: FONT.body, color: "#94a3b8", marginTop: 3 }}>
                     {FMT(m.date)}
                     {rsvpCount > 0 && <span style={{ color: "#22c55e" }}> · {rsvpCount} anmälda</span>}
