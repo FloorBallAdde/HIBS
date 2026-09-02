@@ -6,7 +6,11 @@ import QuickStatsStrip from "./QuickStatsStrip.jsx";
 import FormStrip from "./FormStrip.jsx";
 import TopScorers from "./TopScorers.jsx";
 import LatestTrainings from "./LatestTrainings.jsx";
+import TodayCard from "./TodayCard.jsx";
+import LatestMessageCard from "./LatestMessageCard.jsx";
 import { sbPost, sbDel } from "../../lib/supabase.js";
+import { useApp } from "../../lib/AppContext.jsx";
+import { FONT } from "../../lib/constants.js";
 
 /**
  * HomeContent — Sprint 10 redesign.
@@ -17,8 +21,10 @@ export default function HomeContent({
   stats, totalGoals, totalAssists, history, players,
   trainHistory,
   trainNoteInput, setTrainNoteInput, trainNotes, setTrainNotes,
-  clubId, uid, tok,
+  onGoMatch, onOpenMessages,
 }) {
+  // Sprint 72: clubId/uid/tok via AppContext
+  const { clubId, uid, tok } = useApp();
   const addNote = () => {
     if (!trainNoteInput.trim()) return;
     const txt = trainNoteInput.trim();
@@ -31,12 +37,18 @@ export default function HomeContent({
 
   return (
     <div className="hibs-tab-content">
+      {/* MATCH IDAG — dagsstyrt handlingskort (Sprint 70) */}
+      <TodayCard upcomingMatches={upcomingMatches} onGoMatch={onGoMatch} />
+
+      {/* SENASTE LAGMEDDELANDE (Sprint 71) */}
+      <LatestMessageCard clubId={clubId} tok={tok} onOpenMessages={onOpenMessages} />
+
       {/* INJURED ALERT */}
       {injured.length > 0 && (
         <div style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.22)", borderRadius: 14, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚠️</span>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: "#f87171", marginBottom: 2 }}>SKADADE</div>
+            <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#f87171", marginBottom: 2 }}>SKADADE</div>
             <div style={{ fontSize: 12, color: "#fca5a5" }}>{injured.map(p => p.name).join(", ")}</div>
           </div>
         </div>
@@ -76,7 +88,7 @@ export default function HomeContent({
 
       {/* TRÄNINGSNOTISER */}
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 10 }}>TRÄNINGSNOTISER</div>
+        <div style={{ fontSize: FONT.label, fontWeight: 700, color: "#64748b", marginBottom: 10 }}>TRÄNINGSNOTISER</div>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <StableInput value={trainNoteInput} onChange={e => setTrainNoteInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addNote(); }} placeholder="Något att ta upp på träning..." style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "9px 12px", fontFamily: "inherit", outline: "none" }} />
           <button onClick={addNote} style={{ padding: "9px 14px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 10, color: "#22c55e", fontSize: 18, fontFamily: "inherit", cursor: "pointer", fontWeight: 300 }}>+</button>

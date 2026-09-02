@@ -1,6 +1,7 @@
+import { useApp } from "../../lib/AppContext.jsx";
+import { sbPatch, sbDel } from "../../lib/supabase.js";
 import TeamMessages from "./TeamMessages.jsx";
 import MatchHistoryView from "./MatchHistoryView.jsx";
-import GrupperDnD from "./GrupperDnD.jsx";
 import FeedbackTrend from "./FeedbackTrend.jsx";
 import ParentInvite from "./ParentInvite.jsx";
 import PlayerListView from "./PlayerListView.jsx";
@@ -16,14 +17,15 @@ export default function MerContent({
   pendingCoaches, setPendingCoaches,
   coachStaff, setCoachStaff,
   merSub, setMerSub,
-  players, filterGroup, setFilterGroup,
+  filterGroup, setFilterGroup,
   setNoteModal, setGoalModal, setObsModal,
   checklist, setChecklist,
   history, setHistory, setMatchNoteModal,
   roadmap, setRoadmap, openPeriod, setOpenPeriod,
-  tok, sbPatch, sbDel, updP,
-  clubId, uid, profile,
 }) {
+  // Sprint 72: delad state via AppContext i stället för 8 extra props
+  const { clubId, uid, tok, profile, players, updP } = useApp();
+
   return (
     <div>
       {pendingCoaches.length > 0 && !merSub && (
@@ -53,12 +55,13 @@ export default function MerContent({
       )}
       {!merSub && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Sprint 71: sorterad efter användningsfrekvens. Sprint 74: "Grupper & kedjor"
+              borttagen — grupper hanteras numera enbart i Träning → Kedjor. */}
           {[
             ["meddelanden",   "💬", "Meddelanden",        "Lagmeddelanden mellan tränare"],
             ["spelare",       "👥", "Spelarlista",        "Se alla spelare, noter och observationer"],
-            ["grupper",       "🔀", "Grupper & kedjor",   "Placera spelare i grupp A, B, C eller MV"],
-            ["lagmal",        "🎯", "Lagmål och checklist","Säsongens mål och checklistor"],
             ["matchhistorik", "📊", "Matchhistorik",      "Alla spelade matcher"],
+            ["lagmal",        "🎯", "Lagmål och checklist","Säsongens mål och checklistor"],
             ["sasongsplan",   "🗓", "Säsongsplan",        "Periodsplan för säsongen"],
             ["foraldrainbjud","👪", "Bjud in föräldrar",  "Dela en länk så föräldrar kan logga in"],
           ].map(([id, icon, label, desc]) => (
@@ -89,8 +92,6 @@ export default function MerContent({
           updP={updP}
         />
       )}
-
-      {merSub === "grupper" && <GrupperDnD players={players} updP={updP} />}
 
       {merSub === "lagmal" && (
         <ChecklistView checklist={checklist} setChecklist={setChecklist} />

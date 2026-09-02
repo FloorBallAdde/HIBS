@@ -2,6 +2,7 @@ import { FMT, FONT } from "../../lib/constants.js";
 import SubstitutionPanel from "./SubstitutionPanel.jsx";
 import MatchShotStats from "./MatchShotStats.jsx";
 import ScoringPanel from "./ScoringPanel.jsx";
+import ConfirmDialog from "../ui/ConfirmDialog.jsx";
 
 /**
  * LiveMatchView — live-match-vy under pågående match.
@@ -273,39 +274,17 @@ export default function LiveMatchView({
         </button>
       </div>
 
-      {/* Bekräfta avbryt */}
+      {/* Bekräfta avbryt — delad ConfirmDialog (Sprint 73) */}
       {confirmAbort && (
-        <div
-          onClick={() => setConfirmAbort(false)}
-          className="hibs-overlay"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="hibs-dialog"
-            style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
-          >
-            <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Avbryta matchen?</div>
-            <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
-              Resultat och målgörare sparas inte.
-              {cupMode && " Trupp och kedjor behålls (cup-läge)."}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setConfirmAbort(false)}
-                style={{ flex: 1, padding: "12px 0", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, background: "transparent", color: "#64748b", fontSize: 13, fontFamily: "inherit", cursor: "pointer" }}
-              >
-                Fortsätt
-              </button>
-              <button
-                onClick={abortMatch}
-                style={{ flex: 2, padding: "12px 0", border: "none", borderRadius: 12, background: "#f87171", color: "#fff", fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}
-              >
-                Ja, avbryt
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Avbryta matchen?"
+          body={"Resultat och målgörare sparas inte." + (cupMode ? " Trupp och kedjor behålls (cup-läge)." : "")}
+          cancelLabel="Fortsätt"
+          confirmLabel="Ja, avbryt"
+          danger
+          onCancel={() => setConfirmAbort(false)}
+          onConfirm={abortMatch}
+        />
       )}
     </div>
   );

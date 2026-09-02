@@ -1,15 +1,21 @@
-import { GROUPS, gc, FITNESS_META, nextFitness } from "../../lib/constants.js";
+import { useState } from "react";
+import { GROUPS, GC, gc, FITNESS_META, nextFitness } from "../../lib/constants.js";
 
 /**
  * PlayerListView — Spelarlistan i Mer-fliken.
  * Extraherad från MerContent.jsx i Sprint 35.
  * Visar spelare med gruppfilter, fitness-badge, noter och action-knappar.
+ * Sprint 74: gruppbyte flyttat hit (tryck på Gr.X) — ersätter Mer → Grupper & kedjor.
  */
 export default function PlayerListView({
   players, filterGroup, setFilterGroup,
   setNoteModal, setGoalModal, setObsModal,
   updP,
 }) {
+  // Sprint 74: vilken spelares grupp-picker som är öppen (id eller null)
+  const [pickerFor, setPickerFor] = useState(null);
+  const ALL_GROUPS = [...GROUPS, "MV"];
+
   return (
     <div>
       <div style={{ display: "flex", gap: 6, marginBottom: 14, overflowX: "auto", paddingBottom: 2 }}>
@@ -46,7 +52,14 @@ export default function PlayerListView({
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                    <span style={{ fontSize: 10, color: pgc.color }}>Gr.{p.group} · {p.matches || 0} m</span>
+                    <button
+                      onClick={() => setPickerFor(f => f === p.id ? null : p.id)}
+                      title="Tryck för att byta grupp"
+                      style={{ padding: "1px 5px", borderRadius: 99, background: "transparent", border: "1px dashed " + pgc.color + "50", color: pgc.color, fontSize: 10, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}
+                    >
+                      Gr.{p.group} ▾
+                    </button>
+                    <span style={{ fontSize: 10, color: "#4a5568" }}>{p.matches || 0} m</span>
                     {/* Fitness badge — tap to cycle */}
                     <button
                       onClick={() => updP(p.id, { fitness: nextFitness(p.fitness) })}
@@ -67,6 +80,24 @@ export default function PlayerListView({
                 <button onClick={() => setGoalModal(p)} title="Individuella mål" style={{ padding: "6px 8px", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 8, color: "#a78bfa", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>🎯</button>
               </div>
             </div>
+            {/* Sprint 74: inline grupp-picker A–E/MV */}
+            {pickerFor === p.id && (
+              <div style={{ display: "flex", gap: 6, marginTop: 8, marginBottom: hasNote ? 8 : 0 }}>
+                {ALL_GROUPS.map(ng => {
+                  const ngc = GC[ng] || GC._;
+                  const active = p.group === ng;
+                  return (
+                    <button
+                      key={ng}
+                      onClick={() => { updP(p.id, { group: ng }); setPickerFor(null); }}
+                      style={{ flex: 1, minHeight: 40, border: "1.5px solid " + (active ? ngc.color : "rgba(255,255,255,0.1)"), borderRadius: 9, background: active ? ngc.bg : "transparent", color: active ? ngc.color : "#4a5568", fontSize: 11, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}
+                    >
+                      {ng}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {hasNote && <div style={{ fontSize: 12, color: p.note.startsWith("⚠") ? "#fca5a5" : "#64748b", background: p.note.startsWith("⚠") ? "rgba(248,113,113,0.06)" : "rgba(255,255,255,0.02)", borderRadius: 8, padding: "6px 10px" }}>{p.note}</div>}
           </div>
         );

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import ls from "./lib/storage.js";
 import { sbGet, sbPost, sbPatch, sbDel } from "./lib/supabase.js";
 import { CHECKLIST_INIT, ROADMAP_INIT } from "./lib/constants.js";
+import { AppCtx } from "./lib/AppContext.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useMatchSession } from "./hooks/useMatchSession.js";
 import { useSeasonStats } from "./hooks/useSeasonStats.js";
@@ -166,6 +167,7 @@ export default function App(){
   };
 
   return(
+    <AppCtx.Provider value={{clubId,uid:auth.uid,tok,profile,players,setPlayers,updP}}>
     <div style={{minHeight:"100vh",background:"#0b0d14",fontFamily:"system-ui,sans-serif",color:"#fff",paddingBottom:72}}>
       {noteModal&&<NoteModal player={noteModal} onClose={()=>setNoteModal(null)} onSave={async text=>{await updP(noteModal.id,{note:text});setNoteModal(null);}}/>}
       {goalModal&&<GoalModal player={goalModal} onClose={()=>setGoalModal(null)} onSave={async goals=>{await updP(goalModal.id,{goals});}}/>}
@@ -216,7 +218,8 @@ export default function App(){
           history={history} players={players} trainHistory={trainHistory}
           trainNoteInput={trainNoteInput} setTrainNoteInput={setTrainNoteInput}
           trainNotes={trainNotes} setTrainNotes={setTrainNotes}
-          clubId={clubId} uid={auth.uid} tok={tok}
+          onGoMatch={()=>setTab("match")}
+          onOpenMessages={()=>{setTab("mer");setMerSub("meddelanden");}}
         />}
         {tab==="traning"&&trainSub==="kedjor"&&<KedjorTab players={players} onUpdatePlayerGroup={async(id,group)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,group}:x));await sbPatch("players",id,{group},tok);}}/>}
         {tab==="traning"&&trainSub==="planera"&&<PlaneraTab exercises={exercises} trainHistory={trainHistory}
@@ -238,24 +241,24 @@ export default function App(){
           players={players} trainHistory={trainHistory}
           attendance={attendance}
         />}
+        {/* Sprint 72: clubId/uid/tok/profile/players/updP + sbPatch/sbDel via AppContext/imports */}
         {tab==="mer"&&<MerContent
           pendingCoaches={pendingCoaches} setPendingCoaches={setPendingCoaches}
           coachStaff={coachStaff} setCoachStaff={setCoachStaff}
           merSub={merSub} setMerSub={setMerSub}
-          players={players} filterGroup={filterGroup} setFilterGroup={setFilterGroup}
+          filterGroup={filterGroup} setFilterGroup={setFilterGroup}
           setNoteModal={setNoteModal} setGoalModal={setGoalModal} setObsModal={setObsModal}
           checklist={checklist} setChecklist={setChecklist}
           history={history} setHistory={setHistory}
           setMatchNoteModal={setMatchNoteModal}
           roadmap={roadmap} setRoadmap={setRoadmap}
           openPeriod={openPeriod} setOpenPeriod={setOpenPeriod}
-          tok={tok} sbPatch={sbPatch} sbDel={sbDel} updP={updP}
-          clubId={clubId} uid={auth.uid} profile={profile}
         />}
       </div>
 
       {showFeedback && <PostMatchFeedback onClose={()=>setShowFeedback(false)} clubId={clubId} uid={auth?.uid} />}
       <BottomNav tab={tab} setTab={(t)=>{setTab(t);if(t==="mer")markObsSeen();if(t!=="mer")setMerSub(null);}} setMerSub={setMerSub} merBadge={unreadObs+pendingCoaches.length}/>
     </div>
+    </AppCtx.Provider>
   );
 }

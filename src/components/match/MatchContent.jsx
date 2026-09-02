@@ -7,6 +7,7 @@ import MatchStartView from "./MatchStartView.jsx";
 import MatchStepBar from "./MatchStepBar.jsx";
 import MatchSetupStep from "./MatchSetupStep.jsx";
 import MatchSquadSection from "./MatchSquadSection.jsx";
+import ConfirmDialog from "../ui/ConfirmDialog.jsx";
 import { useTouchSwap } from "../../hooks/useTouchSwap.js";
 
 /**
@@ -283,38 +284,16 @@ export default function MatchContent({
         </button>
       </div>
 
-      {/* Bekräfta inga kedjor */}
+      {/* Bekräfta inga kedjor — delad ConfirmDialog (Sprint 73) */}
       {confirmNoLines && (
-        <div
-          onClick={() => setConfirmNoLines(false)}
-          className="hibs-overlay"
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="hibs-dialog"
-            style={{ background: "#161926", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: 24, width: "100%", maxWidth: 360 }}
-          >
-            <div style={{ fontSize: FONT.title, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Inga kedjor satta!</div>
-            <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20 }}>
-              Du har inte satt upp kedjor för den här matchen. Vill du sätta kedjor eller starta ändå?
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setConfirmNoLines(false)}
-                style={{ flex: 1, padding: "13px 0", border: "1px solid rgba(167,139,250,0.4)", borderRadius: 12, background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
-              >
-                Sätt kedjor
-              </button>
-              <button
-                onClick={() => { setConfirmNoLines(false); startMatch(); }}
-                style={{ flex: 1, padding: "13px 0", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#fff", fontSize: 13, fontWeight: 800, fontFamily: "inherit", cursor: "pointer" }}
-              >
-                Starta ändå
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Inga kedjor satta!"
+          body="Du har inte satt upp kedjor för den här matchen. Vill du sätta kedjor eller starta ändå?"
+          cancelLabel="Sätt kedjor"
+          confirmLabel="Starta ändå"
+          onCancel={() => setConfirmNoLines(false)}
+          onConfirm={() => { setConfirmNoLines(false); startMatch(); }}
+        />
       )}
     </div>
   );
