@@ -9,7 +9,7 @@ const FMT = d => d ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", m
  * PlaneraTab — Sprint 23: added P12 attendance marking in history view.
  * New props: players, attendance, onToggleAttendance
  */
-export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance, matchFuel = null }) {
+export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance, matchFuel = null, trainNotes = [] }) {
   const [phase, setPhase] = useState("build");
   const [fuelOpen, setFuelOpen] = useState(false); // Sprint 75: bensin från senaste matchen
   const [plan, setPlan] = useState(() => ls.get("hibs_plan_draft", []));
@@ -164,6 +164,19 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, 
               {matchFuel.note}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Sprint 76: snabbanteckningar (🧠 i headern) — samma bensin, alltid synliga här */}
+      {trainNotes.length > 0 && (
+        <div style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 14, padding: "12px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#22c55e", marginBottom: 8 }}>🧠 ANTECKNINGAR ATT TRÄNA PÅ</div>
+          {trainNotes.map(n => (
+            <div key={n.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", marginTop: 7, flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: "#cbd5e1", lineHeight: 1.5 }}>{n.text}</span>
+            </div>
+          ))}
         </div>
       )}
       {plan.length > 0 && <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>{plan.length} övningar</span><span style={{ fontSize: 12, color: "#22c55e", fontWeight: 700 }}>{totalMin} min</span></div>}

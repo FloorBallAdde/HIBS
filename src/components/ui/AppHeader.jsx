@@ -1,9 +1,10 @@
 /**
  * AppHeader — Sprint 23 refactoring.
  * Extracted from App.jsx (was inline sticky header block).
- * Props: profile, tab, merSub, onBack, onProfileOpen
+ * Props: profile, tab, merSub, onBack, onProfileOpen, onQuickNote
+ * Sprint 76: 🧠-knapp — snabbanteckning nåbar från varje flik.
  */
-export default function AppHeader({ profile, tab, merSub, onBack, onProfileOpen }) {
+export default function AppHeader({ profile, tab, merSub, onBack, onProfileOpen, onQuickNote }) {
   const roleColor   = profile?.role === "owner" ? "#a78bfa" : profile?.role === "admin" ? "#60a5fa" : "#22c55e";
   const roleBg      = profile?.role === "owner" ? "rgba(167,139,250,0.1)" : profile?.role === "admin" ? "rgba(96,165,250,0.1)" : "rgba(34,197,94,0.1)";
   const roleBorder  = profile?.role === "owner" ? "rgba(167,139,250,0.3)" : profile?.role === "admin" ? "rgba(96,165,250,0.3)" : "rgba(34,197,94,0.3)";
@@ -36,7 +37,23 @@ export default function AppHeader({ profile, tab, merSub, onBack, onProfileOpen 
         </div>
       </div>
 
-      {/* Right action — back button or profile avatar */}
+      {/* Right actions — quick note + (back button eller profil) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <button
+        onClick={onQuickNote}
+        title="Snabbanteckning — delas med tränarna"
+        aria-label="Snabbanteckning"
+        style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: "rgba(251,191,36,0.12)",
+          border: "1.5px solid rgba(251,191,36,0.3)",
+          fontSize: 16, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "inherit", flexShrink: 0, padding: 0,
+        }}
+      >
+        🧠
+      </button>
       {tab === "mer" && merSub
         ? <button
             onClick={onBack}
@@ -68,6 +85,7 @@ export default function AppHeader({ profile, tab, merSub, onBack, onProfileOpen 
             </span>
           </button>
       }
+      </div>
     </div>
   );
 }

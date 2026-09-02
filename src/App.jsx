@@ -23,6 +23,7 @@ import StatsContent from "./components/stats/StatsContent.jsx";
 import MatchContent from "./components/match/MatchContent.jsx";
 import MatchNoteModal from "./components/match/MatchNoteModal.jsx";
 import MatchLessonsModal from "./components/match/MatchLessonsModal.jsx";
+import QuickNoteSheet from "./components/ui/QuickNoteSheet.jsx";
 import MerContent from "./components/mer/MerContent.jsx";
 import BottomNav from "./components/ui/BottomNav.jsx";
 import ProfilePanel from "./components/ui/ProfilePanel.jsx";
@@ -78,6 +79,7 @@ export default function App(){
   const tok=auth?.tok;
   const [showFeedback, setShowFeedback] = useState(false);
   const [showLessons, setShowLessons] = useState(false); // Sprint 75: "Vad såg du?" efter match
+  const [showQuickNote, setShowQuickNote] = useState(false); // Sprint 76: 🧠 snabbanteckning
   const clubId=profile?.club_id;
 
   // MATCH SESSION HOOK (encapsulates all match state, persistence & actions)
@@ -201,7 +203,11 @@ export default function App(){
         merSub={merSub}
         onBack={()=>setMerSub(null)}
         onProfileOpen={()=>setProfileOpen(true)}
+        onQuickNote={()=>setShowQuickNote(true)}
       />
+
+      {/* Sprint 76: snabbanteckning från var som helst */}
+      {showQuickNote && <QuickNoteSheet onSaved={n=>setTrainNotes(p=>[n,...p])} onClose={()=>setShowQuickNote(false)} />}
 
       <div style={{padding:"16px 16px 0"}}>
         {tab==="traning"&&(
@@ -232,6 +238,7 @@ export default function App(){
           attendance={attendance}
           onToggleAttendance={togglePlayer}
           matchFuel={history[0]?.note ? { opponent: history[0].opponent, date: history[0].date, note: history[0].note } : null}
+          trainNotes={trainNotes}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok} exercises={exercises} setExercises={setExercises}/>}
         {tab==="traning"&&trainSub==="tavla"&&<TaktiktavlaTab/>}
