@@ -1,7 +1,7 @@
 import { useState } from "react";
 import StableInput from "../ui/StableInput.jsx";
 import MatchRsvpModal from "./MatchRsvpModal.jsx";
-import { SERIES, FMT, TODAY } from "../../lib/constants.js";
+import { SERIES, FMT, TODAY, serieColor } from "../../lib/constants.js";
 
 /**
  * UpcomingMatchCard — visar nästa planerade match, lista med kommande matcher
@@ -66,13 +66,13 @@ export default function UpcomingMatchCard({ upcomingMatches, addUpcoming, remove
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
               {(() => {
-                const sc = nextMatch.serie === "14A" ? "#f472b6" : nextMatch.serie === "15A" ? "#38bdf8" : "#fbbf24";
+                const sc = serieColor(nextMatch.serie);
                 return <span style={{ fontSize: 11, fontWeight: 800, color: sc, background: sc + "18", border: "1px solid " + sc + "40", borderRadius: 99, padding: "1px 8px" }}>{nextMatch.serie}</span>;
               })()}
               <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>vs {nextMatch.opponent}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 12, color: "#64748b" }}>{FMT(nextMatch.date)}</span>
+              <span style={{ fontSize: 12, color: "#64748b" }}>{FMT(nextMatch.date)}{nextMatch.time ? " · " + nextMatch.time : ""}{nextMatch.venue ? " · " + nextMatch.venue : ""}</span>
               {daysUntil === 0 && <span style={{ fontSize: 12, fontWeight: 800, color: "#22c55e", background: "rgba(34,197,94,0.1)", borderRadius: 99, padding: "2px 10px" }}>Idag! 🏑</span>}
               {daysUntil === 1 && <span style={{ fontSize: 12, fontWeight: 800, color: "#fbbf24", background: "rgba(251,191,36,0.1)", borderRadius: 99, padding: "2px 10px" }}>Imorgon</span>}
               {daysUntil > 1 && <span style={{ fontSize: 12, color: "#64748b" }}>om {daysUntil} dagar</span>}
@@ -86,7 +86,7 @@ export default function UpcomingMatchCard({ upcomingMatches, addUpcoming, remove
             </div>
             {upcomingMatches.filter(m => m.id !== nextMatch.id).slice(0, 2).map(m => {
               const d = Math.ceil((new Date(m.date) - today) / (1000 * 60 * 60 * 24));
-              const sc2 = m.serie === "14A" ? "#f472b6" : m.serie === "15A" ? "#38bdf8" : "#fbbf24";
+              const sc2 = serieColor(m.serie);
               return (
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                   <span style={{ fontSize: 10, color: sc2, background: sc2 + "18", borderRadius: 99, padding: "1px 7px", fontWeight: 700 }}>{m.serie}</span>

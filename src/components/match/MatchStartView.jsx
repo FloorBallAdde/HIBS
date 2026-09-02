@@ -1,4 +1,4 @@
-import { FMT, FONT } from "../../lib/constants.js";
+import { FMT, FONT, serieColor } from "../../lib/constants.js";
 
 /**
  * MatchStartView — landningsvyn för Match-fliken (Sprint 69).
@@ -13,7 +13,6 @@ import { FMT, FONT } from "../../lib/constants.js";
  *   onCupContinue   — () => void       (direkt till Kedjor — trupp sparad)
  */
 export default function MatchStartView({ upcomingMatches, cupMode, onSchedule, onNew, onCupContinue }) {
-  const serieColor = (s) => s === "14A" ? "#f472b6" : s === "15A" ? "#38bdf8" : "#fbbf24";
 
   return (
     <div>
@@ -43,7 +42,8 @@ export default function MatchStartView({ upcomingMatches, cupMode, onSchedule, o
       {upcomingMatches && upcomingMatches.length > 0 && (
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: FONT.label, color: "#64748b", fontWeight: 700, marginBottom: 8 }}>FRÅN SCHEMAT — TRYCK FÖR ATT STARTA</div>
-          {upcomingMatches.map(m => {
+          {/* Sprint 77: visa bara de 5 närmaste — hela säsongen ligger i schemat */}
+          {upcomingMatches.slice(0, 5).map(m => {
             const sc = serieColor(m.serie);
             const rsvpCount = Array.isArray(m.rsvp) ? m.rsvp.length : 0;
             return (
@@ -61,7 +61,7 @@ export default function MatchStartView({ upcomingMatches, cupMode, onSchedule, o
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: FONT.title, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>vs {m.opponent}</div>
                   <div style={{ fontSize: FONT.body, color: "#94a3b8", marginTop: 3 }}>
-                    {FMT(m.date)}
+                    {FMT(m.date)}{m.time ? " " + m.time : ""}{m.venue ? " · " + m.venue : ""}
                     {rsvpCount > 0 && <span style={{ color: "#22c55e" }}> · {rsvpCount} anmälda</span>}
                   </div>
                 </div>
@@ -70,6 +70,11 @@ export default function MatchStartView({ upcomingMatches, cupMode, onSchedule, o
               </button>
             );
           })}
+          {upcomingMatches.length > 5 && (
+            <div style={{ fontSize: FONT.label, color: "#475569", textAlign: "center", padding: "2px 0 4px" }}>
+              + {upcomingMatches.length - 5} matcher till i säsongen
+            </div>
+          )}
         </div>
       )}
 

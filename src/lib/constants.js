@@ -64,8 +64,13 @@ export const PLABEL = {
   forward: "FWD", vanster: "VA", hoger: "HO", back: "BCK",
 };
 
-// Series & groups
-export const SERIES = ["14A", "15A", "Cupmatch", "Traningsmatch"];
+// Series & groups — säsong 26/27: 14A, 14B, 15A 4vs4 (Sprint 77)
+export const SERIES = ["14A", "14B", "15A 4vs4", "Cupmatch", "Traningsmatch"];
+export const serieColor = (s) =>
+  s === "14A" ? "#f472b6"
+  : s === "14B" ? "#a78bfa"
+  : (s || "").startsWith("15A") ? "#38bdf8"
+  : "#fbbf24";
 export const GROUPS = ["A", "B", "C", "D", "E"];
 
 // Exercise categories
