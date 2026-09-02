@@ -15,6 +15,7 @@ export default function UpcomingMatchCard({ upcomingMatches, addUpcoming, remove
   const [newDate, setNewDate] = useState(TODAY());
   const [newSerie, setNewSerie] = useState("14A");
   const [rsvpMatchId, setRsvpMatchId] = useState(null);
+  const [showAll, setShowAll] = useState(false); // Sprint 80: hela säsongskalendern
 
   const rsvpMatch = rsvpMatchId ? upcomingMatches.find(m => m.id === rsvpMatchId) : null;
 
@@ -30,8 +31,8 @@ export default function UpcomingMatchCard({ upcomingMatches, addUpcoming, remove
   const nextMatch = future[0];
   const daysUntil = nextMatch ? Math.ceil((new Date(nextMatch.date) - today) / (1000 * 60 * 60 * 24)) : null;
 
-  // Agenda: händelser efter nästa, grupperade per dag (max 6)
-  const agenda = future.slice(1, 7);
+  // Agenda: händelser efter nästa, grupperade per dag (6 st, eller alla vid Visa hela)
+  const agenda = showAll ? future.slice(1) : future.slice(1, 7);
   const groups = [];
   agenda.forEach(m => {
     const g = groups[groups.length - 1];
@@ -121,9 +122,12 @@ export default function UpcomingMatchCard({ upcomingMatches, addUpcoming, remove
               </div>
             ))}
             {future.length > 7 && (
-              <div style={{ fontSize: 10, color: "#475569", textAlign: "center", paddingTop: 8 }}>
-                + {future.length - 7} händelser till i säsongen
-              </div>
+              <button
+                onClick={() => setShowAll(a => !a)}
+                style={{ width: "100%", marginTop: 8, padding: "11px 0", minHeight: 44, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 10, background: "transparent", color: "#64748b", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}
+              >
+                {showAll ? "▲ Visa färre" : `▼ Visa hela kalendern (${future.length} händelser)`}
+              </button>
             )}
           </div>
         ) : !showAddForm && (

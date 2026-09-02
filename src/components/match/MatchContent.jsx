@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { mkLine, FONT } from "../../lib/constants.js";
+import { mkLine, FONT, isCup } from "../../lib/constants.js";
 import StableInput from "../ui/StableInput.jsx";
 import FormationCard from "./FormationCard.jsx";
 import LiveMatchView from "./LiveMatchView.jsx";
@@ -69,12 +69,19 @@ export default function MatchContent({
   const onSchedule = (m) => {
     loadFromSchedule(m); // sätter motståndare/datum/serie + ev. RSVP-trupp, steg "select"
     if (!Array.isArray(m.rsvp) || m.rsvp.length === 0) autoSelectAll();
+    // Sprint 80: cupkort → aktivera cup-läge automatiskt (trupp+kedjor sparas mellan
+    // matcherna) och lämna motståndaren tom — cupnamnet är ingen motståndare.
+    if (isCup(m)) {
+      setCupMode(true);
+      setOpponent("");
+    }
   };
 
   const canGo = (stepId) => {
     if (stepId === "setup") return true;
-    if (stepId === "select") return opponent.trim().length > 0;
-    return opponent.trim().length > 0 && selected.size > 0; // lines
+    // Cup-läge: motståndaren fylls i per match i kedje-vyn — kräv den inte här
+    if (stepId === "select") return cupMode || opponent.trim().length > 0;
+    return (cupMode || opponent.trim().length > 0) && selected.size > 0; // lines
   };
 
   const onStep = (stepId) => {

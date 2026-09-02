@@ -5,7 +5,6 @@ import LatestMatchCard from "./LatestMatchCard.jsx";
 import QuickStatsStrip from "./QuickStatsStrip.jsx";
 import FormStrip from "./FormStrip.jsx";
 import TopScorers from "./TopScorers.jsx";
-import LatestTrainings from "./LatestTrainings.jsx";
 import TodayCard from "./TodayCard.jsx";
 import LatestMessageCard from "./LatestMessageCard.jsx";
 import { sbPost, sbDel } from "../../lib/supabase.js";
@@ -82,8 +81,8 @@ export default function HomeContent({
         </>
       )}
 
-      {/* SENASTE TRÄNINGAR */}
-      <LatestTrainings trainHistory={trainHistory} />
+      {/* Sprint 80: "Senaste träningar" borttagen från Hem — dubblerade Träning→Planera→Logg
+          och snittminuter per övning var mer förvirrande än användbart här. */}
 
       {/* TRÄNINGSNOTISER */}
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px", marginBottom: 16 }}>

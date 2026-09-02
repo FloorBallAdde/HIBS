@@ -23,9 +23,11 @@ export default function MatchSquadSection({
 
   return (
     <div>
-      {/* Sammanfattning från steg 1 */}
+      {/* Sammanfattning från steg 1 — cupdag saknar motståndare (fylls i per match) */}
       <div style={{ fontSize: FONT.body, color: "#94a3b8", marginBottom: 14 }}>
-        vs <span style={{ color: "#fff", fontWeight: 800 }}>{opponent}</span> · {FMT(matchDate)} · {serie}
+        {opponent.trim()
+          ? <>vs <span style={{ color: "#fff", fontWeight: 800 }}>{opponent}</span> · {FMT(matchDate)} · {serie}</>
+          : <><span style={{ color: "#fbbf24", fontWeight: 800 }}>🏆 Cupdag</span> · {FMT(matchDate)} — motståndare fylls i per match</>}
       </div>
 
       {/* Målvakt */}
