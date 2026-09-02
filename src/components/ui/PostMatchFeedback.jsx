@@ -1,7 +1,7 @@
 // src/components/ui/PostMatchFeedback.jsx
 // Sprint 27 — Post-match UX feedback overlay
 import { useState, useEffect } from 'react';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/constants.js';
+import { SB_URL as SUPABASE_URL, SB_KEY as SUPABASE_ANON_KEY } from '../../lib/supabase.js';
 
 const DISMISS_AFTER_MS = 8000;
 

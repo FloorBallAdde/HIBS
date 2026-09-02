@@ -1,6 +1,7 @@
 // Supabase client & helpers
-const SB_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/ /g, "") || "";
-const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+// Exporteras för PostMatchFeedback (rå fetch mot app_feedback) — buildfix 2026-09-01
+export const SB_URL = import.meta.env.VITE_SUPABASE_URL?.replace(/ /g, "") || "";
+export const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 function hdrs(tok) {
   return {
