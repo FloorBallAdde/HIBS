@@ -4,6 +4,15 @@ export const FMT = (d) =>
   d
     ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", month: "short" })
     : "-";
+// Med veckodag: "lör 5 sep" (Sprint 79 — kalenderkortet)
+export const FMTW = (d) =>
+  d
+    ? new Date(d).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short" })
+    : "-";
+
+// ── Cup-hjälpare (Sprint 79) — cuper ska inte visas som "vs Minicup" ─────────
+export const isCup = (m) => (m?.serie || "").toLowerCase().startsWith("cup");
+export const matchTitle = (m) => (isCup(m) ? "🏆 " + m.opponent : "vs " + m.opponent);
 
 // ── Linje-format (Sprint: 5-manna) ───────────────────────────────────────────
 // 5-manna (1-2-2): 1:a, Höger 2, Vänster 2, Höger 3, Vänster 3 — standard från HT-26

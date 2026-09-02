@@ -54,21 +54,7 @@ export default function HomeContent({
         </div>
       )}
 
-      {/* HERO — SEASON RECORD (Sprint 38: extraherat till SeasonRecordHero) */}
-      <SeasonRecordHero history={history} />
-
-      {/* QUICK STATS STRIP — extraherad till QuickStatsStrip (Sprint 40) */}
-      <QuickStatsStrip
-        totalGoals={totalGoals}
-        totalAssists={totalAssists}
-        history={history}
-        trainHistory={trainHistory}
-      />
-
-      {/* FORM — extraherad till FormStrip (Sprint 41) */}
-      <FormStrip history={history} />
-
-      {/* NÄSTA MATCH — extraherad till UpcomingMatchCard (Sprint 15) */}
+      {/* KALENDER — flyttad högst upp bland innehållet (Sprint 79) */}
       <UpcomingMatchCard
         upcomingMatches={upcomingMatches}
         addUpcoming={addUpcoming}
@@ -77,13 +63,26 @@ export default function HomeContent({
         players={players}
       />
 
-      {/* SENASTE MATCH — extraherad till LatestMatchCard (Sprint 39) */}
-      <LatestMatchCard latestMatch={latestMatch} />
+      {/* HERO — SEASON RECORD */}
+      <SeasonRecordHero history={history} />
 
-      {/* TOP 3 SCORERS — extraherad till TopScorers (Sprint 42) */}
-      <TopScorers stats={stats} players={players} />
+      {/* Sprint 79: statistikkort visas först när säsongen har spelade matcher —
+          en ny säsong ska inte fyllas av tomma kort */}
+      {history.length > 0 && (
+        <>
+          <QuickStatsStrip
+            totalGoals={totalGoals}
+            totalAssists={totalAssists}
+            history={history}
+            trainHistory={trainHistory}
+          />
+          <FormStrip history={history} />
+          <LatestMatchCard latestMatch={latestMatch} />
+          <TopScorers stats={stats} players={players} />
+        </>
+      )}
 
-      {/* SENASTE TRÄNINGAR — extraherad till LatestTrainings (Sprint 43) */}
+      {/* SENASTE TRÄNINGAR */}
       <LatestTrainings trainHistory={trainHistory} />
 
       {/* TRÄNINGSNOTISER */}

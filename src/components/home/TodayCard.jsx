@@ -1,4 +1,4 @@
-import { TODAY, FONT } from "../../lib/constants.js";
+import { TODAY, FONT, isCup, matchTitle } from "../../lib/constants.js";
 
 /**
  * TodayCard — dagsstyrt handlingskort överst på Hem (Sprint 70).
@@ -35,14 +35,14 @@ export default function TodayCard({ upcomingMatches, onGoMatch }) {
         gap: 14,
       }}
     >
-      <span style={{ fontSize: 26, flexShrink: 0 }}>🏑</span>
+      <span style={{ fontSize: 26, flexShrink: 0 }}>{isCup(match) ? "🏆" : "🏑"}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#22c55e", marginBottom: 3 }}>MATCH IDAG</div>
+        <div style={{ fontSize: FONT.label, fontWeight: 800, color: "#22c55e", marginBottom: 3 }}>{isCup(match) ? "CUP IDAG" : "MATCH IDAG"}</div>
         <div style={{ fontSize: FONT.title, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          vs {match.opponent}
+          {isCup(match) ? match.opponent : "vs " + match.opponent}
         </div>
         <div style={{ fontSize: FONT.body, color: "#94a3b8", marginTop: 2 }}>
-          {match.serie}{match.time ? " · " + match.time : ""}{match.venue ? " · " + match.venue : ""}{rsvpCount > 0 ? " · " + rsvpCount + " anmälda" : ""}
+          {(isCup(match) ? "" : match.serie + " · ") + (match.time ? match.time : "")}{match.venue ? " · " + match.venue : ""}{rsvpCount > 0 ? " · " + rsvpCount + " anmälda" : ""}
         </div>
       </div>
       <span style={{ flexShrink: 0, fontSize: FONT.body, fontWeight: 800, color: "#22c55e", background: "rgba(34,197,94,0.14)", border: "1px solid rgba(34,197,94,0.35)", borderRadius: 99, padding: "9px 14px" }}>

@@ -1,4 +1,4 @@
-import { FMT, FONT, serieColor } from "../../lib/constants.js";
+import { FMT, FONT, serieColor, isCup } from "../../lib/constants.js";
 
 /**
  * MatchStartView — landningsvyn för Match-fliken (Sprint 69).
@@ -59,13 +59,13 @@ export default function MatchStartView({ upcomingMatches, cupMode, onSchedule, o
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: FONT.title, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>vs {m.opponent}</div>
+                  <div style={{ fontSize: FONT.title, fontWeight: 900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isCup(m) ? "🏆 " + m.opponent : "vs " + m.opponent}</div>
                   <div style={{ fontSize: FONT.body, color: "#94a3b8", marginTop: 3 }}>
                     {FMT(m.date)}{m.time ? " " + m.time : ""}{m.venue ? " · " + m.venue : ""}
                     {rsvpCount > 0 && <span style={{ color: "#22c55e" }}> · {rsvpCount} anmälda</span>}
                   </div>
                 </div>
-                <span style={{ fontSize: FONT.label, fontWeight: 800, color: sc, background: sc + "18", border: "1px solid " + sc + "40", borderRadius: 99, padding: "4px 10px", flexShrink: 0 }}>{m.serie}</span>
+                <span style={{ fontSize: FONT.label, fontWeight: 800, color: sc, background: sc + "18", border: "1px solid " + sc + "40", borderRadius: 99, padding: "4px 10px", flexShrink: 0 }}>{isCup(m) ? "CUP" : m.serie}</span>
                 <span style={{ color: sc, fontSize: 18, flexShrink: 0 }}>›</span>
               </button>
             );
