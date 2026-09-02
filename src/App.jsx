@@ -101,7 +101,8 @@ export default function App(){
         // tidigare hämtade. Detta är nu appens ENDA övningsladdning (dubbelladdningen borta).
         sbGet("exercises","select=id,name,category,intensity,players,vad,varfor,hur,organisation,tips,coaching_fragor,has_drawing&order=name.asc",tok),
       ]);
-      if(Array.isArray(pl))setPlayers(pl.map(p=>({...p,goals:p.goals||[]})));
+      // Sprint 81: spelare som slutat (active=false) filtreras bort — historiken finns kvar i DB
+      if(Array.isArray(pl))setPlayers(pl.filter(p=>p.active!==false).map(p=>({...p,goals:p.goals||[]})));
       if(Array.isArray(ma))setHistory(ma);
       if(Array.isArray(tr))setTrainHistory(tr);
       if(Array.isArray(tn))setTrainNotes(tn);

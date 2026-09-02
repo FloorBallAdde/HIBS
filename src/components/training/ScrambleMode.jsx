@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ls from "../../lib/storage.js";
-import { GROUPS, GC, gc, shuffle, CHAIN_POS, CHAIN_COL } from "../../lib/constants.js";
+import { GROUPS, GC, gc, shuffle, CHAIN_POS, CHAIN_COL, groupShort } from "../../lib/constants.js";
 import { useTouchSwap } from "../../hooks/useTouchSwap.js";
 
 /**
@@ -176,7 +176,7 @@ export default function ScrambleMode({ players, field, present, setPresent }) {
                       <span style={{ fontSize: 10, fontWeight: 900, color: pc, background: pc + "15", border: "1px solid " + pc + "30", borderRadius: 6, padding: "3px 6px", width: 38, textAlign: "center", flexShrink: 0 }}>{pos}</span>
                       <div style={{ width: 8, height: 8, borderRadius: "50%", background: gc(p.group).color, flexShrink: 0 }} />
                       <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{p.name}</span>
-                      <span style={{ fontSize: 10, color: "#4a5568", marginLeft: "auto" }}>Gr.{p.group}</span>
+                      <span style={{ fontSize: 10, color: "#4a5568", marginLeft: "auto" }}>{groupShort(p.group)}</span>
                     </div>
                   );
                 })}

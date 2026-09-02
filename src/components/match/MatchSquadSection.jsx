@@ -1,4 +1,4 @@
-import { FMT, GROUPS, GC, FONT } from "../../lib/constants.js";
+import { FMT, GROUPS, GC, FONT, groupLabel } from "../../lib/constants.js";
 
 /**
  * MatchSquadSection — steg 2 av 3: truppen (Sprint 69, omskriven).
@@ -78,7 +78,7 @@ export default function MatchSquadSection({
         if (!gp.length) return null;
         return (
           <div key={g} style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: FONT.label, color: GC[g].color, fontWeight: 700, marginBottom: 5 }}>GRUPP {g}</div>
+            <div style={{ fontSize: FONT.label, color: GC[g].color, fontWeight: 700, marginBottom: 5 }}>{groupLabel(g).toUpperCase()}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {gp.map(p => {
                 const on = selected.has(p.id);

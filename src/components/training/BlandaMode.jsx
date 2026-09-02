@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GROUPS, GC, gc, shuffle, CHAIN_POS, CHAIN_COL } from "../../lib/constants.js";
+import { GROUPS, GC, gc, shuffle, CHAIN_POS, CHAIN_COL, groupLabel } from "../../lib/constants.js";
 
 /**
  * BlandaMode — Tre valbara blandningslägen:
@@ -30,7 +30,7 @@ export default function BlandaMode({ field }) {
         const s = shuffle(gp.map(p => p.id));
         const chains = [];
         for (let i = 0; i < s.length; i += size) chains.push(s.slice(i, i + size));
-        res.push({ label: "Grupp " + g, color: GC[g]?.color || "#64748b", chains });
+        res.push({ label: groupLabel(g), color: GC[g]?.color || "#64748b", chains });
       });
       setResults(res);
 
@@ -47,7 +47,7 @@ export default function BlandaMode({ field }) {
           const s = shuffle(pool.map(p => p.id));
           const chains = [];
           for (let k = 0; k < s.length; k += size) chains.push(s.slice(k, k + size));
-          res.push({ label: "Grupp " + g1 + " + " + g2, color: "#a78bfa", chains });
+          res.push({ label: groupLabel(g1) + " + " + groupLabel(g2), color: "#a78bfa", chains });
         }
       }
       setResults(res);

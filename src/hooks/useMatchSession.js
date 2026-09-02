@@ -40,11 +40,20 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
   // Interaktiva lagmål — bocka av under pågående match (Sprint 19)
   const [checkedGoals, setCheckedGoals] = useState(() => new Set(ls.get("hibs_checked_goals", [])));
 
-  // Ladda kommande matcher från Supabase när clubId och tok finns tillgängliga
+  // Ladda kommande matcher från Supabase när clubId och tok finns tillgängliga.
+  // Sprint 81: passerade ospelade matcher auto-arkiveras (is_upcoming=false) så
+  // schemat aldrig fylls av gamla rader — de raderas inte, bara flyttas ur vägen.
   useEffect(() => {
     if (!clubId || !tok) return;
     sbGet("matches", "club_id=eq." + clubId + "&is_upcoming=eq.true&order=date.asc", tok)
-      .then(r => { if (Array.isArray(r)) setUpcomingMatches(r); })
+      .then(r => {
+        if (!Array.isArray(r)) return;
+        const today = TODAY();
+        const current = r.filter(m => m.date >= today);
+        const passed = r.filter(m => m.date < today);
+        setUpcomingMatches(current);
+        passed.forEach(m => sbPatch("matches", m.id, { is_upcoming: false }, tok).catch(() => {}));
+      })
       .catch(() => {});
   }, [clubId, tok]);
 

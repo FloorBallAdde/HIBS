@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-09-02 (Sprint 80 klar)*
+*Senast uppdaterad: 2026-09-02 (Sprint 81 klar)*
 
 ---
 
@@ -214,3 +214,4 @@ hibs-app/
 | 78 | 2026-09-02 | F (Andreas-direkt): Ren säsongsstart 26/27 — migration `add_season_and_archive_spring` (KÖRD i prod): matches.season backfyllt (gräns 1 aug), 5 kvarblivna vårposter arkiverade (is_upcoming=false — INGET raderat) · App: CURRENT_SEASON/SEASONS/seasonOf/matchSeason i constants, seasonHistory-filter i App.jsx — Hem + Statistik visar vald säsong (default 26/27 = allt nollat), säsongsväljare-chips i Statistik (26/27 · 25/26 · Alla), Mer→Matchhistorik orörd = fullt arkiv, matchFuel följer säsongen · nya matcher får season via datum-inferens | 272 → 279 | ✅ Klar |
 | 79 | 2026-09-02 | F (Andreas-direkt): Hem-redesign — UpcomingMatchCard omgjord till 📅 KALENDER: nästa händelse som hero + agenda grupperad per veckodag (FMTW), tid/hall/RSVP per rad, max 7 + räknare · Cup-fix: isCup()/matchTitle()-helpers i constants — cuper visas "🏆 Minicup" med CUP-badge (aldrig "vs Minicup"/"Cupmatch") i TodayCard, kalendern och MatchStartView; TodayCard säger "CUP IDAG" · Hem-städning: kalendern flyttad högst upp bland innehållet, QuickStats/Form/LatestMatch/TopScorers döljs tills säsongen har spelade matcher | 279 → 279 | ✅ Klar |
 | 80 | 2026-09-02 | F (Andreas-feedback): Kalendern expanderbar — "▼ Visa hela kalendern (N händelser)" visar hela säsongen · Cup-autoläge: cupkort i matchstartvyn aktiverar cup-läget automatiskt + tömmer motståndarfältet (cupnamn ≠ motståndare); canGo kräver inte motståndare i cup-läge; trupp-sammanfattningen visar "🏆 Cupdag — motståndare fylls i per match" · "Senaste träningar" borttagen från Hem (dubblerade Träning→Planera→Logg, snittminuter förvirrade) — LatestTrainings.jsx kvar oanvänd, kan raderas | 279 → 279 | ✅ Klar |
+| 81 | 2026-09-02 | F (Andreas-feedback): Grupperna ÄR linorna — migration player_active_flag_and_lina_groups (KÖRD i prod): players.active-flagga (Benji/Sigge/Charlie E avaktiverade — historik behålls), grupper omsatta A=Lina1/B=Lina2/C=Lina3/D=Lina4 enligt grundkedjorna · App: GROUP_LABEL/GROUP_SHORT ("Lina 1"/"L1") i trupp-steget, Spelarlistan, Blanda/Scramble; active-filter i loadData · Auto-arkivering: passerade ospelade matcher sätts is_upcoming=false vid appstart (raderas inte) — schemat kan aldrig fyllas av gamla rader | 279 → 281 | ✅ Klar |

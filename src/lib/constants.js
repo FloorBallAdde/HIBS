@@ -81,6 +81,12 @@ export const SEASONS = ["26/27", "25/26", "Alla"];
 export const seasonOf = (date) => ((date || "") >= "2026-08-01" ? "26/27" : "25/26");
 export const matchSeason = (m) => m.season || seasonOf(m.date);
 
+// ── Gruppetiketter (Sprint 81) — grupperna ÄR linorna HT-26 ──────────────────
+export const GROUP_LABEL = { A: "Lina 1", B: "Lina 2", C: "Lina 3", D: "Lina 4", E: "Lina 5", MV: "Målvakter" };
+export const GROUP_SHORT = { A: "L1", B: "L2", C: "L3", D: "L4", E: "L5", MV: "MV" };
+export const groupLabel = (g) => GROUP_LABEL[g] || g;
+export const groupShort = (g) => GROUP_SHORT[g] || g;
+
 // Series & groups — säsong 26/27: 14A, 14B, 15A 4vs4 (Sprint 77)
 export const SERIES = ["14A", "14B", "15A 4vs4", "Cupmatch", "Traningsmatch"];
 export const serieColor = (s) =>

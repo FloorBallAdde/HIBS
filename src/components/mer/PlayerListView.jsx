@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GROUPS, GC, gc, FITNESS_META, nextFitness } from "../../lib/constants.js";
+import { GROUPS, GC, gc, FITNESS_META, nextFitness, groupShort } from "../../lib/constants.js";
 
 /**
  * PlayerListView — Spelarlistan i Mer-fliken.
@@ -32,7 +32,7 @@ export default function PlayerListView({
               fontSize: 11, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap",
             }}
           >
-            {g === "ALL" ? "Alla" : "Gr." + g}
+            {g === "ALL" ? "Alla" : groupShort(g)}
           </button>
         ))}
       </div>
@@ -57,7 +57,7 @@ export default function PlayerListView({
                       title="Tryck för att byta grupp"
                       style={{ padding: "1px 5px", borderRadius: 99, background: "transparent", border: "1px dashed " + pgc.color + "50", color: pgc.color, fontSize: 10, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}
                     >
-                      Gr.{p.group} ▾
+                      {groupShort(p.group)} ▾
                     </button>
                     <span style={{ fontSize: 10, color: "#4a5568" }}>{p.matches || 0} m</span>
                     {/* Fitness badge — tap to cycle */}
@@ -92,7 +92,7 @@ export default function PlayerListView({
                       onClick={() => { updP(p.id, { group: ng }); setPickerFor(null); }}
                       style={{ flex: 1, minHeight: 40, border: "1.5px solid " + (active ? ngc.color : "rgba(255,255,255,0.1)"), borderRadius: 9, background: active ? ngc.bg : "transparent", color: active ? ngc.color : "#4a5568", fontSize: 11, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}
                     >
-                      {ng}
+                      {groupShort(ng)}
                     </button>
                   );
                 })}
