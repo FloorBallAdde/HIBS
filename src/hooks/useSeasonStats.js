@@ -137,7 +137,8 @@ export function useSeasonStats(history, players = []) {
 
   const totalGoals   = useMemo(() => stats.reduce((s, p) => s + p.goals,   0), [stats]);
   const totalAssists = useMemo(() => stats.reduce((s, p) => s + p.assists, 0), [stats]);
-  const latestMatch  = history[0] || null;
+  // Sprint 82: senaste SPELADE matchen — hoppar över auto-arkiverade rader utan resultat
+  const latestMatch = history.find(m => m.result && m.result.us !== "" && m.result.them !== "") || null;
 
   // Lagövergripande skottstatistik (aggregat över hela säsongen)
   const shotStats = useMemo(() => {

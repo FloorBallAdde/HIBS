@@ -1,6 +1,6 @@
 # HIBS — Nuvarande arkitektur & refaktoreringsplan
 
-*Senast uppdaterad: 2026-09-02 (Sprint 81 klar)*
+*Senast uppdaterad: 2026-09-09 (Sprint 82 klar)*
 
 ---
 
@@ -215,3 +215,4 @@ hibs-app/
 | 79 | 2026-09-02 | F (Andreas-direkt): Hem-redesign — UpcomingMatchCard omgjord till 📅 KALENDER: nästa händelse som hero + agenda grupperad per veckodag (FMTW), tid/hall/RSVP per rad, max 7 + räknare · Cup-fix: isCup()/matchTitle()-helpers i constants — cuper visas "🏆 Minicup" med CUP-badge (aldrig "vs Minicup"/"Cupmatch") i TodayCard, kalendern och MatchStartView; TodayCard säger "CUP IDAG" · Hem-städning: kalendern flyttad högst upp bland innehållet, QuickStats/Form/LatestMatch/TopScorers döljs tills säsongen har spelade matcher | 279 → 279 | ✅ Klar |
 | 80 | 2026-09-02 | F (Andreas-feedback): Kalendern expanderbar — "▼ Visa hela kalendern (N händelser)" visar hela säsongen · Cup-autoläge: cupkort i matchstartvyn aktiverar cup-läget automatiskt + tömmer motståndarfältet (cupnamn ≠ motståndare); canGo kräver inte motståndare i cup-läge; trupp-sammanfattningen visar "🏆 Cupdag — motståndare fylls i per match" · "Senaste träningar" borttagen från Hem (dubblerade Träning→Planera→Logg, snittminuter förvirrade) — LatestTrainings.jsx kvar oanvänd, kan raderas | 279 → 279 | ✅ Klar |
 | 81 | 2026-09-02 | F (Andreas-feedback): Grupperna ÄR linorna — migration player_active_flag_and_lina_groups (KÖRD i prod): players.active-flagga (Benji/Sigge/Charlie E avaktiverade — historik behålls), grupper omsatta A=Lina1/B=Lina2/C=Lina3/D=Lina4 enligt grundkedjorna · App: GROUP_LABEL/GROUP_SHORT ("Lina 1"/"L1") i trupp-steget, Spelarlistan, Blanda/Scramble; active-filter i loadData · Auto-arkivering: passerade ospelade matcher sätts is_upcoming=false vid appstart (raderas inte) — schemat kan aldrig fyllas av gamla rader | 279 → 281 | ✅ Klar |
+| 82 | 2026-09-09 | 🐛 HOTFIX (svart skärm efter inlogg): S81:s auto-arkivering flyttade ospelade cupdagsrader (result=null) in i historiken → FormStrip rad 58 läste `m.result.us` bakom en guard som inte täckte null → TypeError → svart skärm. Fix: (1) FormStrip använder null-säkra formResult som guard, (2) useSeasonStats.latestMatch = senaste match MED resultat, (3) ErrorBoundary i main.jsx — krascher visar nu felmeddelande + Ladda om-knapp i stället för svart skärm · Datastädning i prod: result=null → {"us":"","them":""} (2 rader), kvarglömd is_live-rad (Älvsjö 5/9, aldrig avslutad) stängd · Lärdom: auto-arkiverade rader har inte samma shape som spelade — alla result-läsningar ska gå via formResult | 281 → 281 | ✅ Klar |

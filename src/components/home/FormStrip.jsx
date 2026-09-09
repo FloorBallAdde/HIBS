@@ -55,7 +55,9 @@ export default function FormStrip({ history }) {
                 {res || "–"}
               </div>
               <div style={{ fontSize: 8, color: "#475569", textAlign: "center" }}>
-                {m.result?.us !== "" && m.result?.them !== "" ? `${m.result.us}-${m.result.them}` : m.opponent?.slice(0, 5) || ""}
+                {/* Sprint 82: res (formResult) är null-säker — result kan vara null för
+                    auto-arkiverade ospelade matcher, då visas motståndarstumpen */}
+                {res ? `${m.result.us}-${m.result.them}` : m.opponent?.slice(0, 5) || ""}
               </div>
             </div>
           );
