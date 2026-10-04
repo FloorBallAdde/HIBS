@@ -107,6 +107,7 @@ export default function App(){
       if(Array.isArray(tr))setTrainHistory(tr);
       if(Array.isArray(tn))setTrainNotes(tn);
       if(Array.isArray(ex))setExercises(ex);
+      else console.error("Övningar kunde inte laddas",ex); // Sprint 84: tidigare tyst fel → tom lista
     }catch(e){console.error(e);}
     if(!silent)setLoadingApp(false);
   },[clubId,tok]);
@@ -248,6 +249,7 @@ export default function App(){
           onToggleAttendance={togglePlayer}
           matchFuel={seasonHistory[0]?.note ? { opponent: seasonHistory[0].opponent, date: seasonHistory[0].date, note: seasonHistory[0].note } : null}
           trainNotes={trainNotes}
+          onCreateExercise={async({name,category})=>{const saved=await sbPost("exercises",{name,category,intensity:"Medel",club_id:clubId},tok);const ex=Array.isArray(saved)&&saved[0]?saved[0]:null;if(ex)setExercises(p=>[...p,ex].sort((a,b)=>a.name.localeCompare(b.name,"sv")));return ex;}}
         />}
         {tab==="traning"&&trainSub==="ovningar"&&<OvningarTab token={tok} exercises={exercises} setExercises={setExercises}/>}
         {tab==="traning"&&trainSub==="tavla"&&<TaktiktavlaTab/>}

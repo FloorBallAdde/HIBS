@@ -9,7 +9,7 @@ const FMT = d => d ? new Date(d).toLocaleDateString("sv-SE", { day: "numeric", m
  * PlaneraTab — Sprint 23: added P12 attendance marking in history view.
  * New props: players, attendance, onToggleAttendance
  */
-export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance, matchFuel = null, trainNotes = [] }) {
+export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, players = [], attendance = {}, onToggleAttendance, matchFuel = null, trainNotes = [], onCreateExercise }) {
   const [phase, setPhase] = useState("build");
   const [fuelOpen, setFuelOpen] = useState(false); // Sprint 75: bensin från senaste matchen
   const [plan, setPlan] = useState(() => ls.get("hibs_plan_draft", []));
@@ -20,6 +20,8 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, 
   const [expandedId, setExpandedId] = useState(null);
   const [saved, setSaved] = useState(false);
   const [attOpenId, setAttOpenId] = useState(null); // which session has attendance panel open
+  const [creatingEx, setCreatingEx] = useState(false); // Sprint 84: snabbskapa övning från namn
+  const [createErr, setCreateErr] = useState("");
 
   useEffect(() => { ls.set("hibs_plan_draft", plan); }, [plan]);
   useEffect(() => { ls.set("hibs_plan_note", note); }, [note]);
@@ -29,7 +31,26 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, 
     if (search && !e.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
-  const addEx = ex => { setPlan(p => [...p, { id: Date.now(), exercise: ex, minutes: 10 }]); setPicking(false); setSearch(""); };
+  const addEx = ex => { setPlan(p => [...p, { id: Date.now(), exercise: ex, minutes: 10 }]); setPicking(false); setSearch(""); setCreateErr(""); };
+
+  // Sprint 84: skriv ett namn i sök → skapa övningen direkt och lägg den i planen
+  const newName = search.trim();
+  const exactMatch = newName ? exercises.find(e => e.name.toLowerCase() === newName.toLowerCase()) : null;
+  const newCat = cat !== "Alla" ? cat : "Spelövning";
+  const createAndAdd = async () => {
+    if (!newName || !onCreateExercise || creatingEx) return;
+    setCreatingEx(true); setCreateErr("");
+    let ex = null;
+    try { ex = await onCreateExercise({ name: newName, category: newCat }); } catch (e) { console.error(e); }
+    setCreatingEx(false);
+    if (ex) addEx(ex); else setCreateErr("Kunde inte spara övningen. Försök igen.");
+  };
+  const onSearchKey = e => {
+    if (e.key !== "Enter" || !newName) return;
+    e.preventDefault();
+    if (exactMatch) { if (!plan.some(p => p.exercise.id === exactMatch.id)) addEx(exactMatch); }
+    else createAndAdd();
+  };
   const removeEx = id => setPlan(p => p.filter(x => x.id !== id));
   const setMin = (id, val) => setPlan(p => p.map(x => x.id === id ? { ...x, minutes: Math.max(1, parseInt(val) || 1) } : x));
   const moveUp = idx => { if (idx === 0) return; setPlan(p => { const a = [...p]; [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]]; return a; }); };
@@ -205,14 +226,23 @@ export default function PlaneraTab({ exercises, trainHistory, onSave, onDelete, 
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: 14, marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Välj övning</div>
-            <button onClick={() => { setPicking(false); setSearch(""); }} style={{ background: "none", border: "none", color: "#4a5568", cursor: "pointer", fontSize: 20 }}>×</button>
+            <button onClick={() => { setPicking(false); setSearch(""); setCreateErr(""); }} style={{ background: "none", border: "none", color: "#4a5568", cursor: "pointer", fontSize: 20 }}>×</button>
           </div>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Sök..." style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "8px 12px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
+          <input value={search} onChange={e => { setSearch(e.target.value); setCreateErr(""); }} onKeyDown={onSearchKey} enterKeyHint="done" placeholder="Sök eller skriv namn på ny övning..." style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "8px 12px", fontFamily: "inherit", outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
           <div style={{ overflowX: "auto", paddingBottom: 4, marginBottom: 8 }}>
             <div style={{ display: "flex", gap: 6, width: "max-content" }}>
               {CATEGORIES.map(c => <button key={c} onClick={() => setCat(c)} style={{ padding: "4px 10px", border: "1px solid " + (cat === c ? "#22c55e" : "rgba(255,255,255,0.07)"), borderRadius: 99, background: cat === c ? "rgba(34,197,94,0.12)" : "transparent", color: cat === c ? "#22c55e" : "#4a5568", fontSize: 10, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}>{c}</button>)}
             </div>
           </div>
+          {newName && !exactMatch && onCreateExercise && (
+            <button onClick={createAndAdd} disabled={creatingEx} style={{ width: "100%", minHeight: 44, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", marginBottom: 8, background: "rgba(34,197,94,0.08)", border: "1px dashed rgba(34,197,94,0.4)", borderRadius: 10, color: "#22c55e", fontSize: 13, fontWeight: 700, fontFamily: "inherit", cursor: creatingEx ? "default" : "pointer", textAlign: "left" }}>
+              <span style={{ fontSize: 18, fontWeight: 300, flexShrink: 0 }}>+</span>
+              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{creatingEx ? "Sparar..." : "Ny övning: \u201c" + newName + "\u201d"}</span>
+              <span style={{ fontSize: 10, color: CAT_COLOR[newCat] || "#64748b", flexShrink: 0 }}>{newCat}</span>
+            </button>
+          )}
+          {createErr && <div style={{ fontSize: 12, color: "#f87171", marginBottom: 8 }}>{createErr}</div>}
+          {filtered.length === 0 && !newName && <div style={{ textAlign: "center", padding: "16px 0", color: "#475569", fontSize: 12 }}>Inga övningar här — skriv ett namn ovan för att skapa en.</div>}
           <div style={{ maxHeight: 260, overflowY: "auto", display: "flex", flexDirection: "column", gap: 5 }}>
             {filtered.map(ex => { const alreadyIn = plan.some(p => p.exercise.id === ex.id); const cc = CAT_COLOR[ex.category] || "#64748b"; return (
               <div key={ex.id} onClick={() => !alreadyIn && addEx(ex)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: alreadyIn ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.04)", border: "1px solid " + (alreadyIn ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"), borderRadius: 10, cursor: alreadyIn ? "default" : "pointer", opacity: alreadyIn ? 0.4 : 1 }}>

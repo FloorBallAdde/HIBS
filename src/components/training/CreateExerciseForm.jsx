@@ -66,14 +66,13 @@ export default function CreateExerciseForm({ token, onSaved, onCancel, initialDa
 
   const save = async () => {
     if (!form.name.trim())   return setErr("Namn krävs");
-    if (!form.vad.trim())    return setErr("VAD krävs");
     setErr(""); setSaving(true);
     const body = {
       name:            form.name.trim(),
       category:        form.category,
       intensity:       form.intensity,
       players:         form.players.trim() || null,
-      vad:             form.vad.trim(),
+      vad:             form.vad.trim() || null,
       varfor:          form.varfor.trim() || null,
       hur:             form.hur.trim()    || null,
       organisation:    form.organisation.trim() || null,
@@ -85,7 +84,9 @@ export default function CreateExerciseForm({ token, onSaved, onCancel, initialDa
       await sbPatch("exercises", initialData.id, body, token);
       result = { ...initialData, ...body };
     } else {
-      result = await sbPost("exercises", body, token);
+      // Sprint 84: sbPost returnerar en array (return=representation) — tidigare gav det "Kunde inte spara" trots lyckad insert
+      const r = await sbPost("exercises", body, token);
+      result = Array.isArray(r) ? r[0] : r;
     }
     setSaving(false);
     if (isEdit || result?.id) onSaved(result);
@@ -149,7 +150,7 @@ export default function CreateExerciseForm({ token, onSaved, onCancel, initialDa
           </div>
 
           <Field label="ANTAL SPELARE" value={form.players} onChange={set("players")} placeholder="T.ex. 8-12" />
-          <Field label="VAD — Vad tränar vi?" value={form.vad} onChange={set("vad")} placeholder="Kort beskrivning av övningen" multiline required />
+          <Field label="VAD — Vad tränar vi?" value={form.vad} onChange={set("vad")} placeholder="Kort beskrivning av övningen (valfritt)" multiline />
           <Field label="VARFÖR — Syfte" value={form.varfor} onChange={set("varfor")} placeholder="Vad vill vi att spelarna ska lära sig?" multiline />
           <Field label="HUR — Instruktion" value={form.hur} onChange={set("hur")} placeholder="Steg-för-steg genomförande" multiline />
           <Field label="ORGANISATION — Upplägg" value={form.organisation} onChange={set("organisation")} placeholder="Hur sätter man upp planen?" multiline />
