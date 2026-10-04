@@ -134,27 +134,23 @@ export const intensityColor = (i) => INTENSITY_COLOR[i] || "#64748b";
 export const CHAIN_POS = ["1:a", "H2:a", "V2:a", "H3:a", "V3:a"];
 export const CHAIN_COL = { "1:a": "#f472b6", "H2:a": "#34d399", "V2:a": "#38bdf8", "H3:a": "#a78bfa", "V3:a": "#fbbf24" };
 
-// ── Grundkedjor HT-26 (namn — matchas mot truppen vid laddning) ──────────────
-export const GRUNDKEDJOR = [
-  { name: "Lina 1", slots: { etta: "William", h2: "Rasmus", v2: "Mille",  h3: "Charlie M", v3: "Lucas" } },
-  { name: "Lina 2", slots: { etta: "Joel",    h2: "Lo",     v2: "Oliver", h3: "Viktor",    v3: "Jacob" } },
-  { name: "Lina 3", slots: { etta: "Jonas",   h2: "Ludde",  v2: "Freke",  h3: "Noah",      v3: "Marcus" } },
-  { name: "Lina 4", slots: { etta: "Linus",   h2: "Hugo",   v2: "Arvid",  h3: null,        v3: null } },
-];
-
-// Namnmatchning: exakt → ordgräns-prefix ("Ludde" → "Ludde M") → entydigt förnamn.
-// Returnerar null vid tvetydighet (t.ex. två spelare med samma förnamn) — slot lämnas tom.
-export const matchPlayerByName = (needle, pool) => {
-  if (!needle) return null;
-  const n = needle.toLowerCase().trim();
-  let hit = pool.find(p => p.name.toLowerCase().trim() === n);
-  if (hit) return hit;
-  hit = pool.find(p => p.name.toLowerCase().startsWith(n + " "));
-  if (hit) return hit;
-  const first = n.split(" ")[0];
-  const firstHits = pool.filter(p => p.name.toLowerCase().split(" ")[0] === first);
-  return firstHits.length === 1 ? firstHits[0] : null;
-};
+// ── Grundkedjor (Sprint 83) — byggs från spelarnas lina (group) + position ───
+// Källan är players.group (A–E = Lina 1–5) + players.position (etta/h2/v2/h3/v3).
+// Redigeras i Mer → Grundkedjor. Matchens kedjor är en kopia — ändringar i match
+// slår aldrig tillbaka hit.
+export const KEDJE_GROUPS = ["A", "B", "C", "D", "E"];
+export const posLabel = (pos) => PLABEL[pos] || null;
+export const buildGrundkedjor = (pool) =>
+  KEDJE_GROUPS.map((g, i) => ({
+    id: i + 1,
+    name: GROUP_LABEL[g],
+    group: g,
+    format: 5,
+    slots: Object.fromEntries(LINE_FORMATS[5].map(k => [
+      k,
+      pool.find(p => p.role !== "malvakt" && p.group === g && p.position === k)?.id || null,
+    ])),
+  })).filter((l, i) => i < 4 || Object.values(l.slots).some(Boolean)); // Lina 5 bara om den används
 
 // Default players (used when creating a new club)
 export const DEFAULT_PLAYERS = [

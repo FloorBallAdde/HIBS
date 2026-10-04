@@ -1,4 +1,7 @@
-import { FMT, GROUPS, GC, FONT, groupLabel } from "../../lib/constants.js";
+import { FMT, GROUPS, GC, FONT, groupLabel, posLabel, LINE_FORMATS } from "../../lib/constants.js";
+
+// Sprint 83: spelarna i varje lina sorteras på position (1:a, H2, V2, H3, V3)
+const posOrder = (p) => { const i = LINE_FORMATS[5].indexOf(p.position); return i < 0 ? 9 : i; };
 
 /**
  * MatchSquadSection — steg 2 av 3: truppen (Sprint 69, omskriven).
@@ -74,7 +77,7 @@ export default function MatchSquadSection({
       </div>
 
       {GROUPS.map(g => {
-        const gp = field.filter(p => p.group === g);
+        const gp = field.filter(p => p.group === g).sort((a, b) => posOrder(a) - posOrder(b));
         if (!gp.length) return null;
         return (
           <div key={g} style={{ marginBottom: 10 }}>
@@ -103,6 +106,7 @@ export default function MatchSquadSection({
                       textDecoration: !on && !inj ? "line-through" : "none",
                     }}
                   >
+                    {posLabel(p.position) && <span style={{ fontSize: 10, fontWeight: 900, opacity: 0.7, marginRight: 5 }}>{posLabel(p.position)}</span>}
                     {p.name}{inj ? " 🤕" : ltd ? " ⚡" : ""}
                   </button>
                 );

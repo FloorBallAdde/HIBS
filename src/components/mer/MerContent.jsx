@@ -7,6 +7,7 @@ import ParentInvite from "./ParentInvite.jsx";
 import PlayerListView from "./PlayerListView.jsx";
 import ChecklistView from "./ChecklistView.jsx";
 import SeasonPlanView from "./SeasonPlanView.jsx";
+import GrundkedjorView from "./GrundkedjorView.jsx";
 
 /**
  * MerContent — "Mer"-fliken med spelare, lagmål, matchhistorik, säsongsplan.
@@ -60,6 +61,7 @@ export default function MerContent({
           {[
             ["meddelanden",   "💬", "Meddelanden",        "Lagmeddelanden mellan tränare"],
             ["spelare",       "👥", "Spelarlista",        "Se alla spelare, noter och observationer"],
+            ["grundkedjor",   "⭐", "Grundkedjor",        "Lina och position för varje spelare"],
             ["matchhistorik", "📊", "Matchhistorik",      "Alla spelade matcher"],
             ["lagmal",        "🎯", "Lagmål och checklist","Säsongens mål och checklistor"],
             ["sasongsplan",   "🗓", "Säsongsplan",        "Periodsplan för säsongen"],
@@ -92,6 +94,8 @@ export default function MerContent({
           updP={updP}
         />
       )}
+
+      {merSub === "grundkedjor" && <GrundkedjorView />}
 
       {merSub === "lagmal" && (
         <ChecklistView checklist={checklist} setChecklist={setChecklist} />

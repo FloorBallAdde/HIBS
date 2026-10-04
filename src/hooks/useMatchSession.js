@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import ls from "../lib/storage.js";
 import { sbGet, sbPost, sbPatch, sbDel } from "../lib/supabase.js";
-import { TODAY, mkLine, LINE_FORMATS, POS_MAP_5TO4, lineSlotKeys, GRUNDKEDJOR, matchPlayerByName } from "../lib/constants.js";
+import { TODAY, mkLine, LINE_FORMATS, POS_MAP_5TO4, lineSlotKeys, buildGrundkedjor } from "../lib/constants.js";
 
 // Standarduppsättning: 4 tomma 5-mannalinor
 const defaultLines = () => [mkLine(1), mkLine(2), mkLine(3), mkLine(4)];
@@ -175,21 +175,11 @@ export function useMatchSession({ onMatchEnded, clubId, tok, auth, players, setP
     return { ...l, format, slots };
   }));
 
-  // Ladda grundkedjorna (HT-26) — fyller linorna med spelare ur vald trupp via namnmatchning.
+  // Ladda grundkedjorna — byggs från spelarnas lina + position (Mer → Grundkedjor).
   // Spelare som inte är i truppen lämnas tomma; målvakter ingår aldrig.
   const loadGrundkedjor = () => {
     const pool = players.filter(p => selected.has(p.id) && p.role !== "malvakt");
-    const used = new Set();
-    const newLines = GRUNDKEDJOR.map((g, i) => {
-      const slots = {};
-      LINE_FORMATS[5].forEach(k => {
-        const hit = matchPlayerByName(g.slots[k], pool.filter(p => !used.has(p.id)));
-        if (hit) used.add(hit.id);
-        slots[k] = hit ? hit.id : null;
-      });
-      return { id: i + 1, name: g.name, format: 5, slots };
-    });
-    setLines(newLines);
+    setLines(buildGrundkedjor(pool).map(({ group, ...l }) => l));
   };
 
   const removeSlot = (li, pos) => setLines(ls2 => ls2.map((l, i) => i === li ? { ...l, slots: { ...l.slots, [pos]: null } } : l));

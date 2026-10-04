@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { GROUPS, GC, gc, FITNESS_META, nextFitness, groupShort } from "../../lib/constants.js";
+import { GROUPS, GC, gc, FITNESS_META, nextFitness, groupShort, posLabel, PCOLOR, LINE_FORMATS } from "../../lib/constants.js";
+
+// Sprint 83: sortera på lina, sedan position (1:a, H2, V2, H3, V3), sist utan position
+const posOrder = (p) => { const i = LINE_FORMATS[5].indexOf(p.position); return i < 0 ? 9 : i; };
+const byLinePos = (a, b) => (a.group || "Z").localeCompare(b.group || "Z") || posOrder(a) - posOrder(b) || a.name.localeCompare(b.name, "sv");
 
 /**
  * PlayerListView — Spelarlistan i Mer-fliken.
@@ -36,7 +40,7 @@ export default function PlayerListView({
           </button>
         ))}
       </div>
-      {players.filter(p => filterGroup === "ALL" || p.group === filterGroup).map(p => {
+      {players.filter(p => filterGroup === "ALL" || p.group === filterGroup).sort(byLinePos).map(p => {
         const pgc = gc(p.group);
         const fm = FITNESS_META[p.fitness || "fit"];
         const obsCount = Array.isArray(p.observations) ? p.observations.length : 0;
@@ -59,6 +63,11 @@ export default function PlayerListView({
                     >
                       {groupShort(p.group)} ▾
                     </button>
+                    {posLabel(p.position) && (
+                      <span style={{ padding: "1px 6px", borderRadius: 6, background: PCOLOR[p.position] + "15", border: "1px solid " + PCOLOR[p.position] + "40", color: PCOLOR[p.position], fontSize: 10, fontWeight: 900, flexShrink: 0 }}>
+                        {posLabel(p.position)}
+                      </span>
+                    )}
                     <span style={{ fontSize: 10, color: "#4a5568" }}>{p.matches || 0} m</span>
                     {/* Fitness badge — tap to cycle */}
                     <button
@@ -89,7 +98,7 @@ export default function PlayerListView({
                   return (
                     <button
                       key={ng}
-                      onClick={() => { updP(p.id, { group: ng }); setPickerFor(null); }}
+                      onClick={() => { if (ng !== p.group) updP(p.id, { group: ng, position: null }); setPickerFor(null); }}
                       style={{ flex: 1, minHeight: 40, border: "1.5px solid " + (active ? ngc.color : "rgba(255,255,255,0.1)"), borderRadius: 9, background: active ? ngc.bg : "transparent", color: active ? ngc.color : "#4a5568", fontSize: 11, fontWeight: 900, fontFamily: "inherit", cursor: "pointer" }}
                     >
                       {groupShort(ng)}
